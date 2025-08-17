@@ -1,26 +1,381 @@
 @import "tailwindcss";
 
+/* CSS Custom Properties approach */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Violet Primary Colors */
+  --primary: oklch(0.606 0.25 292.717);
+  --primary-foreground: oklch(0.969 0.016 293.756);
+
+  /* Base Colors */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.606 0.25 292.717);
+  --radius: 0.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  /* Dark Violet Theme */
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.969 0.016 293.756);
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.274 0.006 286.033);
+  --input: oklch(0.274 0.006 286.033);
+  --ring: oklch(0.541 0.281 293.009);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base styles */
+* {
+  border-color: var(--border);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), "Poppins", ui-sans-serif, system-ui;
+}
+
+/* Utility classes for Tailwind v4 */
+@layer utilities {
+  .bg-primary {
+    background-color: var(--primary);
+  }
+
+  .text-primary {
+    color: var(--primary);
+  }
+
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+
+  .bg-secondary {
+    background-color: var(--secondary);
+  }
+
+  .text-secondary-foreground {
+    color: var(--secondary-foreground);
+  }
+
+  .bg-background {
+    background-color: var(--background);
+  }
+
+  .text-foreground {
+    color: var(--foreground);
+  }
+
+  .bg-card {
+    background-color: var(--card);
+  }
+
+  .text-card-foreground {
+    color: var(--card-foreground);
+  }
+
+  .bg-popover {
+    background-color: var(--popover);
+  }
+
+  .text-popover-foreground {
+    color: var(--popover-foreground);
+  }
+
+  .border-border {
+    border-color: var(--border);
+  }
+
+  .bg-muted {
+    background-color: var(--muted);
+  }
+
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+
+  .bg-accent {
+    background-color: var(--accent);
+  }
+
+  .text-accent-foreground {
+    color: var(--accent-foreground);
+  }
+
+  .bg-destructive {
+    background-color: var(--destructive);
+  }
+
+  .text-destructive-foreground {
+    color: var(--destructive-foreground);
+  }
+
+  .bg-input {
+    background-color: var(--input);
+  }
+}
+
+/* Fix untuk Radix UI Popover */
+[data-radix-popper-content-wrapper] {
+  z-index: 50;
+}
+
+/* Pastikan Command component memiliki styling yang benar */
+[cmdk-root] {
+  background-color: var(--popover);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+[cmdk-input] {
+  background-color: var(--background);
+}
+
+[cmdk-list] {
+  background-color: var(--popover);
+}
+
+/* Fix untuk hover states */
+[cmdk-item]:hover,
+[cmdk-item][data-selected="true"] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* FIXED: Scrollbar styling dengan fallback untuk semua browser */
+.boards-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.boards-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.boards-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.boards-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.boards-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.task-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.task-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* FIXED: Menghilangkan scrollbar arrows untuk semua browser */
+.boards-container::-webkit-scrollbar-button,
+.task-scroll-container::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* FIXED: Mobile touch scrolling */
+.boards-container,
+.task-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* FIXED: Responsive text clamping */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* FIXED: Ensure proper responsive breakpoint classes */
+@media (max-width: 480px) {
+  .xs\:hidden {
+    display: none !important;
+  }
+
+  .xs\:inline {
+    display: inline !important;
+  }
+}
+/* Tambahkan CSS ini ke globals.css Anda */
+
+/* Fix untuk page container - mencegah horizontal scroll di page level */
+.page-container {
+  overflow-x: hidden !important; /* Paksa hide horizontal scroll di page */
+  overflow-y: auto; /* Tetap izinkan vertical scroll */
+  width: 100%;
+  max-width: 100vw; /* Batasi maksimal lebar ke viewport width */
+}
+
+/* Perbaikan untuk main container di page.tsx */
+.main-container {
+  overflow-x: hidden !important;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Perbaikan untuk project area container */
+.project-area-container {
+  overflow: hidden !important; /* Hide semua overflow */
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Pastikan boards container memiliki horizontal scroll yang benar */
+.boards-container {
+  overflow-x: auto !important; /* Enable horizontal scroll */
+  overflow-y: hidden !important; /* Hide vertical scroll */
+  width: 100%;
+  max-width: 100%;
+  /* Existing scrollbar styling tetap */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Perbaikan untuk boards wrapper */
+.boards-wrapper {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: 100%;
+  min-width: max-content; /* Penting: memastikan content tidak terpotong */
+  width: max-content; /* Memastikan lebar sesuai content */
+}
+
+/* Pastikan setiap board memiliki lebar tetap */
+.single-board {
+  flex-shrink: 0; /* Mencegah board mengecil */
+  width: 300px; /* atau sesuai dengan boardWidth state */
+  min-width: 300px;
+  max-width: 300px;
+}
+
+/* Media queries untuk responsive board width */
+@media (max-width: 640px) {
+  .single-board {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .single-board {
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .single-board {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .single-board {
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+  }
+}
+
+@media (min-width: 1281px) {
+  .single-board {
+    width: 360px;
+    min-width: 360px;
+    max-width: 360px;
+  }
+}
+
+/* Perbaikan untuk card container */
+.project-area-card {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Pastikan tidak ada element yang menyebabkan horizontal overflow */
+* {
+  box-sizing: border-box;
+}
+
+/* Fix khusus untuk grid layout di main */
+.xl\:grid {
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.xl\:grid-cols-\[minmax\(0\,3fr\)_minmax\(0\,1fr\)\] {
+  overflow: hidden;
+}
+
+/* Tambahan untuk memastikan flex container tidak overflow */
+.flex {
+  min-width: 0; /* Penting untuk flex items */
+}
+
+/* Khusus untuk container utama project area */
+.min-w-0 {
+  min-width: 0 !important;
+  overflow: hidden;
 }
