@@ -20,7 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="overflow-x-hidden overflow-y-scroll"
+    >
       <body className={`${poppins.variable} antialiased`}>
         <AppWrapper>{children}</AppWrapper>
       </body>

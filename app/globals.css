@@ -50,9 +50,21 @@
   --ring: oklch(0.541 0.281 293.009);
 }
 
-/* Base styles */
-* {
+/* CRITICAL: Global overflow dan sizing reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   border-color: var(--border);
+}
+
+html,
+body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -61,7 +73,309 @@ body {
   font-family: var(--font-poppins), "Poppins", ui-sans-serif, system-ui;
 }
 
-/* Utility classes for Tailwind v4 */
+/* FIXED: Page container - level tertinggi untuk mencegah horizontal scroll */
+.page-container {
+  overflow-x: hidden !important;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* FIXED: Main container dengan responsive layout yang benar */
+.main-container {
+  overflow-x: hidden !important;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+
+  /* Default: flex column untuk mobile/tablet */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop: Grid layout */
+@media (min-width: 1280px) {
+  .main-container {
+    display: grid !important;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) !important;
+    gap: inherit;
+  }
+}
+
+/* FIXED: Project area containers */
+.project-area-container {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.project-area-card {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* FIXED: Right sidebar */
+.right-sidebar-card {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* FIXED: Navbar responsive */
+nav {
+  overflow: hidden !important;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* FIXED: Boards container dengan horizontal scroll yang optimal */
+.boards-container {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  width: 100%;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar styling untuk boards container */
+.boards-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.boards-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.boards-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.boards-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.boards-container::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* FIXED: Boards wrapper */
+.boards-wrapper {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: 100%;
+  min-width: max-content;
+  width: max-content;
+}
+
+/* FIXED: Single board dengan responsive width */
+.single-board {
+  flex-shrink: 0;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+/* FIXED: Task scroll container dengan mobile height limit */
+.task-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.task-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.task-scroll-container::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* MOBILE: Batasi tinggi board untuk maksimal 3-4 task visible */
+@media (max-width: 768px) {
+  .single-board {
+    /* Batasi tinggi total board di mobile */
+    max-height: calc(100vh - 200px);
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .task-scroll-container {
+    /* Kalkulasi: 
+       - Header board: ~4rem
+       - Add task button: ~3rem
+       - Gap dan padding: ~2rem
+       - 1 task: ~8rem (estimasi)
+       - Buffer untuk 3.5 task: 3.5 * 8rem = 28rem
+    */
+    max-height: 28rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Pastikan board header tidak shrink */
+  .single-board > div:first-child {
+    flex-shrink: 0;
+  }
+
+  /* Pastikan add task button tidak shrink */
+  .single-board > div:last-child {
+    flex-shrink: 0;
+  }
+}
+
+/* RESPONSIVE BREAKPOINTS */
+
+/* Mobile (xs) */
+@media (max-width: 480px) {
+  .xs\:hidden {
+    display: none !important;
+  }
+
+  .xs\:inline {
+    display: inline !important;
+  }
+
+  .main-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .single-board {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    /* Mobile board height constraint untuk 3-4 task visible */
+    max-height: calc(100vh - 180px);
+  }
+
+  .task-scroll-container {
+    /* Lebih ketat di XS screen */
+    max-height: 24rem; /* Sekitar 3 task visible */
+  }
+}
+
+/* Small mobile */
+@media (max-width: 640px) {
+  .single-board {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    max-height: calc(100vh - 180px);
+  }
+
+  .task-scroll-container {
+    max-height: 26rem; /* Sekitar 3.2 task visible */
+  }
+}
+
+/* Tablet portrait */
+@media (min-width: 641px) and (max-width: 768px) {
+  .single-board {
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+    max-height: calc(100vh - 160px);
+  }
+
+  .task-scroll-container {
+    max-height: 32rem; /* Sekitar 4 task visible */
+  }
+}
+
+/* Tablet landscape - remove mobile constraints */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .single-board {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    /* Reset mobile constraints untuk tablet landscape */
+    max-height: none;
+  }
+
+  .task-scroll-container {
+    /* Reset mobile constraints untuk tablet landscape */
+    max-height: none;
+  }
+}
+
+/* Small desktop - remove mobile constraints */
+@media (min-width: 1025px) and (max-width: 1279px) {
+  .single-board {
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+    /* Reset mobile constraints untuk desktop kecil */
+    max-height: none;
+  }
+
+  .task-scroll-container {
+    /* Reset mobile constraints untuk desktop kecil */
+    max-height: none;
+  }
+
+  /* Pastikan masih flex column di breakpoint ini */
+  .main-container {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .main-container > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+}
+
+/* Large desktop - remove mobile constraints */
+@media (min-width: 1280px) {
+  .single-board {
+    width: 360px;
+    min-width: 360px;
+    max-width: 360px;
+    /* Reset mobile constraints untuk desktop besar */
+    max-height: none;
+  }
+
+  .task-scroll-container {
+    /* Reset mobile constraints untuk desktop besar */
+    max-height: none;
+  }
+}
+
+/* UTILITY CLASSES */
 @layer utilities {
   .bg-primary {
     background-color: var(--primary);
@@ -140,12 +454,11 @@ body {
   }
 }
 
-/* Fix untuk Radix UI Popover */
+/* RADIX UI FIXES */
 [data-radix-popper-content-wrapper] {
   z-index: 50;
 }
 
-/* Pastikan Command component memiliki styling yang benar */
 [cmdk-root] {
   background-color: var(--popover);
   border-radius: calc(var(--radius) - 2px);
@@ -159,72 +472,13 @@ body {
   background-color: var(--popover);
 }
 
-/* Fix untuk hover states */
 [cmdk-item]:hover,
 [cmdk-item][data-selected="true"] {
   background-color: var(--accent);
   color: var(--accent-foreground);
 }
 
-/* FIXED: Scrollbar styling dengan fallback untuk semua browser */
-.boards-container {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.boards-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.boards-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.boards-container::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-
-.boards-container::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
-}
-
-.task-scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.task-scroll-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.task-scroll-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.task-scroll-container::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-.task-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
-}
-
-/* FIXED: Menghilangkan scrollbar arrows untuk semua browser */
-.boards-container::-webkit-scrollbar-button,
-.task-scroll-container::-webkit-scrollbar-button {
-  display: none;
-}
-
-/* FIXED: Mobile touch scrolling */
-.boards-container,
-.task-scroll-container {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* FIXED: Responsive text clamping */
+/* TEXT CLAMPING */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -239,143 +493,95 @@ body {
   overflow: hidden;
 }
 
-/* FIXED: Ensure proper responsive breakpoint classes */
-@media (max-width: 480px) {
-  .xs\:hidden {
-    display: none !important;
-  }
-
-  .xs\:inline {
-    display: inline !important;
-  }
-}
-/* Tambahkan CSS ini ke globals.css Anda */
-
-/* Fix untuk page container - mencegah horizontal scroll di page level */
-.page-container {
-  overflow-x: hidden !important; /* Paksa hide horizontal scroll di page */
-  overflow-y: auto; /* Tetap izinkan vertical scroll */
-  width: 100%;
-  max-width: 100vw; /* Batasi maksimal lebar ke viewport width */
-}
-
-/* Perbaikan untuk main container di page.tsx */
-.main-container {
-  overflow-x: hidden !important;
-  max-width: 100%;
-  width: 100%;
-}
-
-/* Perbaikan untuk project area container */
-.project-area-container {
-  overflow: hidden !important; /* Hide semua overflow */
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Pastikan boards container memiliki horizontal scroll yang benar */
-.boards-container {
-  overflow-x: auto !important; /* Enable horizontal scroll */
-  overflow-y: hidden !important; /* Hide vertical scroll */
-  width: 100%;
-  max-width: 100%;
-  /* Existing scrollbar styling tetap */
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* Perbaikan untuk boards wrapper */
-.boards-wrapper {
-  display: flex;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
-  height: 100%;
-  min-width: max-content; /* Penting: memastikan content tidak terpotong */
-  width: max-content; /* Memastikan lebar sesuai content */
-}
-
-/* Pastikan setiap board memiliki lebar tetap */
-.single-board {
-  flex-shrink: 0; /* Mencegah board mengecil */
-  width: 300px; /* atau sesuai dengan boardWidth state */
-  min-width: 300px;
-  max-width: 300px;
-}
-
-/* Media queries untuk responsive board width */
-@media (max-width: 640px) {
-  .single-board {
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 768px) {
-  .single-board {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .single-board {
-    width: 320px;
-    min-width: 320px;
-    max-width: 320px;
-  }
-}
-
-@media (min-width: 1025px) and (max-width: 1280px) {
-  .single-board {
-    width: 340px;
-    min-width: 340px;
-    max-width: 340px;
-  }
-}
-
-@media (min-width: 1281px) {
-  .single-board {
-    width: 360px;
-    min-width: 360px;
-    max-width: 360px;
-  }
-}
-
-/* Perbaikan untuk card container */
-.project-area-card {
-  overflow: hidden !important;
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Pastikan tidak ada element yang menyebabkan horizontal overflow */
-* {
+/* FLEX UTILITIES */
+.flex {
+  min-width: 0 !important;
   box-sizing: border-box;
 }
 
-/* Fix khusus untuk grid layout di main */
+.min-w-0 {
+  min-width: 0 !important;
+  overflow: hidden;
+}
+
+/* DRAG AND DROP STYLES */
+.drag-active {
+  cursor: grabbing;
+}
+
+.boards-container.drag-active {
+  scroll-behavior: auto;
+}
+
+/* GRID UTILITIES untuk desktop */
 .xl\:grid {
   overflow: hidden;
   max-width: 100%;
+  width: 100%;
 }
 
 .xl\:grid-cols-\[minmax\(0\,3fr\)_minmax\(0\,1fr\)\] {
   overflow: hidden;
 }
 
-/* Tambahan untuk memastikan flex container tidak overflow */
-.flex {
-  min-width: 0; /* Penting untuk flex items */
+/* CRITICAL: Mencegah semua kemungkinan horizontal overflow */
+#__next,
+[data-reactroot] {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
 }
 
-/* Khusus untuk container utama project area */
-.min-w-0 {
-  min-width: 0 !important;
-  overflow: hidden;
+/* Pastikan semua container level tertinggi tidak overflow */
+main,
+section,
+article,
+aside,
+header,
+footer {
+  max-width: 100%;
+  box-sizing: border-box;
 }
+
+/* ANIMATION PERFORMANCE */
+* {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Smooth transitions untuk responsive changes */
+.main-container,
+.single-board,
+.boards-container {
+  transition: all 0.3s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-container,
+  .single-board,
+  .boards-container {
+    transition: none;
+  }
+}
+
+/* DEBUG: Uncomment untuk debugging layout issues */
+/*
+* {
+  outline: 1px solid red;
+}
+
+.page-container {
+  outline: 3px solid blue !important;
+}
+
+.main-container {
+  outline: 3px solid green !important;
+}
+
+.project-area-card {
+  outline: 3px solid orange !important;
+}
+
+.right-sidebar-card {
+  outline: 3px solid purple !important;
+}
+*/

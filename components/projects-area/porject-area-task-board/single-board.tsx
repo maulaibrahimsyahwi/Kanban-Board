@@ -35,14 +35,13 @@ export default function SingleBoard({
       canDrop: ({ source }) => {
         return source.data.type === "task" && source.data.boardId !== boardId;
       },
-      getIsSticky: () => true, // Makes the drop target "sticky"
+      getIsSticky: () => true,
       onDragEnter: ({ source }) => {
         if (source.data.type === "task" && source.data.boardId !== boardId) {
           setIsDraggedOver(true);
         }
       },
       onDragLeave: ({ source }) => {
-        // Only remove drag over state if we're not over a child element
         if (source.data.type === "task" && source.data.boardId !== boardId) {
           setIsDraggedOver(false);
         }
@@ -68,8 +67,9 @@ export default function SingleBoard({
         isDraggedOver
           ? "border-primary/50 bg-primary/5 shadow-lg"
           : "border-border"
-      } p-3 md:p-4`}
+      } p-3 md:p-4 single-board`}
     >
+      {/* Board Header - Fixed height, tidak akan shrink */}
       <div className="bg-muted/50 flex justify-between p-2 sm:p-3 md:p-4 rounded-lg items-center mb-3 md:mb-4 flex-shrink-0 min-h-[3rem] sm:min-h-[3.5rem] group">
         <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1">
           <span className="font-medium text-xs sm:text-sm md:text-base text-foreground truncate leading-tight">
@@ -88,6 +88,7 @@ export default function SingleBoard({
         </div>
       </div>
 
+      {/* Tasks Container - Flexible, akan grow/shrink dan scroll di mobile */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 sm:space-y-3 pr-1 task-scroll-container">
           {tasks.length === 0 ? (
@@ -102,6 +103,8 @@ export default function SingleBoard({
             ))
           )}
         </div>
+
+        {/* Add Task Button - Fixed height, tidak akan shrink */}
         <div className="mt-2 sm:mt-3 flex-shrink-0">
           <TaskDialog
             boardId={boardId}

@@ -9,7 +9,7 @@ export default function RightSideBar() {
 
   if (!selectedProject) {
     return (
-      <Card className="shadow-none p-4 md:p-6 rounded-2xl md:rounded-3xl flex items-center justify-center">
+      <Card className="shadow-none p-4 md:p-6 rounded-2xl md:rounded-3xl flex items-center justify-center right-sidebar-card">
         <div className="text-center text-muted-foreground">
           <p className="text-sm md:text-base">No project created</p>
           <p className="text-xs md:text-sm">
@@ -21,15 +21,15 @@ export default function RightSideBar() {
   }
 
   return (
-    <Card className="shadow-none p-4 md:p-6 rounded-2xl md:rounded-3xl overflow-y-auto">
-      <div className="flex flex-col gap-0">
-        <div className="flex-shrink-0">
+    <Card className="shadow-none p-4 md:p-6 rounded-2xl md:rounded-3xl overflow-y-auto right-sidebar-card">
+      <div className="flex flex-col gap-0 w-full">
+        <div className="flex-shrink-0 w-full">
           <ProjectSelectionDropDown />
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center w-full">
           <CircularProgress />
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-full">
           <TasksStats />
         </div>
       </div>
