@@ -30,11 +30,12 @@ export default function BoardDropDown({
   boardIndex,
   totalBoards,
 }: BoardDropDownProps) {
-  const { deleteBoard, editBoard } = useProjects();
+  const { deleteBoard } = useProjects();
+  // Note: editBoard removed as it's not currently used - will be implemented when edit functionality is added
 
   const handleEditBoard = () => {
     console.log("Edit board clicked", board.id);
-    // Implementasi edit board
+    // TODO: Implementasi edit board
     // Anda bisa buat EditBoardDialog serupa dengan TaskDialog
   };
 
@@ -43,10 +44,7 @@ export default function BoardDropDown({
     deleteBoard(boardId);
   };
 
-  const handleAddTask = () => {
-    console.log("Add task to board:", board.id);
-    // TaskDialog sudah handle ini dengan boardId
-  };
+  // Note: handleAddTask removed as TaskDialog component handles this directly
 
   // Prevent deleting if it's the last board
   const canDelete = totalBoards > 1;
