@@ -58,7 +58,7 @@ export default function BoardDropDown({
           <Button
             variant="ghost"
             size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary cursor-pointer"
           >
             <MdOutlineAdd className="w-4 h-4" />
           </Button>
@@ -67,7 +67,7 @@ export default function BoardDropDown({
 
       {/* Board Menu Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild className="cursor-pointer">
           <Button
             variant="ghost"
             size="sm"
@@ -111,15 +111,6 @@ export default function BoardDropDown({
           >
             <FaRegEdit className="flex-shrink-0" />
             <span>Edit Board</span>
-          </DropdownMenuItem>
-
-          {/* Board Settings */}
-          <DropdownMenuItem
-            className="flex items-center gap-2 p-[10px] cursor-pointer"
-            onClick={() => console.log("Board settings")}
-          >
-            <Settings className="flex-shrink-0 w-4 h-4" />
-            <span>Board Settings</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
