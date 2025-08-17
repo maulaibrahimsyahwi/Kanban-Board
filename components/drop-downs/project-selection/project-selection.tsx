@@ -18,7 +18,7 @@ export default function ProjectSelectionDropDown() {
       <div className="w-full text-center p-4 bg-muted rounded-xl">
         <p className="text-muted-foreground">No projects found.</p>
         <p className="text-sm text-muted-foreground">
-          Click 'Create Project' to start.
+          Click &apos;Create Project&apos; to start.
         </p>
       </div>
     );

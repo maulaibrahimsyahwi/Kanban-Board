@@ -84,7 +84,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
     selectProject(project.id);
     setIsOpen(false);
     toast.success("Project selected", {
-      description: `Switched to "${project.name}" project.`,
+      description: `Switched to &quot;${project.name}&quot; project.`,
     });
   };
 
@@ -129,7 +129,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
     editTask(task.id, boardId, updatedData);
     setSelectedTaskForEdit(null);
     toast.success("Task updated", {
-      description: `"${task.title}" has been updated.`,
+      description: `&quot;${task.title}&quot; has been updated.`,
     });
   };
 
@@ -556,7 +556,8 @@ function EditTaskDialog({
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
-            Editing task in "{boardName}" board of "{projectName}" project
+            Editing task in &quot;{boardName}&quot; board of &quot;{projectName}
+            &quot; project
           </DialogDescription>
         </DialogHeader>
 

@@ -76,7 +76,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
 
       // Show success toast with Sonner
       toast.success("Board created successfully", {
-        description: `"${boardName.trim()}" board has been added to your project.`,
+        description: `&quot;${boardName.trim()}&quot; board has been added to your project.`,
         duration: 4000,
       });
 
@@ -151,7 +151,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
                   Create New Board
                 </DialogTitle>
                 <DialogDescription className="text-left">
-                  Add a new board to "{selectedProject.name}" project
+                  Add a new board to &quot;{selectedProject.name}&quot; project
                 </DialogDescription>
               </div>
             </div>

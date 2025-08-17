@@ -48,7 +48,7 @@ export default function DeleteBoardDialog({
 
       // Show success toast with Sonner
       toast.success("Board deleted successfully", {
-        description: `"${board.name}" board and all its tasks have been removed.`,
+        description: `&quot;${board.name}&quot; board and all its tasks have been removed.`,
         duration: 5000,
       });
 
@@ -104,7 +104,7 @@ export default function DeleteBoardDialog({
             </div>
             <div>
               <AlertDialogTitle className="text-left">
-                Delete "{board.name}" board?
+                Delete &quot;{board.name}&quot; board?
               </AlertDialogTitle>
               <AlertDialogDescription className="text-left">
                 This action cannot be undone.
@@ -164,7 +164,7 @@ export default function DeleteBoardDialog({
                   This will permanently delete:
                 </p>
                 <ul className="mt-1 text-red-700 dark:text-red-300 space-y-1">
-                  <li>• The "{board.name}" board</li>
+                  <li>• The &quot;{board.name}&quot; board</li>
                   <li>• All {board.tasks.length} tasks in this board</li>
                   <li>• All task history and data</li>
                 </ul>
