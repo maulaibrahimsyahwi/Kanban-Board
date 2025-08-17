@@ -97,7 +97,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
       toast.success("Project deleted", {
         description: "Project has been permanently deleted.",
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete project");
     } finally {
       setIsDeleting(false);
@@ -114,7 +114,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
       toast.success("All projects deleted", {
         description: "All projects have been permanently deleted.",
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete all projects");
     } finally {
       setIsDeleting(false);
@@ -556,7 +556,8 @@ function EditTaskDialog({
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
-            Editing task in "{boardName}" board of "{projectName}" project
+            Editing task in &quot;{boardName}&quot; board of &quot;{projectName}
+            &quot; project
           </DialogDescription>
         </DialogHeader>
 
