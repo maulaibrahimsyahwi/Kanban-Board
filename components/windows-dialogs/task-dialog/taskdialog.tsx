@@ -1,3 +1,4 @@
+// components/windows-dialogs/task-dialog/taskdialog.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
                 Create New Task
               </DialogTitle>
               <DialogDescription className="text-left">
-                Add a new task to "{selectedProject.name}"
+                Add a new task to &quot;{selectedProject.name}&quot;
               </DialogDescription>
             </div>
           </div>

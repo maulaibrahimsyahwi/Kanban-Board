@@ -1,3 +1,4 @@
+// components/windows-dialogs/task-dialog/delete-task-dialog.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -49,14 +50,14 @@ export default function DeleteTaskDialog({
 
       // Show success toast with Sonner
       toast.success("Task deleted successfully", {
-        description: `"${task.title}" has been removed from ${boardName}.`,
+        description: `&quot;${task.title}&quot; has been removed from ${boardName}.`,
         duration: 5000,
       });
 
       // Tutup dialog
       setIsOpen(false);
-    } catch (error) {
-      console.error("Error deleting task:", error);
+    } catch {
+      console.error("Error deleting task");
 
       // Show error toast with Sonner
       toast.error("Failed to delete task", {
@@ -196,7 +197,7 @@ export default function DeleteTaskDialog({
                   This will permanently delete:
                 </p>
                 <ul className="mt-1 text-red-700 dark:text-red-300 space-y-1">
-                  <li>• The task "{task.title}"</li>
+                  <li>• The task &quot;{task.title}&quot;</li>
                   <li>• All task content and description</li>
                   <li>• Task history and metadata</li>
                 </ul>

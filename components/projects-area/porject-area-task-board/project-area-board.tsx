@@ -16,7 +16,7 @@ export default function ProjectAreaBoards({
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const { moveTask, selectedProject } = useProjects();
+  const { moveTask } = useProjects();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<number | null>(null);
 

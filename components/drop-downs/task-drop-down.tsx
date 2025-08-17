@@ -1,3 +1,4 @@
+// components/drop-downs/task-drop-down.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -183,7 +184,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
               onClick={handleMoveToPrevious}
             >
               <IoArrowBack className="flex-shrink-0 text-lg" />
-              <span>← Move to "{previousBoard.name}"</span>
+              <span>← Move to &quot;{previousBoard.name}&quot;</span>
             </DropdownMenuItem>
           )}
 
@@ -194,7 +195,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
               onClick={handleMoveToNext}
             >
               <IoArrowForward className="flex-shrink-0 text-lg" />
-              <span>Move to "{nextBoard.name}" →</span>
+              <span>Move to &quot;{nextBoard.name}&quot; →</span>
             </DropdownMenuItem>
           )}
 
@@ -267,7 +268,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Editing task in "{currentBoard.name}" board
+              Editing task in &quot;{currentBoard.name}&quot; board
             </p>
           </DialogHeader>
 
