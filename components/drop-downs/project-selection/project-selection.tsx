@@ -31,7 +31,7 @@ export default function ProjectSelectionDropDown() {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex justify-between py-9 rounded-xl bg-card border hover:bg-card/80"
+          className="w-full flex justify-between py-9 rounded-xl bg-card border hover:bg-card/80 cursor-pointer"
         >
           <div className="flex items-start flex-col text-base gap-1 text-left">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">
