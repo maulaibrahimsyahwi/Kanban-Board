@@ -102,7 +102,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="poppins sm:max-w-[425px] poppins sm:top-50 top-140 translate-y-0">
         <DialogHeader className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-muted rounded-full flex justify-center items-center">

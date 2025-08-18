@@ -55,11 +55,7 @@ export default function BoardDropDown({
       <TaskDialog
         boardId={board.id}
         trigger={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary cursor-pointer"
-          >
+          <Button variant="ghost" size="sm" className="cursor-pointer">
             <MdOutlineAdd className="w-4 h-4" />
           </Button>
         }
@@ -68,11 +64,7 @@ export default function BoardDropDown({
       {/* Board Menu Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild className="cursor-pointer">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-          >
+          <Button variant="ghost" size="sm" className="">
             <span className="sr-only">Open board menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>

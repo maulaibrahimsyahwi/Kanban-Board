@@ -139,7 +139,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins sm:max-w-[425px]">
+      <DialogContent className="poppins translate-y-0 fixed sm:max-w-[425px] sm:top-50 top-130">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <div className="flex items-center gap-3">

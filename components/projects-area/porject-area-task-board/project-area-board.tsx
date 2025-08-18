@@ -68,7 +68,7 @@ export default function ProjectAreaBoards({
     }
   }, []);
 
-  // Handle auto-scroll berdasarkan posisi mouse
+  // Handle auto-scroll berdasarkan posisi mouse dengan area yang lebih kecil untuk mobile/tablet
   const handleAutoScroll = useCallback(
     (clientX: number) => {
       if (!scrollContainerRef.current) return;
@@ -76,10 +76,22 @@ export default function ProjectAreaBoards({
       const container = scrollContainerRef.current;
       const rect = container.getBoundingClientRect();
 
-      // Zona scroll dengan kecepatan berbeda
-      const ultraFastZone = 50; // 0-50px dari edge: ultra cepat
-      const fastZone = 120; // 50-120px dari edge: cepat
-      const normalZone = 200; // 120-200px dari edge: normal
+      // Check if we're on mobile/tablet (md and below - using 1024px as lg breakpoint)
+      const isMobileTablet = window.innerWidth < 1024;
+
+      let ultraFastZone, fastZone, normalZone;
+
+      if (isMobileTablet) {
+        // Smaller, less sensitive zones for mobile/tablet
+        ultraFastZone = 20; // 0-25px dari edge: ultra cepat
+        fastZone = 50; // 25-60px dari edge: cepat
+        normalZone = 130; // 60-100px dari edge: normal
+      } else {
+        // Larger zones for desktop
+        ultraFastZone = 40; // 0-50px dari edge: ultra cepat
+        fastZone = 100; // 50-120px dari edge: cepat
+        normalZone = 160; // 120-200px dari edge: normal
+      }
 
       const containerLeft = rect.left;
       const containerRight = rect.right;
@@ -88,14 +100,14 @@ export default function ProjectAreaBoards({
 
       // Scroll ke kiri
       if (leftDistance <= normalZone && container.scrollLeft > 0) {
-        let scrollSpeed = 10; // Base speed
+        let scrollSpeed = 8; // Base speed lebih lambat untuk mobile
 
         if (leftDistance <= ultraFastZone) {
-          scrollSpeed = 50; // Ultra cepat seperti Atlassian
+          scrollSpeed = isMobileTablet ? 25 : 50; // Lebih lambat di mobile
         } else if (leftDistance <= fastZone) {
-          scrollSpeed = 30; // Cepat
+          scrollSpeed = isMobileTablet ? 15 : 30; // Lebih lambat di mobile
         } else {
-          scrollSpeed = 15; // Normal
+          scrollSpeed = isMobileTablet ? 8 : 12; // Lebih lambat di mobile
         }
 
         startAutoScroll("left", scrollSpeed);
@@ -107,14 +119,14 @@ export default function ProjectAreaBoards({
         rightDistance <= normalZone &&
         container.scrollLeft < container.scrollWidth - container.clientWidth
       ) {
-        let scrollSpeed = 10; // Base speed
+        let scrollSpeed = 8; // Base speed lebih lambat untuk mobile
 
         if (rightDistance <= ultraFastZone) {
-          scrollSpeed = 50; // Ultra cepat seperti Atlassian
+          scrollSpeed = isMobileTablet ? 35 : 50; // Lebih lambat di mobile
         } else if (rightDistance <= fastZone) {
-          scrollSpeed = 30; // Cepat
+          scrollSpeed = isMobileTablet ? 20 : 30; // Lebih lambat di mobile
         } else {
-          scrollSpeed = 15; // Normal
+          scrollSpeed = isMobileTablet ? 12 : 15; // Lebih lambat di mobile
         }
 
         startAutoScroll("right", scrollSpeed);

@@ -32,12 +32,12 @@ export default function ProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-3xl px-5 cursor-pointer">
+        <Button className="rounded-3xl px-5 cursor-pointer ">
           <HiFolderPlus className="mr-2 size-5" />
           Create Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="poppins sm:max-w-[425px]">
+      <DialogContent className="poppins sm:max-w-[425px] poppins top-50  translate-y-0">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>

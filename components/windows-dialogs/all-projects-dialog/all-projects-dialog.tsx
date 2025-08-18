@@ -46,6 +46,7 @@ import { useProjects } from "@/contexts/projectContext";
 import { Project, Task } from "@/contexts/projectContext";
 import { formatDateSafely } from "@/lib/utils";
 import { toast } from "sonner";
+import PrioritySelector from "@/components/windows-dialogs/task-dialog/sub-component/priority-selector";
 
 interface AllProjectsDialogProps {
   trigger?: React.ReactNode;
@@ -67,7 +68,6 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
   const { projects, selectedProject, selectProject, deleteProject, editTask } =
     useProjects();
 
-  // Filter projects based on search query
   const filteredProjects = projects.filter(
     (project) =>
       project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -183,7 +183,13 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
           )}
         </DialogTrigger>
 
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col poppins">
+        <DialogContent
+          className="
+            max-w-4xl max-h-[90vh] 
+            overflow-hidden flex flex-col poppins
+            xl:top-20 lg:top-135 top-120 !left-1/2 !-translate-x-1/2 !-translate-y-0
+          "
+        >
           <DialogHeader>
             <div className="flex items-center gap-3">
               <div className="size-10 bg-primary/10 rounded-full flex justify-center items-center">
@@ -200,7 +206,6 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
             </div>
           </DialogHeader>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-4 py-4">
             <div className="bg-muted rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-primary">
@@ -222,7 +227,6 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
             </div>
           </div>
 
-          {/* Search and Actions */}
           <div className="flex items-center gap-3 py-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -247,7 +251,6 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
 
           <Separator />
 
-          {/* Projects List */}
           <div className="flex-1 overflow-y-auto space-y-4 py-4">
             {filteredProjects.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -278,8 +281,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Project Confirmation */}
+      {/* delete one project in all projects */}
       <AlertDialog
         open={!!deleteProjectId}
         onOpenChange={() => setDeleteProjectId(null)}
@@ -313,14 +315,14 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete All Projects Confirmation */}
       <AlertDialog
         open={deleteAllConfirmOpen}
         onOpenChange={setDeleteAllConfirmOpen}
       >
-        <AlertDialogContent>
+        {/* all project delete all */}
+        <AlertDialogContent className="translate-y-0 fixed sm:top-70 top-190">
           <AlertDialogHeader>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ">
               <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
@@ -346,7 +348,6 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Task Dialog */}
       {selectedTaskForEdit && (
         <EditTaskDialog
           task={selectedTaskForEdit.task}
@@ -391,7 +392,6 @@ function ProjectCard({
         isSelected ? "border-primary bg-primary/5" : "border-border"
       }`}
     >
-      {/* Project Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="size-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground">
@@ -435,7 +435,6 @@ function ProjectCard({
         </DropdownMenu>
       </div>
 
-      {/* Boards */}
       <div className="space-y-3">
         {project.boards.map((board) => (
           <div key={board.id} className="bg-muted/50 rounded-lg p-3">
@@ -446,7 +445,6 @@ function ProjectCard({
               </Badge>
             </div>
 
-            {/* Tasks */}
             {board.tasks.length > 0 && (
               <div className="space-y-2">
                 {board.tasks.slice(0, 3).map((task) => (
@@ -584,7 +582,6 @@ function EditTaskDialog({
           <div className="space-y-3">
             <label className="text-sm font-medium">Priority</label>
 
-            {/* Priority Preview Badge */}
             <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
@@ -597,7 +594,6 @@ function EditTaskDialog({
               </span>
             </div>
 
-            {/* Custom Priority Selection */}
             <div className="grid grid-cols-1 gap-2">
               {[
                 { value: "low", label: "Low Priority" },
