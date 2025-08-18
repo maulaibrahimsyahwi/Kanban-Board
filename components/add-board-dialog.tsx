@@ -1,6 +1,7 @@
+// components/windows-dialogs/add-board-dialog.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Tambahkan useEffect di sini
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,9 +29,21 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-
   const { addBoard, selectedProject } = useProjects();
 
+  // 👉 PERBAIKAN: Gunakan useEffect untuk mengelola scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("dialog-open");
+    } else {
+      document.body.classList.remove("dialog-open");
+    }
+    return () => {
+      document.body.classList.remove("dialog-open");
+    };
+  }, [isOpen]);
+
+  // (sisa kode tetap sama)
   const validateBoardName = (name: string) => {
     if (!name.trim()) {
       setError("Board name is required");
@@ -45,7 +58,6 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
       return false;
     }
 
-    // Check if board name already exists
     if (
       selectedProject?.boards.some(
         (board) => board.name.toLowerCase() === name.trim().toLowerCase()
@@ -61,33 +73,23 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateBoardName(boardName)) {
       return;
     }
 
     setIsCreating(true);
-
     try {
-      // Simulasi delay untuk UX yang lebih baik
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       addBoard(boardName.trim());
-
-      // Show success toast with Sonner
       toast.success("Board created successfully", {
         description: `&quot;${boardName.trim()}&quot; board has been added to your project.`,
         duration: 4000,
       });
-
-      // Reset form dan tutup dialog
       setBoardName("");
       setError("");
       setIsOpen(false);
     } catch (error) {
       console.error("Error creating board:", error);
-
-      // Show error toast with Sonner
       toast.error("Failed to create board", {
         description:
           "An error occurred while creating the board. Please try again.",
@@ -172,7 +174,6 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
 
-            {/* Board Preview */}
             {boardName.trim() && !error && (
               <div className="bg-muted p-3 rounded-lg border">
                 <p className="text-sm text-muted-foreground mb-2">Preview:</p>

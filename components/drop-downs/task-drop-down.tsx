@@ -1,11 +1,10 @@
 // components/drop-downs/task-drop-down.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete, MdOutlineSwapHoriz } from "react-icons/md";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/contexts/projectContext";
@@ -48,10 +46,21 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<Task["priority"]>("low");
 
+  // 👉 PERBAIKAN: Gunakan useEffect untuk mengelola scroll lock
+  useEffect(() => {
+    if (isEditDialogOpen) {
+      document.body.classList.add("dialog-open");
+    } else {
+      document.body.classList.remove("dialog-open");
+    }
+    // Cleanup function: hapus kelas saat komponen dilepas dari DOM
+    return () => {
+      document.body.classList.remove("dialog-open");
+    };
+  }, [isEditDialogOpen]);
+
   const handleEditTask = () => {
     if (!selectedProject || !task) return;
-
-    // Initialize form with current task data
     setEditTitle(task.title);
     setEditDescription(task.description);
     setEditPriority(task.priority);
@@ -60,13 +69,11 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
 
   const handleSaveEdit = () => {
     if (!editTitle.trim() || editTitle.length < 3) return;
-
     editTask(taskId, boardId, {
       title: editTitle.trim(),
       description: editDescription.trim(),
       priority: editPriority,
     });
-
     setIsEditDialogOpen(false);
   };
 
@@ -75,33 +82,25 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
   };
 
   if (!selectedProject) {
-    console.log("❌ No selected project");
     return null;
   }
 
-  // Find current board
   const boards = selectedProject.boards;
   const currentBoardIndex = boards.findIndex((board) => board.id === boardId);
 
   if (currentBoardIndex === -1) {
-    console.error("❌ Current board not found!", {
-      boardId,
-      availableBoards: boards.map((b) => b.id),
-    });
+    console.error("❌ Current board not found!");
     return null;
   }
 
   const currentBoard = boards[currentBoardIndex];
-
-  // Find the task to get its details
   const task = currentBoard.tasks.find((task) => task.id === taskId);
 
   if (!task) {
-    console.error("❌ Task not found in current board:", taskId);
+    console.error("❌ Task not found in current board");
     return null;
   }
 
-  // Navigation options
   const previousBoard =
     currentBoardIndex > 0 ? boards[currentBoardIndex - 1] : null;
   const nextBoard =
@@ -111,14 +110,12 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
 
   const handleMoveToPrevious = () => {
     if (previousBoard) {
-      console.log("🎯 MOVE TO PREVIOUS CLICKED");
       moveTask(taskId, boardId, previousBoard.id);
     }
   };
 
   const handleMoveToNext = () => {
     if (nextBoard) {
-      console.log("🎯 MOVE TO NEXT CLICKED");
       moveTask(taskId, boardId, nextBoard.id);
     }
   };
@@ -129,7 +126,6 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
     }
   };
 
-  // Get other boards for manual selection
   const otherBoards = boards.filter((board) => board.id !== boardId);
 
   const getPriorityColor = (priority: string) => {
@@ -175,8 +171,6 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
             <span>Edit Task</span>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-
           {/* Previous Board Button */}
           {previousBoard && (
             <DropdownMenuItem
@@ -184,7 +178,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
               onClick={handleMoveToPrevious}
             >
               <IoArrowBack className="flex-shrink-0 text-lg" />
-              <span>← Move to &quot;{previousBoard.name}&quot;</span>
+              <span>Move to &quot;{previousBoard.name}&quot;</span>
             </DropdownMenuItem>
           )}
 
@@ -195,7 +189,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
               onClick={handleMoveToNext}
             >
               <IoArrowForward className="flex-shrink-0 text-lg" />
-              <span>Move to &quot;{nextBoard.name}&quot; →</span>
+              <span>Move to &quot;{nextBoard.name}&quot;</span>
             </DropdownMenuItem>
           )}
 

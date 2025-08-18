@@ -1,10 +1,10 @@
 // components/board-dropdown-menu.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react"; // Tambahkan useState di sini
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete, MdOutlineAdd } from "react-icons/md";
-import { MoreHorizontal, Settings } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import { Board } from "@/contexts/projectContext";
 import { useProjects } from "@/contexts/projectContext";
 import DeleteBoardDialog from "./delete-board-dialog";
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
+import EditBoardDialog from "@/components/windows-dialogs/board-dialogs/edit-board-dialog"; // Impor komponen baru
 
 interface BoardDropDownProps {
   board: Board;
@@ -31,27 +32,16 @@ export default function BoardDropDown({
   totalBoards,
 }: BoardDropDownProps) {
   const { deleteBoard } = useProjects();
-  // Note: editBoard removed as it's not currently used - will be implemented when edit functionality is added
-
-  const handleEditBoard = () => {
-    console.log("Edit board clicked", board.id);
-    // TODO: Implementasi edit board
-    // Anda bisa buat EditBoardDialog serupa dengan TaskDialog
-  };
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State untuk dialog edit
 
   const handleDeleteBoard = (boardId: string) => {
-    console.log("Deleting board:", boardId);
     deleteBoard(boardId);
   };
 
-  // Note: handleAddTask removed as TaskDialog component handles this directly
-
-  // Prevent deleting if it's the last board
   const canDelete = totalBoards > 1;
 
   return (
     <div className="flex items-center gap-2">
-      {/* Add Task Button */}
       <TaskDialog
         boardId={board.id}
         trigger={
@@ -61,7 +51,6 @@ export default function BoardDropDown({
         }
       />
 
-      {/* Board Menu Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild className="cursor-pointer">
           <Button variant="ghost" size="sm" className="">
@@ -71,7 +60,6 @@ export default function BoardDropDown({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="poppins" align="end">
-          {/* Board Info */}
           <div className="px-2 py-1.5 text-sm text-muted-foreground">
             <div className="font-medium text-foreground">{board.name}</div>
             <div className="text-xs">
@@ -82,7 +70,6 @@ export default function BoardDropDown({
 
           <DropdownMenuSeparator />
 
-          {/* Add Task */}
           <TaskDialog
             boardId={board.id}
             trigger={
@@ -96,10 +83,9 @@ export default function BoardDropDown({
             }
           />
 
-          {/* Edit Board */}
           <DropdownMenuItem
             className="flex items-center gap-2 p-[10px] cursor-pointer"
-            onClick={handleEditBoard}
+            onClick={() => setIsEditDialogOpen(true)} // Panggil dialog edit
           >
             <FaRegEdit className="flex-shrink-0" />
             <span>Edit Board</span>
@@ -107,7 +93,6 @@ export default function BoardDropDown({
 
           <DropdownMenuSeparator />
 
-          {/* Delete Board */}
           <DeleteBoardDialog
             board={board}
             onDelete={handleDeleteBoard}
@@ -132,6 +117,12 @@ export default function BoardDropDown({
           />
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <EditBoardDialog
+        board={board}
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+      />
     </div>
   );
 }

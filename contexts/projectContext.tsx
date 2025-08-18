@@ -501,7 +501,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       })
     );
   };
-
   const addBoard = (boardName: string) => {
     if (!selectedProjectId) return;
     const newBoard: Board = {
