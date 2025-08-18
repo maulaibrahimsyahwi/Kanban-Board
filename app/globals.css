@@ -562,26 +562,3 @@ footer {
     transition: none;
   }
 }
-
-/* DEBUG: Uncomment untuk debugging layout issues */
-/*
-* {
-  outline: 1px solid red;
-}
-
-.page-container {
-  outline: 3px solid blue !important;
-}
-
-.main-container {
-  outline: 3px solid green !important;
-}
-
-.project-area-card {
-  outline: 3px solid orange !important;
-}
-
-.right-sidebar-card {
-  outline: 3px solid purple !important;
-}
-*/
