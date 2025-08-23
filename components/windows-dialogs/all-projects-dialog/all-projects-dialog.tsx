@@ -187,7 +187,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
           className="
             max-w-4xl max-h-[90vh] 
             overflow-hidden flex flex-col poppins
-            xl:top-20 lg:top-135 top-120 !left-1/2 !-translate-x-1/2 !-translate-y-0
+            top-10 !left-1/2 !-translate-x-1/2 !-translate-y-0
           "
         >
           <DialogHeader>
@@ -242,7 +242,7 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
               size="sm"
               onClick={() => setDeleteAllConfirmOpen(true)}
               disabled={projects.length === 0}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
               Delete All
@@ -426,7 +426,7 @@ function ProjectCard({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
-              className="flex items-center gap-2 text-red-600"
+              className="flex items-center gap-2 text-red-600 cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
               Delete Project

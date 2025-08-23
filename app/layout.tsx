@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "ProKanban - Project Management",
+  title: "Kanban Board | Project Management",
   description: "Modern Kanban board for project management",
 };
 

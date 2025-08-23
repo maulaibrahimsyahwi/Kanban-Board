@@ -1,7 +1,7 @@
 // components/drop-downs/task-drop-down.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete, MdOutlineSwapHoriz } from "react-icons/md";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
@@ -14,12 +14,14 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogPortal,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,35 +37,94 @@ import PrioritySelector from "@/components/windows-dialogs/task-dialog/sub-compo
 interface TasksDropDownProps {
   taskId: string;
   boardId: string;
+  boardIndex?: number; // 👈 TAMBAH: Index board untuk menentukan posisi
+  totalBoards?: number; // 👈 TAMBAH: Total boards untuk mendeteksi board terakhir
 }
 
-export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
+export default function TasksDropDown({
+  taskId,
+  boardId,
+  boardIndex = 0,
+  totalBoards = 1,
+}: TasksDropDownProps) {
   const { selectedProject, deleteTask, moveTask, editTask } = useProjects();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null); // 👈 TAMBAH: Ref untuk trigger
+  const [dropdownAlign, setDropdownAlign] = useState<"start" | "end">("end");
 
   // Edit form states
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<Task["priority"]>("low");
 
-  // 👉 PERBAIKAN: Gunakan useEffect untuk mengelola scroll lock
+  // 👈 TAMBAH: Function untuk menentukan alignment dropdown berdasarkan posisi
+  const calculateDropdownAlignment = () => {
+    if (!triggerRef.current) return "end";
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const dropdownWidth = 280; // Estimasi lebar dropdown
+
+    // Jarak dari trigger ke tepi kanan viewport
+    const distanceToRight = viewportWidth - triggerRect.right;
+
+    // Jika jarak ke kanan tidak cukup untuk dropdown, align ke kiri (start)
+    // Tambahkan buffer 20px untuk memastikan tidak terpotong
+    if (distanceToRight < dropdownWidth + 20) {
+      return "start";
+    }
+
+    return "end";
+  };
+
+  useEffect(() => {
+    if (isDropdownOpen) {
+      const alignment = calculateDropdownAlignment();
+      setDropdownAlign(alignment);
+    }
+  }, [isDropdownOpen, boardIndex, totalBoards]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (isDropdownOpen) {
+        const alignment = calculateDropdownAlignment();
+        setDropdownAlign(alignment);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isDropdownOpen]);
+
   useEffect(() => {
     if (isEditDialogOpen) {
       document.body.classList.add("dialog-open");
     } else {
       document.body.classList.remove("dialog-open");
     }
-    // Cleanup function: hapus kelas saat komponen dilepas dari DOM
     return () => {
       document.body.classList.remove("dialog-open");
     };
   }, [isEditDialogOpen]);
+
+  useEffect(() => {
+    if (isDropdownOpen) {
+      document.body.classList.add("dropdown-open");
+    } else {
+      document.body.classList.remove("dropdown-open");
+    }
+    return () => {
+      document.body.classList.remove("dropdown-open");
+    };
+  }, [isDropdownOpen]);
 
   const handleEditTask = () => {
     if (!selectedProject || !task) return;
     setEditTitle(task.title);
     setEditDescription(task.description);
     setEditPriority(task.priority);
+    setIsDropdownOpen(false);
     setIsEditDialogOpen(true);
   };
 
@@ -79,6 +140,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
 
   const handleDeleteTask = (taskIdToDelete: string) => {
     deleteTask(taskIdToDelete, boardId);
+    setIsDropdownOpen(false);
   };
 
   if (!selectedProject) {
@@ -89,7 +151,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
   const currentBoardIndex = boards.findIndex((board) => board.id === boardId);
 
   if (currentBoardIndex === -1) {
-    console.error("❌ Current board not found!");
+    console.error("Current board not found!");
     return null;
   }
 
@@ -97,7 +159,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
   const task = currentBoard.tasks.find((task) => task.id === taskId);
 
   if (!task) {
-    console.error("❌ Task not found in current board");
+    console.error("Task not found in current board");
     return null;
   }
 
@@ -111,18 +173,21 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
   const handleMoveToPrevious = () => {
     if (previousBoard) {
       moveTask(taskId, boardId, previousBoard.id);
+      setIsDropdownOpen(false);
     }
   };
 
   const handleMoveToNext = () => {
     if (nextBoard) {
       moveTask(taskId, boardId, nextBoard.id);
+      setIsDropdownOpen(false);
     }
   };
 
   const handleMoveTask = (targetBoardId: string) => {
     if (targetBoardId !== boardId) {
       moveTask(taskId, boardId, targetBoardId);
+      setIsDropdownOpen(false);
     }
   };
 
@@ -143,15 +208,27 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button
+            ref={triggerRef}
+            variant="ghost"
+            className="h-8 w-8 p-0 relative z-10"
+          >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="poppins" align="end">
+        <DropdownMenuContent
+          className="poppins dropdown-content-fixed"
+          align={dropdownAlign}
+          side="bottom"
+          sideOffset={8}
+          alignOffset={0}
+          avoidCollisions={true}
+          collisionPadding={8}
+        >
           {/* Task Info */}
           <div className="px-2 py-1.5 text-sm text-muted-foreground border-b">
             <div className="font-medium text-foreground truncate max-w-[200px]">
@@ -203,11 +280,17 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
                 <MdOutlineSwapHoriz className="flex-shrink-0 text-lg" />
                 <span>Move to Board</span>
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent
+                className="dropdown-subcontent-fixed"
+                // 👈 TAMBAH: Alignment untuk submenu juga
+                alignOffset={dropdownAlign === "start" ? -10 : 10}
+              >
                 {otherBoards.map((board) => {
-                  const boardIndex = boards.findIndex((b) => b.id === board.id);
-                  const isPrevious = boardIndex === currentBoardIndex - 1;
-                  const isNext = boardIndex === currentBoardIndex + 1;
+                  const boardIndexInAll = boards.findIndex(
+                    (b) => b.id === board.id
+                  );
+                  const isPrevious = boardIndexInAll === currentBoardIndex - 1;
+                  const isNext = boardIndexInAll === currentBoardIndex + 1;
 
                   return (
                     <DropdownMenuItem
@@ -256,77 +339,81 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Edit Task Dialog */}
+      {/* Edit Task Dialog dengan Portal */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md poppins">
-          <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Editing task in &quot;{currentBoard.name}&quot; board
-            </p>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogContent className="max-w-md poppins">
+            <DialogHeader>
+              <DialogTitle>Edit Task</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Editing task in &quot;{currentBoard.name}&quot; board
+              </p>
+            </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            {/* Task Title */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Task Title</Label>
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Enter task title..."
-                className={editTitle.length < 3 ? "border-red-500" : ""}
+            <div className="space-y-4 py-4">
+              {/* Task Title */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Task Title</Label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Enter task title..."
+                  className={editTitle.length < 3 ? "border-red-500" : ""}
+                />
+                {editTitle.length > 0 && editTitle.length < 3 && (
+                  <p className="text-red-500 text-xs">
+                    Task title must be at least 3 characters
+                  </p>
+                )}
+              </div>
+
+              {/* Task Description */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Task Description</Label>
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Enter task description..."
+                  className="resize-none min-h-[100px]"
+                />
+              </div>
+
+              {/* Priority */}
+              <PrioritySelector
+                selectedPriority={editPriority}
+                onSelectPriority={setEditPriority}
               />
-              {editTitle.length > 0 && editTitle.length < 3 && (
-                <p className="text-red-500 text-xs">
-                  Task title must be at least 3 characters
-                </p>
-              )}
+
+              {/* Current Priority Preview */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Current:</span>
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${getPriorityColor(editPriority)}`}
+                >
+                  {editPriority.charAt(0).toUpperCase() + editPriority.slice(1)}
+                </Badge>
+              </div>
             </div>
 
-            {/* Task Description */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Task Description</Label>
-              <Textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Enter task description..."
-                className="resize-none min-h-[100px]"
-              />
-            </div>
-
-            {/* Priority */}
-            <PrioritySelector
-              selectedPriority={editPriority}
-              onSelectPriority={setEditPriority}
-            />
-
-            {/* Current Priority Preview */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Current:</span>
-              <Badge
-                variant="outline"
-                className={`text-xs ${getPriorityColor(editPriority)}`}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="cursor-pointer"
               >
-                {editPriority.charAt(0).toUpperCase() + editPriority.slice(1)}
-              </Badge>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={!editTitle.trim() || editTitle.length < 3}
+                className="cursor-pointer"
+              >
+                Save Changes
+              </Button>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveEdit}
-              disabled={!editTitle.trim() || editTitle.length < 3}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </DialogContent>
+          </DialogContent>
+        </DialogPortal>
       </Dialog>
     </>
   );

@@ -76,7 +76,8 @@ export default function SingleTask({
   return (
     <Card
       ref={taskRef}
-      className={`shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border ${
+      data-testid="task-card" // 👈 TAMBAH DATA TESTID UNTUK CSS
+      className={`shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card ${
         !isDragPreview ? "cursor-grab active:cursor-grabbing" : ""
       } ${isDragging ? "opacity-50 shadow-lg scale-105 rotate-2 z-50" : ""} ${
         isDragPreview ? "transform rotate-6 opacity-90" : ""
@@ -93,7 +94,10 @@ export default function SingleTask({
             </span>
           </div>
           {!isDragPreview && (
-            <div onClick={(e) => e.stopPropagation()}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="dropdown-trigger-button" // 👈 TAMBAH CLASS UNTUK CSS
+            >
               <TasksDropDown taskId={task.id} boardId={boardId} />
             </div>
           )}

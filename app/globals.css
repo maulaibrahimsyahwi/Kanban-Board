@@ -588,12 +588,54 @@ footer {
   box-sizing: border-box;
 }
 
-/* ANIMATION PERFORMANCE */
+/* ANIMATION PERFORMANCE
 * {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+} */
+/* ANIMATION PERFORMANCE - Hanya untuk elemen tertentu */
+.animation-element,
+.drag-preview,
+.transform-needed {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
+/* Smooth transitions untuk responsive changes - TAPI tanpa transform global */
+.main-container,
+.single-board,
+.boards-container {
+  transition: all 0.3s ease-in-out;
+  /* JANGAN TAMBAH TRANSFORM DI SINI */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-container,
+  .single-board,
+  .boards-container,
+  .animation-element,
+  .drag-preview,
+  .transform-needed {
+    transition: none;
+    -webkit-transform: none !important;
+    transform: none !important;
+    will-change: auto;
+  }
+}
+
+/* TAMBAHAN: Pastikan container utama tidak mengganggu dropdown */
+.page-container,
+.main-container,
+.project-area-card,
+.project-area-container,
+.boards-container,
+.boards-wrapper {
+  /* Hapus semua transform yang bisa mengganggu dropdown positioning */
+  -webkit-transform: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
 /* Smooth transitions untuk responsive changes */
 .main-container,
 .single-board,
@@ -628,4 +670,166 @@ footer {
 html.dialog-open,
 body.dialog-open {
   overflow: hidden;
+}
+/* Tambahkan ini ke globals.css Anda */
+
+/* === DROPDOWN POSITIONING FIXES === */
+
+/* 1. CRITICAL: Hanya hapus transform pada container yang bermasalah */
+.boards-container,
+.boards-wrapper,
+.project-area-container {
+  /* Hapus transform yang bisa mengganggu stacking context */
+  -webkit-transform: none !important;
+  transform: none !important;
+  /* Pastikan tidak membuat stacking context baru */
+  will-change: auto !important;
+}
+
+/* 2. DROPDOWN CONTENT: Z-index dan positioning yang benar */
+.dropdown-content-fixed {
+  /* Z-index tinggi untuk dropdown */
+  z-index: 50 !important;
+
+  /* FIXED: Lebar minimum dan maksimum yang konsisten */
+  min-width: 220px !important;
+  max-width: 280px !important;
+  width: auto !important;
+
+  /* Styling untuk visibility yang baik */
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: calc(var(--radius)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+
+  /* Prevent scroll issues */
+  max-height: 400px !important;
+  overflow-y: auto !important;
+
+  /* Ensure proper positioning */
+  position: absolute !important;
+
+  /* TAMBAHAN: Padding yang konsisten */
+  padding: 4px !important;
+}
+
+/* Dark mode support */
+.dark .dropdown-content-fixed {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 3. SUBMENU POSITIONING */
+.dropdown-subcontent-fixed {
+  z-index: 51 !important;
+  position: absolute !important;
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: calc(var(--radius)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+
+  /* FIXED: Lebar konsisten untuk submenu */
+  min-width: 200px !important;
+  max-width: 250px !important;
+  width: auto !important;
+  padding: 4px !important;
+}
+
+/* 4. DIALOG POSITIONING */
+.dialog-content-fixed {
+  z-index: 100 !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-height: 85vh !important;
+  overflow-y: auto !important;
+}
+
+/* 5. TASK CARD - pastikan relatif positioning untuk dropdown trigger */
+[data-testid="task-card"],
+.task-card {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 6. DROPDOWN TRIGGER - pastikan posisi untuk reference point */
+.dropdown-trigger-button {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* 7. RADIX UI DROPDOWN SPECIFIC - memastikan positioning yang benar */
+[data-radix-dropdown-menu-content] {
+  z-index: 50 !important;
+  /* Jangan gunakan position fixed di sini, biarkan Radix mengelola */
+}
+
+[data-radix-dropdown-menu-sub-content] {
+  z-index: 51 !important;
+}
+
+/* 8. SINGLE BOARD - pastikan tidak mengganggu dropdown */
+.single-board {
+  /* Jangan gunakan transform di sini */
+  -webkit-transform: none !important;
+  transform: none !important;
+  /* Pastikan overflow tidak memotong dropdown */
+  overflow: visible !important;
+}
+
+/* 9. TASK SCROLL CONTAINER - khusus untuk area scroll task */
+.task-scroll-container {
+  /* Pastikan dropdown tidak terpotong */
+  overflow-x: visible !important;
+  overflow-y: auto !important;
+  /* Hapus transform yang mengganggu */
+  -webkit-transform: none !important;
+  transform: none !important;
+}
+
+/* 10. BODY STATES - hanya untuk mencegah background scroll */
+.dropdown-open {
+  /* Hanya cegah scroll background, jangan gunakan position fixed */
+  overflow-y: auto !important;
+}
+
+.dialog-open {
+  overflow: hidden !important;
+}
+
+/* 11. MOBILE FIXES */
+@media (max-width: 768px) {
+  .dropdown-content-fixed {
+    /* MOBILE: Lebar yang lebih fleksibel tapi tetap konsisten */
+    min-width: 200px !important;
+    max-width: calc(100vw - 32px) !important;
+    width: auto !important;
+  }
+
+  .dropdown-subcontent-fixed {
+    min-width: 180px !important;
+    max-width: calc(100vw - 48px) !important;
+    width: auto !important;
+  }
+}
+
+/* 12. GLOBAL TRANSFORM FIX - hanya apply pada elemen yang butuh */
+.page-container,
+.main-container,
+.project-area-card,
+.project-area-container {
+  /* Hapus transform yang mengganggu dropdown positioning */
+  -webkit-transform: none !important;
+  transform: none !important;
+}
+
+/* 13. KEEP TRANSFORM hanya untuk elemen yang benar-benar membutuhkan */
+.transform-needed,
+.drag-preview,
+.animation-element {
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
 }

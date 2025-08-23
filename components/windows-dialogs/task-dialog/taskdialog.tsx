@@ -102,7 +102,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins sm:max-w-[425px] poppins sm:top-50 top-140 translate-y-0">
+      <DialogContent className="poppins sm:max-w-[425px] poppins top-10 translate-y-0">
         <DialogHeader className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-muted rounded-full flex justify-center items-center">
@@ -119,7 +119,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           </div>
         </DialogHeader>
 
-        <Separator className="my-4" />
+        <Separator className="my-1" />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
@@ -139,10 +139,19 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           <Separator className="my-4" />
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="secondary" onClick={handleCancel}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+              className="cursor-pointer"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="px-6" disabled={!isFormValid}>
+            <Button
+              type="submit"
+              className="cursor-pointer"
+              disabled={!isFormValid}
+            >
               Create Task
             </Button>
           </div>

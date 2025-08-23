@@ -82,7 +82,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       addBoard(boardName.trim());
       toast.success("Board created successfully", {
-        description: `&quot;${boardName.trim()}&quot; board has been added to your project.`,
+        description: `${boardName.trim()} board has been added to your project.`,
         duration: 4000,
       });
       setBoardName("");
@@ -141,7 +141,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins translate-y-0 fixed sm:max-w-[425px] sm:top-50 top-130">
+      <DialogContent className="poppins translate-y-0 fixed sm:max-w-[425px] top-50">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -198,6 +198,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
                 variant="secondary"
                 onClick={handleCancel}
                 disabled={isCreating}
+                className="cursor-pointer"
               >
                 Cancel
               </Button>
@@ -209,14 +210,14 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
             >
               {isCreating ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 " />
                   Creating...
                 </>
               ) : (
-                <>
+                <div className="flex items-center cursor-pointer">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Board
-                </>
+                </div>
               )}
             </Button>
           </DialogFooter>

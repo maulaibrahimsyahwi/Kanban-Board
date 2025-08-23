@@ -48,7 +48,7 @@ export default function DeleteBoardDialog({
 
       // Show success toast with Sonner
       toast.success("Board deleted successfully", {
-        description: `&quot;${board.name}&quot; board and all its tasks have been removed.`,
+        description: `${board.name} board and all its tasks have been removed.`,
         duration: 5000,
       });
 
@@ -176,7 +176,7 @@ export default function DeleteBoardDialog({
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel
             disabled={isDeleting}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 cursor-pointer"
           >
             Cancel
           </AlertDialogCancel>
@@ -188,14 +188,14 @@ export default function DeleteBoardDialog({
           >
             {isDeleting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin cursor-pointer" />
                 Deleting...
               </>
             ) : (
-              <>
+              <div className="flex items-center gap-2 cursor-pointer">
                 <Trash2 className="w-4 h-4" />
                 Delete Board
-              </>
+              </div>
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

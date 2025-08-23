@@ -23,7 +23,7 @@ export default function RightSideBar() {
   return (
     <Card className="shadow-none p-4 md:p-6 rounded-2xl md:rounded-3xl overflow-y-auto right-sidebar-card">
       <div className="flex flex-col gap-0 w-full">
-        <div className="flex-shrink-0 w-full">
+        <div className="flex-shrink-0 w-full mb-5">
           <ProjectSelectionDropDown />
         </div>
         <div className="flex-1 flex items-center justify-center w-full">
