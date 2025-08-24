@@ -102,7 +102,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins sm:max-w-[425px] poppins top-10 translate-y-0">
+      <DialogContent className="poppins sm:max-w-[425px] poppins top-10 translate-y-0 overflow-hidden">
         <DialogHeader className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-muted rounded-full flex justify-center items-center">
@@ -121,7 +121,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
 
         <Separator className="my-1" />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-hidden">
           <div className="space-y-4">
             {/* Task Title */}
             <TaskName value={title} onChange={setTitle} />

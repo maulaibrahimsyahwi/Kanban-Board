@@ -23,9 +23,6 @@ import {
   DialogTitle,
   DialogPortal,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
@@ -33,12 +30,14 @@ import { useProjects } from "@/contexts/projectContext";
 import { Task } from "@/contexts/projectContext";
 import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
 import PrioritySelector from "@/components/windows-dialogs/task-dialog/sub-component/priority-selector";
+import TaskDescription from "../windows-dialogs/task-dialog/sub-component/task-description";
+import TaskName from "../windows-dialogs/task-dialog/sub-component/task-name";
 
 interface TasksDropDownProps {
   taskId: string;
   boardId: string;
-  boardIndex?: number; // 👈 TAMBAH: Index board untuk menentukan posisi
-  totalBoards?: number; // 👈 TAMBAH: Total boards untuk mendeteksi board terakhir
+  boardIndex?: number;
+  totalBoards?: number;
 }
 
 export default function TasksDropDown({
@@ -50,7 +49,7 @@ export default function TasksDropDown({
   const { selectedProject, deleteTask, moveTask, editTask } = useProjects();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null); // 👈 TAMBAH: Ref untuk trigger
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [dropdownAlign, setDropdownAlign] = useState<"start" | "end">("end");
 
   // Edit form states
@@ -58,19 +57,15 @@ export default function TasksDropDown({
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<Task["priority"]>("low");
 
-  // 👈 TAMBAH: Function untuk menentukan alignment dropdown berdasarkan posisi
   const calculateDropdownAlignment = () => {
     if (!triggerRef.current) return "end";
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
-    const dropdownWidth = 280; // Estimasi lebar dropdown
+    const dropdownWidth = 280;
 
-    // Jarak dari trigger ke tepi kanan viewport
     const distanceToRight = viewportWidth - triggerRect.right;
 
-    // Jika jarak ke kanan tidak cukup untuk dropdown, align ke kiri (start)
-    // Tambahkan buffer 20px untuk memastikan tidak terpotong
     if (distanceToRight < dropdownWidth + 20) {
       return "start";
     }
@@ -282,7 +277,6 @@ export default function TasksDropDown({
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent
                 className="dropdown-subcontent-fixed"
-                // 👈 TAMBAH: Alignment untuk submenu juga
                 alignOffset={dropdownAlign === "start" ? -10 : 10}
               >
                 {otherBoards.map((board) => {
@@ -342,7 +336,7 @@ export default function TasksDropDown({
       {/* Edit Task Dialog dengan Portal */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogPortal>
-          <DialogContent className="max-w-md poppins">
+          <DialogContent className="max-w-md poppins overflow-hidden">
             <DialogHeader>
               <DialogTitle>Edit Task</DialogTitle>
               <p className="text-sm text-muted-foreground">
@@ -350,33 +344,22 @@ export default function TasksDropDown({
               </p>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 overflow-hidden">
               {/* Task Title */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Task Title</Label>
-                <Input
+                <TaskName
                   value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Enter task title..."
-                  className={editTitle.length < 3 ? "border-red-500" : ""}
+                  onChange={setEditTitle}
+                  onEnter={handleSaveEdit}
                 />
-                {editTitle.length > 0 && editTitle.length < 3 && (
-                  <p className="text-red-500 text-xs">
-                    Task title must be at least 3 characters
-                  </p>
-                )}
               </div>
 
               {/* Task Description */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Task Description</Label>
-                <Textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Enter task description..."
-                  className="resize-none min-h-[100px]"
-                />
-              </div>
+              <TaskDescription
+                value={editDescription}
+                onChange={setEditDescription}
+                onEnter={handleSaveEdit}
+              />
 
               {/* Priority */}
               <PrioritySelector
@@ -393,6 +376,18 @@ export default function TasksDropDown({
                 >
                   {editPriority.charAt(0).toUpperCase() + editPriority.slice(1)}
                 </Badge>
+              </div>
+
+              {/* Keyboard shortcuts hint */}
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                <div>
+                  Press <span className="font-bold">Enter </span> in title field
+                  to save
+                </div>
+                <div>
+                  Press <span className="font-bold">Ctrl + Enter </span> in
+                  description to save
+                </div>
               </div>
             </div>
 

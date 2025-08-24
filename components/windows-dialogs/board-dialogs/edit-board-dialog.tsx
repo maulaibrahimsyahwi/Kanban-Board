@@ -130,13 +130,14 @@ export default function EditBoardDialog({
               variant="secondary"
               onClick={onClose}
               disabled={isSaving}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!boardName.trim() || !!error || isSaving}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
             >
               {isSaving ? (
                 <>

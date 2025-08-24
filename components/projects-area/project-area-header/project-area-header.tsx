@@ -33,7 +33,6 @@ export default function ProjectAreaHeader({
 
       <div className="flex items-center gap-2 sm:gap-3 ">
         <AddBoardDialog />
-        <Separator orientation="vertical" className="h-6 hidden sm:block" />
         <TaskDialog />
       </div>
     </div>

@@ -1,25 +1,39 @@
-import { Label } from "@/components/ui/label"; // Gunakan label yang benar
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FaCircleExclamation } from "react-icons/fa6";
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 
-export default function TaskName() {
-  const [taskName, setTaskName] = useState("");
+interface TaskNameProps {
+  value: string;
+  onChange: (value: string) => void;
+  onEnter?: () => void; // Optional callback untuk Enter key
+}
+
+export default function TaskName({ value, onChange, onEnter }: TaskNameProps) {
   const [error, setError] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTaskName(value);
-
-    // Validasi
+  // Update error when value changes
+  useEffect(() => {
     if (value.trim() === "") {
       setError("Task name is required");
     } else if (value.length < 3) {
       setError("Task name must be at least 3 characters");
-    } else if (value.length > 50) {
-      setError("Task name must be less than 50 characters");
+    } else if (value.length > 30) {
+      setError("Task name must be less than 30 characters");
     } else {
       setError("");
+    }
+  }, [value]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && onEnter && !error && value.trim()) {
+      e.preventDefault();
+      onEnter();
     }
   };
 
@@ -29,8 +43,9 @@ export default function TaskName() {
       <Input
         placeholder="Enter task name..."
         className={`h-11 ${error ? "border-red-500" : ""}`}
-        value={taskName}
+        value={value}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
       />
 
       {/* Error container - only show when there's an error */}

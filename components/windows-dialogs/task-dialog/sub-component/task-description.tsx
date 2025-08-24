@@ -1,32 +1,53 @@
-import { Label } from "@/components/ui/label"; // Gunakan label yang benar
+import { Label } from "@/components/ui/label";
 import { FaCircleExclamation } from "react-icons/fa6";
 import { Textarea } from "@/components/ui/textarea";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useEffect, KeyboardEvent } from "react";
 
-export default function TaskDescription() {
-  const [textValue, setTextValue] = useState("");
+interface TaskDescriptionProps {
+  value: string;
+  onChange: (value: string) => void;
+  onEnter?: () => void; // Optional callback untuk Ctrl+Enter
+}
+
+export default function TaskDescription({
+  value,
+  onChange,
+  onEnter,
+}: TaskDescriptionProps) {
   const [hasError, setHasError] = useState(false);
-  const maxLength = 200; // Increase limit for better UX
+  const maxLength = 200;
+
+  // Update error when value changes
+  useEffect(() => {
+    setHasError(value.length > maxLength);
+  }, [value]);
 
   function handleTextChange(e: ChangeEvent<HTMLTextAreaElement>) {
     const textInput = e.target.value;
 
-    if (textInput.length <= maxLength) {
-      setTextValue(textInput);
-      setHasError(false);
-    } else {
-      setHasError(true);
-    }
+    // Always call onChange, but set error if over limit
+    onChange(textInput);
+
+    // Update error state
+    setHasError(textInput.length > maxLength);
   }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && onEnter && !hasError) {
+      e.preventDefault();
+      onEnter();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2 mt-4">
       <Label className="opacity-75 text-sm font-medium">Task Description</Label>
       <Textarea
-        value={textValue}
+        value={value}
         onChange={handleTextChange}
+        onKeyDown={handleKeyDown}
         placeholder="Give a description of the task..."
-        className={`resize-none min-h-[100px] ${
+        className={`resize-none min-h-[100px] max-h-[200px] overflow-y-auto ${
           hasError ? "border-red-500" : ""
         }`}
       />
@@ -44,12 +65,12 @@ export default function TaskDescription() {
         <div className="ml-auto">
           <p
             className={`text-[12px] ${
-              textValue.length > maxLength * 0.8
+              value.length > maxLength * 0.8
                 ? "text-orange-500"
                 : "text-gray-500"
             }`}
           >
-            {textValue.length} / {maxLength} Characters
+            {value.length} / {maxLength} Characters
           </p>
         </div>
       </div>
