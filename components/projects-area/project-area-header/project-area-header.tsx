@@ -1,7 +1,6 @@
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
 import AddBoardDialog from "@/components/add-board-dialog";
 import AllProjectsDialog from "@/components/windows-dialogs/all-projects-dialog/all-projects-dialog";
-import { Separator } from "@/components/ui/separator";
 import { Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
