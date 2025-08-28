@@ -31,15 +31,23 @@ export default function ProjectSelectionDropDown() {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex justify-between py-9 rounded-xl bg-card border hover:bg-card/80 cursor-pointer"
+          className="w-full flex justify-between py-9 rounded-xl bg-card border hover:bg-card/80 cursor-pointer min-w-0"
         >
-          <div className="flex items-start flex-col text-base gap-1 text-left">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+          {/* Left side - Project info with proper text truncation */}
+          <div className="flex items-start flex-col text-base gap-1 text-left min-w-0 flex-1 pr-2">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide flex-shrink-0">
               PROJECT
             </p>
-            <p className="font-bold text-foreground">{selectedProject.name}</p>
+            <p
+              className="font-bold text-foreground truncate w-full text-left"
+              title={selectedProject.name} // Show full name on hover
+            >
+              {selectedProject.name}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Right side - Icon and chevron */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="size-10 bg-primary rounded-full flex items-center justify-center text-2xl text-primary-foreground">
               {IconComponent && <IconComponent />}
             </div>
