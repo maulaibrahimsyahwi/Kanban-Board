@@ -1,12 +1,9 @@
 @import "tailwindcss";
 
-/* CSS Custom Properties approach */
+/* === CSS CUSTOM PROPERTIES === */
 :root {
-  /* Violet Primary Colors */
   --primary: oklch(0.606 0.25 292.717);
   --primary-foreground: oklch(0.969 0.016 293.756);
-
-  /* Base Colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -25,10 +22,18 @@
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.606 0.25 292.717);
   --radius: 0.5rem;
+
+  /* Layout constants */
+  --board-width-mobile: 280px;
+  --board-width-tablet: 320px;
+  --board-width-desktop: 360px;
+  --task-height-estimate: 9rem;
+  --max-tasks-mobile: 3;
+  --max-tasks-tablet: 3;
+  --max-tasks-desktop: 4;
 }
 
 .dark {
-  /* Dark Violet Theme */
   --primary: oklch(0.541 0.281 293.009);
   --primary-foreground: oklch(0.969 0.016 293.756);
   --background: oklch(0.141 0.005 285.823);
@@ -50,17 +55,14 @@
   --ring: oklch(0.541 0.281 293.009);
 }
 
-/* --- PERBAIKAN KRITIS UNTUK DIALOG DAN OVERFLOW --- */
-
-/* Pastikan elemen root tidak memiliki properti yang menimpa `fixed` */
+/* === BASE STYLES === */
 html,
 body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-  width: 100%;
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
-  /* Hindari `transform`, `filter`, atau `perspective` di sini */
+  width: 100%;
+  max-width: 100vw;
 }
 
 body {
@@ -69,82 +71,187 @@ body {
   font-family: var(--font-poppins), "Poppins", ui-sans-serif, system-ui;
 }
 
-/* FIXED: Page container - level tertinggi untuk mencegah horizontal scroll */
+/* === LAYOUT CONTAINERS === */
 .page-container {
-  overflow-x: hidden !important;
+  overflow-x: hidden;
   overflow-y: auto;
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
   position: relative;
-  /* Aturan ini tidak akan mengganggu `fixed` */
 }
 
-/* FIXED: Main container dengan responsive layout yang benar */
 .main-container {
-  overflow-x: hidden !important;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Desktop: Grid layout */
+/* Desktop grid layout */
 @media (min-width: 1280px) {
   .main-container {
-    display: grid !important;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) !important;
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
     gap: inherit;
   }
 }
 
-/* FIXED: Project area containers */
+/* === PROJECT AREA === */
+.project-area-card,
 .project-area-container {
-  overflow: hidden !important;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.project-area-card {
-  overflow: hidden !important;
+  overflow: hidden;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
 }
 
-/* FIXED: Right sidebar */
-.right-sidebar-card {
-  overflow: hidden !important;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-/* FIXED: Navbar responsive */
-nav {
-  overflow: hidden !important;
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* FIXED: Boards container dengan horizontal scroll yang optimal */
+/* === BOARDS LAYOUT === */
 .boards-container {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
+  overflow-x: auto;
+  overflow-y: hidden;
   width: 100%;
   max-width: 100%;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* Scrollbar styling untuk boards container */
+.boards-container.drag-active {
+  scroll-behavior: auto;
+}
+
+.boards-wrapper {
+  display: flex;
+  gap: 1rem;
+  padding: 0.25rem 0.25rem 1rem;
+  height: 100%;
+  min-width: max-content;
+  width: max-content;
+}
+
+/* === BOARD SIZING === */
+.single-board {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  width: var(--board-width-mobile);
+  min-width: var(--board-width-mobile);
+  max-width: var(--board-width-mobile);
+}
+
+/* Task container height constraints */
+.task-scroll-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(var(--max-tasks-mobile) * var(--task-height-estimate));
+}
+
+/* Board header and footer don't shrink */
+.single-board > div:first-child,
+.single-board > div:last-child {
+  flex-shrink: 0;
+}
+
+/* === RESPONSIVE BREAKPOINTS === */
+/* Tablet */
+@media (min-width: 768px) {
+  .single-board {
+    width: var(--board-width-tablet);
+    min-width: var(--board-width-tablet);
+    max-width: var(--board-width-tablet);
+  }
+
+  .task-scroll-container {
+    max-height: calc(var(--max-tasks-tablet) * var(--task-height-estimate));
+  }
+}
+
+/* Desktop */
+@media (min-width: 1280px) {
+  .single-board {
+    width: var(--board-width-desktop);
+    min-width: var(--board-width-desktop);
+    max-width: var(--board-width-desktop);
+  }
+
+  .task-scroll-container {
+    max-height: calc(var(--max-tasks-desktop) * var(--task-height-estimate));
+  }
+}
+
+/* === SCROLLBAR STYLING === */
+/* Base scrollbar for horizontal scroll (boards) */
+.scrollbar-horizontal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar {
+  height: 8px;
+  width: 0;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 0;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  border: none;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Scrollbar for vertical scroll (tasks) */
+.scrollbar-vertical {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-vertical::-webkit-scrollbar {
+  width: 6px;
+  height: 0;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 0;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  border: none;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-vertical::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Apply specific scrollbar styles */
+.boards-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 .boards-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -166,32 +273,9 @@ nav {
   display: none;
 }
 
-/* FIXED: Boards wrapper */
-.boards-wrapper {
-  display: flex;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
-  height: 100%;
-  min-width: max-content;
-  width: max-content;
-}
-
-/* FIXED: Single board dengan responsive width */
-.single-board {
-  flex-shrink: 0;
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
-}
-
-/* FIXED: Task scroll container dengan styling yang konsisten */
 .task-scroll-container {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
 }
 
 .task-scroll-container::-webkit-scrollbar {
@@ -215,292 +299,144 @@ nav {
   display: none;
 }
 
-/* MOBILE: Batasi tinggi board untuk maksimal 3-4 task visible */
-@media (max-width: 768px) {
-  .single-board {
-    /* Batasi tinggi total board di mobile */
-    max-height: calc(100vh - 200px);
-    height: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .task-scroll-container {
-    /* Kalkulasi:
-        - Header board: ~4rem
-        - Add task button: ~3rem
-        - Gap dan padding: ~2rem
-        - 1 task: ~8rem (estimasi)
-        - Buffer untuk 3.5 task: 3.5 * 8rem = 28rem
-    */
-    max-height: 28rem;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Pastikan board header tidak shrink */
-  .single-board > div:first-child {
-    flex-shrink: 0;
-  }
-
-  /* Pastikan add task button tidak shrink */
-  .single-board > div:last-child {
-    flex-shrink: 0;
-  }
+/* === DROPDOWN & DIALOG POSITIONING === */
+.task-card {
+  position: relative;
+  z-index: 1;
 }
 
-/* RESPONSIVE BREAKPOINTS */
-
-/* Mobile (xs) */
-@media (max-width: 480px) {
-  .xs\:hidden {
-    display: none !important;
-  }
-
-  .xs\:inline {
-    display: inline !important;
-  }
-
-  .main-container {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-
-  .single-board {
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
-    /* Mobile board height constraint untuk 3-4 task visible */
-    max-height: calc(100vh - 180px);
-  }
-
-  .task-scroll-container {
-    /* Lebih ketat di XS screen */
-    max-height: 24rem; /* Sekitar 3 task visible */
-  }
+.dropdown-trigger-button {
+  position: relative;
+  z-index: 2;
 }
 
-/* Small mobile */
-@media (max-width: 640px) {
-  .single-board {
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
-    max-height: calc(100vh - 180px);
-  }
-
-  .task-scroll-container {
-    max-height: 26rem; /* Sekitar 3.2 task visible */
-  }
+[data-radix-dropdown-menu-content] {
+  z-index: 50;
+  min-width: 220px;
+  max-width: 280px;
+  background-color: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 4px;
 }
 
-/* Tablet portrait */
-@media (min-width: 641px) and (max-width: 768px) {
-  .single-board {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
-    max-height: calc(100vh - 160px);
-  }
-
-  .task-scroll-container {
-    max-height: 32rem; /* Sekitar 4 task visible */
-  }
+[data-radix-dropdown-menu-sub-content] {
+  z-index: 51;
+  min-width: 200px;
+  max-width: 250px;
 }
 
-/* NEW: Tablet landscape - 3 task limit (768px - 1280px) */
-@media (min-width: 768px) and (max-width: 1280px) {
-  .single-board {
-    width: 320px;
-    min-width: 320px;
-    max-width: 320px;
-    /* Reset mobile constraints tapi tambahkan constraint untuk 3 task */
-    max-height: none;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .task-scroll-container {
-    /* UPDATED: Batasi untuk hanya 3 task yang terlihat 
-       Estimasi: 1 task = ~9rem (termasuk margin)
-       3 task = 3 * 9rem = 27rem
-    */
-    max-height: 27rem;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Pastikan board header tidak shrink */
-  .single-board > div:first-child {
-    flex-shrink: 0;
-  }
-
-  /* Pastikan add task button tidak shrink */
-  .single-board > div:last-child {
-    flex-shrink: 0;
-  }
+/* Dialog positioning */
+.dialog-content {
+  z-index: 100;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-/* Small desktop - remove mobile constraints */
-@media (min-width: 1024px) and (max-width: 1280px) {
-  .single-board {
-    width: 340px;
-    min-width: 340px;
-    max-width: 340px;
-    /* Tetap 3 task limit untuk range ini */
-    max-height: none;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .task-scroll-container {
-    /* Tetap 3 task limit */
-    max-height: 27rem;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Pastikan masih flex column di breakpoint ini */
-  .main-container {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .main-container > div {
-    width: 100% !important;
-    max-width: 100% !important;
-    flex-shrink: 0;
-    min-width: 0;
-  }
-
-  /* Pastikan board header tidak shrink */
-  .single-board > div:first-child {
-    flex-shrink: 0;
-  }
-
-  /* Pastikan add task button tidak shrink */
-  .single-board > div:last-child {
-    flex-shrink: 0;
-  }
+/* === DRAG & DROP STATES === */
+.drag-active {
+  cursor: grabbing;
 }
 
-/* NEW: Large desktop - 4 task limit (1280px+) */
-@media (min-width: 1280px) {
-  .single-board {
-    width: 360px;
-    min-width: 360px;
-    max-width: 360px;
-    /* Reset mobile constraints tapi tambahkan constraint untuk 4 task */
-    max-height: none;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .task-scroll-container {
-    /* UPDATED: Batasi untuk hanya 4 task yang terlihat 
-       Estimasi: 1 task = ~9rem (termasuk margin)
-       4 task = 4 * 9rem = 36rem
-    */
-    max-height: 36rem;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Pastikan board header tidak shrink */
-  .single-board > div:first-child {
-    flex-shrink: 0;
-  }
-
-  /* Pastikan add task button tidak shrink */
-  .single-board > div:last-child {
-    flex-shrink: 0;
-  }
+.drag-preview {
+  pointer-events: none;
+  position: fixed;
+  z-index: 50;
+  transform: rotate(6deg);
+  opacity: 0.9;
+  left: -9999px;
+  top: -9999px;
 }
 
-/* UTILITY CLASSES */
+/* === UTILITY CLASSES === */
 @layer utilities {
+  /* Color utilities */
   .bg-primary {
     background-color: var(--primary);
   }
-
   .text-primary {
     color: var(--primary);
   }
-
   .text-primary-foreground {
     color: var(--primary-foreground);
   }
-
   .bg-secondary {
     background-color: var(--secondary);
   }
-
   .text-secondary-foreground {
     color: var(--secondary-foreground);
   }
-
   .bg-background {
     background-color: var(--background);
   }
-
   .text-foreground {
     color: var(--foreground);
   }
-
   .bg-card {
     background-color: var(--card);
   }
-
   .text-card-foreground {
     color: var(--card-foreground);
   }
-
   .bg-popover {
     background-color: var(--popover);
   }
-
   .text-popover-foreground {
     color: var(--popover-foreground);
   }
-
   .border-border {
     border-color: var(--border);
   }
-
   .bg-muted {
     background-color: var(--muted);
   }
-
   .text-muted-foreground {
     color: var(--muted-foreground);
   }
-
   .bg-accent {
     background-color: var(--accent);
   }
-
   .text-accent-foreground {
     color: var(--accent-foreground);
   }
-
   .bg-destructive {
     background-color: var(--destructive);
   }
-
   .text-destructive-foreground {
     color: var(--destructive-foreground);
   }
-
   .bg-input {
     background-color: var(--input);
   }
+
+  /* Text clamping */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Layout helpers */
+  .min-w-0 {
+    min-width: 0;
+    overflow: hidden;
+  }
 }
 
-/* RADIX UI FIXES */
+/* === COMPONENT-SPECIFIC FIXES === */
 [data-radix-popper-content-wrapper] {
   z-index: 50;
 }
@@ -524,312 +460,46 @@ nav {
   color: var(--accent-foreground);
 }
 
-/* TEXT CLAMPING */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* === RESPONSIVE UTILITIES === */
+@media (max-width: 480px) {
+  .xs\:hidden {
+    display: none;
+  }
+  .xs\:inline {
+    display: inline;
+  }
 
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  .main-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 
-/* FLEX UTILITIES */
-.flex {
-  min-width: 0 !important;
-  box-sizing: border-box;
-}
-
-.min-w-0 {
-  min-width: 0 !important;
-  overflow: hidden;
-}
-
-/* DRAG AND DROP STYLES */
-.drag-active {
-  cursor: grabbing;
-}
-
-.boards-container.drag-active {
-  scroll-behavior: auto;
-}
-
-/* GRID UTILITIES untuk desktop */
-.xl\:grid {
-  overflow: hidden;
-  max-width: 100%;
-  width: 100%;
-}
-
-.xl\:grid-cols-\[minmax\(0\,3fr\)_minmax\(0\,1fr\)\] {
-  overflow: hidden;
-}
-
-/* CRITICAL: Mencegah semua kemungkinan horizontal overflow */
-#__next,
-[data-reactroot] {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-}
-
-/* Pastikan semua container level tertinggi tidak overflow */
-main,
-section,
-article,
-aside,
-header,
-footer {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* ANIMATION PERFORMANCE
-* {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-} */
-/* ANIMATION PERFORMANCE - Hanya untuk elemen tertentu */
-.animation-element,
-.drag-preview,
-.transform-needed {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* Smooth transitions untuk responsive changes - TAPI tanpa transform global */
-.main-container,
-.single-board,
-.boards-container {
-  transition: all 0.3s ease-in-out;
-  /* JANGAN TAMBAH TRANSFORM DI SINI */
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .main-container,
-  .single-board,
-  .boards-container,
-  .animation-element,
-  .drag-preview,
-  .transform-needed {
-    transition: none;
-    -webkit-transform: none !important;
-    transform: none !important;
-    will-change: auto;
+  [data-radix-dropdown-menu-content] {
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
   }
 }
 
-/* TAMBAHAN: Pastikan container utama tidak mengganggu dropdown */
+/* === PERFORMANCE OPTIMIZATIONS === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Prevent unwanted transforms on containers */
 .page-container,
 .main-container,
 .project-area-card,
 .project-area-container,
 .boards-container,
 .boards-wrapper {
-  /* Hapus semua transform yang bisa mengganggu dropdown positioning */
-  -webkit-transform: none !important;
-  transform: none !important;
-  will-change: auto !important;
-}
-/* Smooth transitions untuk responsive changes */
-.main-container,
-.single-board,
-.boards-container {
-  transition: all 0.3s ease-in-out;
+  transform: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .main-container,
-  .single-board,
-  .boards-container {
-    transition: none;
-  }
-}
-
-/* Pastikan elemen overlay dan dialog berada di atas segalanya */
-/* Tambahan penting: properti ini harus ada di style.css */
-/* Dialog content sudah diatur dengan 'fixed', ini hanya sebagai penguat */
-.dialog-overlay,
-.dialog-content {
-  z-index: 100; /* Nilai yang sangat tinggi untuk memastikan di atas semuanya */
-}
-
-/* Tambahan untuk overlay, biasanya sudah ada di shadcn */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4); /* Contoh: latar belakang buram */
-}
-
-/* Tambahan jika posisi fixed terganggu */
-html.dialog-open,
-body.dialog-open {
-  overflow: hidden;
-}
-/* Tambahkan ini ke globals.css Anda */
-
-/* === DROPDOWN POSITIONING FIXES === */
-
-/* 1. CRITICAL: Hanya hapus transform pada container yang bermasalah */
-.boards-container,
-.boards-wrapper,
-.project-area-container {
-  /* Hapus transform yang bisa mengganggu stacking context */
-  -webkit-transform: none !important;
-  transform: none !important;
-  /* Pastikan tidak membuat stacking context baru */
-  will-change: auto !important;
-}
-
-/* 2. DROPDOWN CONTENT: Z-index dan positioning yang benar */
-.dropdown-content-fixed {
-  /* Z-index tinggi untuk dropdown */
-  z-index: 50 !important;
-
-  /* FIXED: Lebar minimum dan maksimum yang konsisten */
-  min-width: 220px !important;
-  max-width: 280px !important;
-  width: auto !important;
-
-  /* Styling untuk visibility yang baik */
-  background-color: var(--popover) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: calc(var(--radius)) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-
-  /* Prevent scroll issues */
-  max-height: 400px !important;
-  overflow-y: auto !important;
-
-  /* Ensure proper positioning */
-  position: absolute !important;
-
-  /* TAMBAHAN: Padding yang konsisten */
-  padding: 4px !important;
-}
-
-/* Dark mode support */
-.dark .dropdown-content-fixed {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* 3. SUBMENU POSITIONING */
-.dropdown-subcontent-fixed {
-  z-index: 51 !important;
-  position: absolute !important;
-  background-color: var(--popover) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: calc(var(--radius)) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-
-  /* FIXED: Lebar konsisten untuk submenu */
-  min-width: 200px !important;
-  max-width: 250px !important;
-  width: auto !important;
-  padding: 4px !important;
-}
-
-/* 4. DIALOG POSITIONING */
-.dialog-content-fixed {
-  z-index: 100 !important;
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  max-height: 85vh !important;
-  overflow-y: auto !important;
-}
-
-/* 5. TASK CARD - pastikan relatif positioning untuk dropdown trigger */
-[data-testid="task-card"],
-.task-card {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* 6. DROPDOWN TRIGGER - pastikan posisi untuk reference point */
-.dropdown-trigger-button {
-  position: relative !important;
-  z-index: 2 !important;
-}
-
-/* 7. RADIX UI DROPDOWN SPECIFIC - memastikan positioning yang benar */
-[data-radix-dropdown-menu-content] {
-  z-index: 50 !important;
-  /* Jangan gunakan position fixed di sini, biarkan Radix mengelola */
-}
-
-[data-radix-dropdown-menu-sub-content] {
-  z-index: 51 !important;
-}
-
-/* 8. SINGLE BOARD - pastikan tidak mengganggu dropdown */
-.single-board {
-  /* Jangan gunakan transform di sini */
-  -webkit-transform: none !important;
-  transform: none !important;
-  /* Pastikan overflow tidak memotong dropdown */
-  overflow: visible !important;
-}
-
-/* 9. TASK SCROLL CONTAINER - khusus untuk area scroll task */
-.task-scroll-container {
-  /* Pastikan dropdown tidak terpotong */
-  overflow-x: visible !important;
-  overflow-y: auto !important;
-  /* Hapus transform yang mengganggu */
-  -webkit-transform: none !important;
-  transform: none !important;
-}
-
-/* 10. BODY STATES - hanya untuk mencegah background scroll */
-.dropdown-open {
-  /* Hanya cegah scroll background, jangan gunakan position fixed */
-  overflow-y: auto !important;
-}
-
+/* State management for dialogs */
 .dialog-open {
-  overflow: hidden !important;
-}
-
-/* 11. MOBILE FIXES */
-@media (max-width: 768px) {
-  .dropdown-content-fixed {
-    /* MOBILE: Lebar yang lebih fleksibel tapi tetap konsisten */
-    min-width: 200px !important;
-    max-width: calc(100vw - 32px) !important;
-    width: auto !important;
-  }
-
-  .dropdown-subcontent-fixed {
-    min-width: 180px !important;
-    max-width: calc(100vw - 48px) !important;
-    width: auto !important;
-  }
-}
-
-/* 12. GLOBAL TRANSFORM FIX - hanya apply pada elemen yang butuh */
-.page-container,
-.main-container,
-.project-area-card,
-.project-area-container {
-  /* Hapus transform yang mengganggu dropdown positioning */
-  -webkit-transform: none !important;
-  transform: none !important;
-}
-
-/* 13. KEEP TRANSFORM hanya untuk elemen yang benar-benar membutuhkan */
-.transform-needed,
-.drag-preview,
-.animation-element {
-  -webkit-transform: translateZ(0) !important;
-  transform: translateZ(0) !important;
+  overflow: hidden;
 }
