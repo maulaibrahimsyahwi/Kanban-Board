@@ -97,7 +97,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           <Button className="rounded-3xl px-4 cursor-pointer">
             {" "}
             <CgGoogleTasks />
-            Add Task
+            New Task
           </Button>
         )}
       </DialogTrigger>

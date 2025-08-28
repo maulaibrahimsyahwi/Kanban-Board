@@ -136,7 +136,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
             size="sm"
           >
             <MdDashboardCustomize />
-            Add Board
+            New Board
           </Button>
         )}
       </DialogTrigger>
