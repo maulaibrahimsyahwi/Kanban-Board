@@ -769,3 +769,12 @@ body {
 .pr-0-important {
   padding-right: 0 !important;
 }
+
+/* Logo dark mode styling Logo dark mode styling */
+.logo-dark-mode {
+  filter: brightness(0) saturate(100%) invert(0);
+}
+
+.dark .logo-dark-mode {
+  filter: invert(1);
+}

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import logo from "@/app/assets/logo.png";
+import logo from "@/app/assets/logo.svg";
 import Link from "next/link";
 
 export default function AppNameAndLogo() {
@@ -12,9 +12,10 @@ export default function AppNameAndLogo() {
           alt="Free Kanban Logo"
           width={20}
           height={20}
-          className="bg-transparent sm:w-6 sm:h-6 md:w-7 md:h-7"
+          className="sm:w-6 sm:h-6 md:w-7 md:h-7 logo-dark-mode"
         />
       </div>
+
       {/* app name */}
       <div className="">
         <div className="flex gap-0.5 sm:gap-1 items-center min-w-0">
@@ -28,7 +29,7 @@ export default function AppNameAndLogo() {
         <Link
           href="https://www.linkedin.com/in/maula-ibrahim-syahwi"
           target="_blank"
-          className="text-xs text-muted-foreground -mt-2 hover:text-foreground "
+          className="text-xs text-muted-foreground"
         >
           by Maula Ibrahim Syahwi
         </Link>
