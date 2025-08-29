@@ -12,6 +12,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Kanban Board | Project Management",
   description: "Modern Kanban board for project management",
+  icons: {
+    icon: "/favicon.ico", // ini relatif ke /public
+  },
 };
 export default function RootLayout({
   children,
