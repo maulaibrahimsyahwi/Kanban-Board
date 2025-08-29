@@ -281,33 +281,41 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
           </div>
         </DialogContent>
       </Dialog>
-      {/* delete one project in all projects */}
+
+      {/* Delete Single Project Alert */}
       <AlertDialog
         open={!!deleteProjectId}
         onOpenChange={() => setDeleteProjectId(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] max-w-md mx-auto">
           <AlertDialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
-              <div>
-                <AlertDialogTitle>Delete Project?</AlertDialogTitle>
-                <AlertDialogDescription>
+              <div className="min-w-0 flex-1">
+                <AlertDialogTitle className="text-left text-base sm:text-lg">
+                  Delete Project?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-left text-sm">
                   This will permanently delete the project and all its data.
                 </AlertDialogDescription>
               </div>
             </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 deleteProjectId && handleDeleteProject(deleteProjectId)
               }
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
             >
               {isDeleting ? "Deleting..." : "Delete Project"}
             </AlertDialogAction>
@@ -315,32 +323,39 @@ export default function AllProjectsDialog({ trigger }: AllProjectsDialogProps) {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Delete All Projects Alert */}
       <AlertDialog
         open={deleteAllConfirmOpen}
         onOpenChange={setDeleteAllConfirmOpen}
       >
-        {/* all project delete all */}
-        <AlertDialogContent className="translate-y-0 fixed sm:top-70 top-190">
+        <AlertDialogContent className="w-[95vw] max-w-md mx-auto">
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 ">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
-              <div>
-                <AlertDialogTitle>Delete All Projects?</AlertDialogTitle>
-                <AlertDialogDescription>
+              <div className="min-w-0 flex-1">
+                <AlertDialogTitle className="text-left text-base sm:text-lg">
+                  Delete All Projects?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-left text-sm">
                   This will permanently delete all {projects.length} projects
                   and their data. This action cannot be undone.
                 </AlertDialogDescription>
               </div>
             </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAllProjects}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
             >
               {isDeleting ? "Deleting..." : "Delete All Projects"}
             </AlertDialogAction>
@@ -550,7 +565,7 @@ function EditTaskDialog({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[95vw] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
@@ -637,11 +652,19 @@ function EditTaskDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!title.trim()}>
+          <Button
+            onClick={handleSave}
+            disabled={!title.trim()}
+            className="w-full sm:w-auto"
+          >
             Save Changes
           </Button>
         </div>

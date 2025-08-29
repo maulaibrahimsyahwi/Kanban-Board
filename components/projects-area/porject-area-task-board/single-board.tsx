@@ -20,7 +20,7 @@ export default function SingleBoard({
   const { name: boardName, tasks, id: boardId } = board;
   const boardRef = useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = useState(false);
-  const { moveTask } = useProjects();
+  const { moveTask, reorderTasksInBoard } = useProjects(); // Add reorderTasksInBoard
 
   useEffect(() => {
     const element = boardRef.current;
@@ -33,16 +33,16 @@ export default function SingleBoard({
         boardId,
       }),
       canDrop: ({ source }) => {
-        return source.data.type === "task" && source.data.boardId !== boardId;
+        return source.data.type === "task";
       },
       getIsSticky: () => true,
       onDragEnter: ({ source }) => {
-        if (source.data.type === "task" && source.data.boardId !== boardId) {
+        if (source.data.type === "task") {
           setIsDraggedOver(true);
         }
       },
       onDragLeave: ({ source }) => {
-        if (source.data.type === "task" && source.data.boardId !== boardId) {
+        if (source.data.type === "task") {
           setIsDraggedOver(false);
         }
       },
@@ -52,6 +52,7 @@ export default function SingleBoard({
           const taskId = source.data.taskId as string;
           const sourceBoardId = source.data.boardId as string;
 
+          // Only move to different board
           if (sourceBoardId !== boardId) {
             moveTask(taskId, sourceBoardId, boardId);
           }
@@ -69,7 +70,7 @@ export default function SingleBoard({
           : "border-border"
       } p-3 md:p-4 single-board`}
     >
-      {/* Board Header - Fixed height, tidak akan shrink */}
+      {/* Board Header */}
       <div className="bg-muted/50 flex justify-between p-2 sm:p-3 md:p-4 rounded-lg items-center mb-3 md:mb-4 flex-shrink-0 min-h-[3rem] sm:min-h-[3.5rem] group">
         <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1">
           <span className="font-medium text-xs sm:text-sm md:text-base text-foreground truncate leading-tight">
@@ -88,7 +89,7 @@ export default function SingleBoard({
         </div>
       </div>
 
-      {/* Tasks Container - Flexible, akan grow/shrink dan scroll di mobile */}
+      {/* Tasks Container */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 sm:space-y-3 pr-1 task-scroll-container">
           {tasks.length === 0 ? (
@@ -98,13 +99,19 @@ export default function SingleBoard({
               </p>
             </div>
           ) : (
-            tasks.map((task) => (
-              <SingleTask key={task.id} task={task} boardId={boardId} />
+            tasks.map((task, index) => (
+              <SingleTask
+                key={task.id}
+                task={task}
+                boardId={boardId}
+                taskIndex={index}
+                totalTasks={tasks.length}
+              />
             ))
           )}
         </div>
 
-        {/* Add Task Button - Fixed height, tidak akan shrink */}
+        {/* Add Task Button */}
         <div className="mt-2 sm:mt-3 flex-shrink-0">
           <TaskDialog
             boardId={boardId}

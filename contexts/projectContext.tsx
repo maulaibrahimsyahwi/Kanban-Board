@@ -198,6 +198,11 @@ interface ProjectContextType {
     boardId: string
   ) => void;
   moveTask: (taskId: string, fromBoardId: string, toBoardId: string) => void;
+  reorderTasksInBoard: (
+    boardId: string,
+    sourceIndex: number,
+    destinationIndex: number
+  ) => void;
   deleteTask: (taskId: string, boardId: string) => void;
   editTask: (
     taskId: string,
@@ -417,6 +422,37 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const reorderTasksInBoard = (
+    boardId: string,
+    sourceIndex: number,
+    destinationIndex: number
+  ) => {
+    if (!selectedProjectId) return;
+
+    setProjects((prevProjects) => {
+      return prevProjects.map((project) => {
+        if (project.id === selectedProjectId) {
+          const updatedBoards = project.boards.map((board) => {
+            if (board.id === boardId) {
+              const tasks = [...board.tasks];
+
+              // Remove task from source position
+              const [movedTask] = tasks.splice(sourceIndex, 1);
+
+              // Insert task at destination position
+              tasks.splice(destinationIndex, 0, movedTask);
+
+              return { ...board, tasks };
+            }
+            return board;
+          });
+          return { ...project, boards: updatedBoards };
+        }
+        return project;
+      });
+    });
+  };
+
   const deleteTask = (taskId: string, boardId: string) => {
     if (!selectedProjectId) return;
     setProjects((prevProjects) =>
@@ -531,6 +567,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     addProject,
     addTaskToProject,
     moveTask,
+    reorderTasksInBoard,
     deleteTask,
     editTask,
     deleteProject,

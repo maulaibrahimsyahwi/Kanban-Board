@@ -200,6 +200,12 @@ export default function TasksDropDown({
     }
   };
 
+  // Helper function to truncate board names
+  const truncateBoardName = (name: string, maxLength: number = 20) => {
+    if (name.length <= maxLength) return name;
+    return name.slice(0, maxLength) + "...";
+  };
+
   return (
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -215,7 +221,7 @@ export default function TasksDropDown({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          className="poppins dropdown-content-fixed"
+          className="poppins dropdown-content-fixed w-55 sm:w-55" // Responsive width: smaller on mobile
           align={dropdownAlign}
           side="bottom"
           sideOffset={8}
@@ -225,11 +231,12 @@ export default function TasksDropDown({
         >
           {/* Task Info */}
           <div className="px-2 py-1.5 text-sm text-muted-foreground border-b">
-            <div className="font-medium text-foreground truncate max-w-[200px]">
+            <div className="font-medium text-foreground truncate max-w-[200px] sm:max-w-[240px]">
               {task.title}
             </div>
-            <div className="text-xs">
-              {currentBoard.name} • {task.priority} priority
+            <div className="text-xs truncate max-w-[200px] sm:max-w-[240px]">
+              {truncateBoardName(currentBoard.name, 20)} • {task.priority}{" "}
+              priority
             </div>
           </div>
 
@@ -249,7 +256,15 @@ export default function TasksDropDown({
               onClick={handleMoveToPrevious}
             >
               <IoArrowBack className="flex-shrink-0 text-lg" />
-              <span>Move to &quot;{previousBoard.name}&quot;</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-xs sm:text-sm">Move to</span>
+                <span
+                  className="font-medium truncate max-w-[140px] sm:max-w-[160px]"
+                  title={previousBoard.name}
+                >
+                  {truncateBoardName(previousBoard.name, 10)}
+                </span>
+              </div>
             </DropdownMenuItem>
           )}
 
@@ -260,7 +275,15 @@ export default function TasksDropDown({
               onClick={handleMoveToNext}
             >
               <IoArrowForward className="flex-shrink-0 text-lg" />
-              <span>Move to &quot;{nextBoard.name}&quot;</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-xs sm:text-sm">Move to</span>
+                <span
+                  className="font-medium truncate max-w-[140px] sm:max-w-[160px]"
+                  title={nextBoard.name}
+                >
+                  {truncateBoardName(nextBoard.name, 10)}
+                </span>
+              </div>
             </DropdownMenuItem>
           )}
 
@@ -275,7 +298,7 @@ export default function TasksDropDown({
                 <span>Move to Board</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent
-                className="dropdown-subcontent-fixed"
+                className="dropdown-subcontent-fixed w-40 sm:w-50" // Smaller width on mobile
                 alignOffset={dropdownAlign === "start" ? -10 : 10}
               >
                 {otherBoards.map((board) => {
@@ -288,7 +311,7 @@ export default function TasksDropDown({
                   return (
                     <DropdownMenuItem
                       key={board.id}
-                      className={`cursor-pointer ${
+                      className={`cursor-pointer p-2 ${
                         isPrevious
                           ? "text-blue-600 dark:text-blue-400"
                           : isNext
@@ -297,13 +320,26 @@ export default function TasksDropDown({
                       }`}
                       onClick={() => handleMoveTask(board.id)}
                     >
-                      <div className="flex items-center gap-2">
-                        {isPrevious && <IoArrowBack className="text-sm" />}
-                        {isNext && <IoArrowForward className="text-sm" />}
-                        <span>{board.name}</span>
-                        <span className="text-xs opacity-60">
-                          ({board.tasks.length})
-                        </span>
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        {isPrevious && (
+                          <IoArrowBack className="text-sm flex-shrink-0" />
+                        )}
+                        {isNext && (
+                          <IoArrowForward className="text-sm flex-shrink-0" />
+                        )}
+
+                        <div className="flex flex-col items-start min-w-0 flex-1">
+                          <span
+                            className="text-sm font-medium truncate max-w-[160px]"
+                            title={board.name}
+                          >
+                            {truncateBoardName(board.name, 14)}
+                          </span>
+                          <span className="text-xs opacity-60">
+                            {board.tasks.length} task
+                            {board.tasks.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
                       </div>
                     </DropdownMenuItem>
                   );
@@ -339,7 +375,8 @@ export default function TasksDropDown({
             <DialogHeader>
               <DialogTitle>Edit Task</DialogTitle>
               <p className="text-sm text-muted-foreground">
-                Editing task in &quot;{currentBoard.name}&quot; board
+                Editing task in &quot;{truncateBoardName(currentBoard.name, 30)}
+                &quot; board
               </p>
             </DialogHeader>
 
