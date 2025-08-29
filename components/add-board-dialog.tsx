@@ -1,7 +1,7 @@
 // components/windows-dialogs/add-board-dialog.tsx
 "use client";
 
-import { useState, useEffect } from "react"; // Tambahkan useEffect di sini
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,8 @@ import { useProjects } from "@/contexts/projectContext";
 import { toast } from "sonner";
 import { MdDashboardCustomize } from "react-icons/md";
 
+const MAX_BOARD_NAME_LENGTH = 30;
+
 interface AddBoardDialogProps {
   trigger?: React.ReactNode;
 }
@@ -31,7 +33,7 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
   const [isCreating, setIsCreating] = useState(false);
   const { addBoard, selectedProject } = useProjects();
 
-  // 👉 PERBAIKAN: Gunakan useEffect untuk mengelola scroll lock
+  // Gunakan useEffect untuk mengelola scroll lock
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("dialog-open");
@@ -43,7 +45,6 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
     };
   }, [isOpen]);
 
-  // (sisa kode tetap sama)
   const validateBoardName = (name: string) => {
     if (!name.trim()) {
       setError("Board name is required");
@@ -53,8 +54,8 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
       setError("Board name must be at least 2 characters");
       return false;
     }
-    if (name.length > 25) {
-      setError("Board name must be less than 25 characters");
+    if (name.length > MAX_BOARD_NAME_LENGTH) {
+      setError(`Board name cannot exceed ${MAX_BOARD_NAME_LENGTH} characters`);
       return false;
     }
 
@@ -108,6 +109,12 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Batasi input maksimal 30 karakter
+    if (value.length > MAX_BOARD_NAME_LENGTH) {
+      return; // Tidak izinkan input lebih dari 30 karakter
+    }
+
     setBoardName(value);
     if (error) {
       validateBoardName(value);
@@ -168,27 +175,28 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
                 onChange={handleInputChange}
                 className={error ? "border-red-500" : ""}
                 placeholder="e.g. Testing, Review, Deployment"
+                maxLength={MAX_BOARD_NAME_LENGTH}
                 required
                 disabled={isCreating}
               />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {boardName.length}/{MAX_BOARD_NAME_LENGTH} characters
+                </span>
+                <span
+                  className={
+                    boardName.length >= MAX_BOARD_NAME_LENGTH
+                      ? "text-red-500"
+                      : ""
+                  }
+                >
+                  {boardName.length >= MAX_BOARD_NAME_LENGTH
+                    ? "Maximum reached"
+                    : ""}
+                </span>
+              </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
-
-            {boardName.trim() && !error && (
-              <div className="bg-muted p-3 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-2">Preview:</p>
-                <div className="bg-card border rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">
-                      {boardName.trim()}
-                    </span>
-                    <div className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                      0
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
@@ -205,7 +213,12 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
             </DialogClose>
             <Button
               type="submit"
-              disabled={!boardName.trim() || !!error || isCreating}
+              disabled={
+                !boardName.trim() ||
+                !!error ||
+                isCreating ||
+                boardName.length > MAX_BOARD_NAME_LENGTH
+              }
               className="min-w-[100px]"
             >
               {isCreating ? (

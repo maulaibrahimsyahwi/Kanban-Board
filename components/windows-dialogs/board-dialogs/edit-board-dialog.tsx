@@ -16,6 +16,8 @@ import { Board } from "@/contexts/projectContext";
 import { toast } from "sonner";
 import { FaRegEdit } from "react-icons/fa";
 
+const MAX_BOARD_NAME_LENGTH = 30;
+
 interface EditBoardDialogProps {
   board: Board;
   isOpen: boolean;
@@ -48,8 +50,8 @@ export default function EditBoardDialog({
       setError("Board name must be at least 2 characters");
       return false;
     }
-    if (name.length > 25) {
-      setError("Board name must be less than 25 characters");
+    if (name.length > MAX_BOARD_NAME_LENGTH) {
+      setError(`Board name cannot exceed ${MAX_BOARD_NAME_LENGTH} characters`);
       return false;
     }
     if (
@@ -94,6 +96,12 @@ export default function EditBoardDialog({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Batasi input maksimal 30 karakter
+    if (value.length > MAX_BOARD_NAME_LENGTH) {
+      return; // Tidak izinkan input lebih dari 30 karakter
+    }
+
     setBoardName(value);
     if (error) {
       validateBoardName(value);
@@ -118,10 +126,27 @@ export default function EditBoardDialog({
                 onChange={handleInputChange}
                 className={error ? "border-red-500" : ""}
                 placeholder="e.g. In Progress, Done"
+                maxLength={MAX_BOARD_NAME_LENGTH}
                 required
                 disabled={isSaving}
               />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {boardName.length}/{MAX_BOARD_NAME_LENGTH} characters
+                </span>
+                <span
+                  className={
+                    boardName.length >= MAX_BOARD_NAME_LENGTH
+                      ? "text-red-500"
+                      : ""
+                  }
+                >
+                  {boardName.length >= MAX_BOARD_NAME_LENGTH
+                    ? "Maximum reached"
+                    : ""}
+                </span>
+              </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
           </div>
           <DialogFooter>
@@ -136,7 +161,12 @@ export default function EditBoardDialog({
             </Button>
             <Button
               type="submit"
-              disabled={!boardName.trim() || !!error || isSaving}
+              disabled={
+                !boardName.trim() ||
+                !!error ||
+                isSaving ||
+                boardName.length > MAX_BOARD_NAME_LENGTH
+              }
               className="min-w-[100px] cursor-pointer"
             >
               {isSaving ? (

@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   title: "Kanban Board | Project Management",
   description: "Modern Kanban board for project management",
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{

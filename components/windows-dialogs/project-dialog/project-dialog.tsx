@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { useProjects } from "@/contexts/projectContext";
 import { HiFolderPlus } from "react-icons/hi2";
 
+const MAX_PROJECT_NAME_LENGTH = 30;
+
 export default function ProjectDialog() {
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
@@ -31,6 +33,12 @@ export default function ProjectDialog() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Batasi input maksimal 30 karakter
+    if (value.length > MAX_PROJECT_NAME_LENGTH) {
+      return; // Tidak izinkan input lebih dari 30 karakter
+    }
+
     setProjectName(value);
 
     // Clear error when user starts typing
@@ -51,6 +59,13 @@ export default function ProjectDialog() {
 
     if (!trimmedName) {
       setError("Project name is required");
+      return;
+    }
+
+    if (trimmedName.length > MAX_PROJECT_NAME_LENGTH) {
+      setError(
+        `Project name cannot exceed ${MAX_PROJECT_NAME_LENGTH} characters`
+      );
       return;
     }
 
@@ -93,14 +108,32 @@ export default function ProjectDialog() {
               <Label htmlFor="name" className="text-right">
                 Name
               </Label>
-              <Input
-                id="name"
-                value={projectName}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="e.g. Website Redesign"
-                required
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="name"
+                  value={projectName}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Website Redesign"
+                  maxLength={MAX_PROJECT_NAME_LENGTH}
+                  required
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {projectName.length}/{MAX_PROJECT_NAME_LENGTH} characters
+                  </span>
+                  <span
+                    className={
+                      projectName.length >= MAX_PROJECT_NAME_LENGTH
+                        ? "text-red-500"
+                        : ""
+                    }
+                  >
+                    {projectName.length >= MAX_PROJECT_NAME_LENGTH
+                      ? "Maximum reached"
+                      : ""}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           {error && (
@@ -123,7 +156,9 @@ export default function ProjectDialog() {
               type="submit"
               className="cursor-pointer"
               disabled={
-                !projectName.trim() || isProjectNameExists(projectName.trim())
+                !projectName.trim() ||
+                isProjectNameExists(projectName.trim()) ||
+                projectName.length > MAX_PROJECT_NAME_LENGTH
               }
             >
               Create
