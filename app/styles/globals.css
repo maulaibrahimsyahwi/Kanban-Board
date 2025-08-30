@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/* Import all other CSS files */
+@import "./layout.css";
+@import "./boards.css";
+@import "./drag-drop.css";
+@import "./animations.css";
+@import "./scrollbar.css";
+@import "./utilities.css";
+
+/* === CSS CUSTOM PROPERTIES === */
+:root {
+  --primary: oklch(0.606 0.25 292.717);
+  --primary-foreground: oklch(0.969 0.016 293.756);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.606 0.25 292.717);
+  --radius: 0.5rem;
+
+  /* Layout constants */
+  --board-width-mobile: 280px;
+  --board-width-tablet: 320px;
+  --board-width-desktop: 360px;
+  --task-height-estimate: 9rem;
+  --max-tasks-mobile: 3;
+  --max-tasks-tablet: 3;
+  --max-tasks-desktop: 4;
+}
+
+.dark {
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.969 0.016 293.756);
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.274 0.006 286.033);
+  --input: oklch(0.274 0.006 286.033);
+  --ring: oklch(0.541 0.281 293.009);
+}
+
+/* === BASE STYLES === */
+html,
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-poppins), "Poppins", ui-sans-serif, system-ui;
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* State management for dialogs */
+.dialog-open {
+  overflow: hidden;
+}
+/* === CUSTOM STYLES Logo Navbar === */
+/* Logo dark mode styling */
+.logo-dark-mode {
+  filter: brightness(0) saturate(100%) invert(0);
+}
+
+.dark .logo-dark-mode {
+  filter: invert(1);
+}

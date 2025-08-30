@@ -1,0 +1,115 @@
+/* === SCROLLBAR STYLING === */
+
+/* Base scrollbar for horizontal scroll (boards) */
+.scrollbar-horizontal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar {
+  height: 8px;
+  width: 0;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 0;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  border: none;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Scrollbar for vertical scroll (tasks) */
+.scrollbar-vertical {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-vertical::-webkit-scrollbar {
+  width: 6px;
+  height: 0;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 0;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  border: none;
+}
+
+.scrollbar-vertical::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-vertical::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Apply specific scrollbar styles to boards container */
+.boards-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.boards-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.boards-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.boards-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.boards-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.boards-container::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Apply specific scrollbar styles to task container */
+.task-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.task-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.task-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.task-scroll-container::-webkit-scrollbar-button {
+  display: none;
+}

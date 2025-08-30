@@ -1,0 +1,160 @@
+/* === DRAG & DROP STATES === */
+.drag-active {
+  cursor: grabbing;
+}
+
+.drag-preview {
+  pointer-events: none;
+  position: fixed;
+  z-index: 50;
+  transform: rotate(6deg);
+  opacity: 0.9;
+  left: -9999px;
+  top: -9999px;
+}
+
+/* Drop indicators */
+.task-drop-indicator-top::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--primary);
+  border-radius: 1px;
+  z-index: 10;
+}
+
+.task-drop-indicator-bottom::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--primary);
+  border-radius: 1px;
+  z-index: 10;
+}
+
+/* Enhanced drag states for tasks */
+.task-card {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 0.75rem;
+  transform-origin: center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.task-card:last-child {
+  margin-bottom: 0;
+}
+
+.task-card.task-dragging {
+  opacity: 0.5;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  transition: none; /* Disable transitions during drag */
+}
+
+.task-card.task-drag-over {
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.3);
+  transform: scale(1.01);
+}
+
+/* Smooth reordering animations */
+.task-card:not(.task-dragging):not(.task-animating) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.task-card.task-animating {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+}
+
+/* Task reordering states */
+.task-card.moving-up {
+  transform: translateY(-100%);
+  opacity: 0.7;
+}
+
+.task-card.moving-down {
+  transform: translateY(100%);
+  opacity: 0.7;
+}
+
+.task-card.settling {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Enhanced reordering visual feedback */
+.task-reorder-ghost {
+  opacity: 0.3;
+  transform: scale(0.98);
+  background: var(--muted);
+  border: 2px dashed var(--border);
+  pointer-events: none;
+}
+
+.task-reorder-placeholder {
+  height: var(--task-height-estimate);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    transparent 50%,
+    var(--primary) 100%
+  );
+  background-size: 20px 20px;
+  opacity: 0.1;
+  border-radius: var(--radius);
+  animation: shimmer 2s infinite;
+  margin: 0.5rem 0;
+}
+
+/* Smooth transitions for reordering */
+.task-card:not(.dragging) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improved hover states for better UX */
+.task-card:hover:not(.dragging) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent text selection during drag */
+.task-card.dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Dark mode adjustments */
+.dark .task-card.task-drag-over {
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.4);
+}
+
+.dark .task-drop-indicator-top::after,
+.dark .task-drop-indicator-bottom::after {
+  background-color: var(--primary);
+  box-shadow: 0 0 4px var(--primary);
+}
+
+/* Mobile specific improvements */
+@media (max-width: 768px) {
+  .task-card {
+    margin-bottom: 0.5rem;
+  }
+
+  .task-drop-indicator-top::after,
+  .task-drop-indicator-bottom::after {
+    left: 4px;
+    right: 4px;
+    height: 3px;
+  }
+}

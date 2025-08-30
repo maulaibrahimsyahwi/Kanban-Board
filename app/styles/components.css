@@ -1,0 +1,102 @@
+/* === DROPDOWN & DIALOG POSITIONING === */
+.dropdown-trigger-button {
+  position: relative;
+  z-index: 2;
+}
+
+/* Ensure dropdown doesn't interfere with drag */
+.dropdown-trigger-button {
+  position: relative;
+  z-index: 10;
+}
+
+[data-radix-dropdown-menu-content] {
+  z-index: 50;
+  min-width: 220px;
+  max-width: 280px;
+  background-color: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+}
+
+[data-radix-dropdown-menu-sub-content] {
+  z-index: 51;
+  min-width: 200px;
+  max-width: 250px;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 50;
+}
+
+/* Dialog positioning */
+.dialog-content {
+  z-index: 100;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* === COMMAND PALETTE STYLES === */
+[cmdk-root] {
+  background-color: var(--popover);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+[cmdk-input] {
+  background-color: var(--background);
+}
+
+[cmdk-list] {
+  background-color: var(--popover);
+}
+
+[cmdk-item]:hover,
+[cmdk-item][data-selected="true"] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* === LOGO STYLING === */
+.logo-dark-mode {
+  filter: brightness(0) saturate(100%) invert(0);
+}
+
+.dark .logo-dark-mode {
+  filter: invert(1);
+}
+
+/* === SIDEBAR TOGGLE COMPONENTS === */
+.toggle-in-header {
+  margin-left: auto;
+}
+
+.toggle-in-sidebar {
+  flex-shrink: 0;
+}
+
+/* === RESPONSIVE COMPONENT ADJUSTMENTS === */
+@media (max-width: 480px) {
+  .xs\:hidden {
+    display: none;
+  }
+
+  .xs\:inline {
+    display: inline;
+  }
+
+  .main-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  [data-radix-dropdown-menu-content] {
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+  }
+}
