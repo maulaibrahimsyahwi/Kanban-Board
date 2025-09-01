@@ -4,7 +4,7 @@ import SingleBoard from "./single-board";
 import { Board, Task } from "@/contexts/projectContext";
 import { useProjects } from "@/contexts/projectContext";
 import EmptyBoardsState from "@/components/projects-area/empty-board-state";
-import SingleTask from "./single-task";
+import SingleTask from "../project-area-task-board/single-task";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 export default function ProjectAreaBoards({

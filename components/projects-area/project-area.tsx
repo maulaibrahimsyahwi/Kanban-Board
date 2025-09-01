@@ -1,5 +1,5 @@
 import { Card } from "../ui/card";
-import ProjectAreaBoards from "./porject-area-task-board/project-area-board";
+import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
 import { useProjects } from "@/contexts/projectContext";
 
