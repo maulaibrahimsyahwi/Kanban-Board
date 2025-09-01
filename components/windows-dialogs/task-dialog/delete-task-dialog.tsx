@@ -50,7 +50,7 @@ export default function DeleteTaskDialog({
 
       // Show success toast with Sonner
       toast.success("Task deleted successfully", {
-        description: `&quot;${task.title}&quot; has been removed from ${boardName}.`,
+        description: `${task.title} has been removed from ${boardName}.`,
         duration: 5000,
       });
 
@@ -209,7 +209,7 @@ export default function DeleteTaskDialog({
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel
             disabled={isDeleting}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 cursor-pointer"
           >
             Cancel
           </AlertDialogCancel>
@@ -217,7 +217,7 @@ export default function DeleteTaskDialog({
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 flex items-center gap-2 min-w-[120px]"
+            className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 flex items-center gap-2 min-w-[120px] cursor-pointer"
           >
             {isDeleting ? (
               <>

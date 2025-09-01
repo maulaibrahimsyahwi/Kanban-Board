@@ -31,6 +31,7 @@ import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-ta
 import PrioritySelector from "@/components/windows-dialogs/task-dialog/sub-component/priority-selector";
 import TaskDescription from "../windows-dialogs/task-dialog/sub-component/task-description";
 import TaskName from "../windows-dialogs/task-dialog/sub-component/task-name";
+import { toast } from "sonner";
 
 interface TasksDropDownProps {
   taskId: string;
@@ -50,7 +51,7 @@ export default function TasksDropDown({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [dropdownAlign, setDropdownAlign] = useState<"start" | "end">("end");
-
+  const [isSaving, setIsSaving] = useState(false);
   // Edit form states
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -122,14 +123,44 @@ export default function TasksDropDown({
     setIsEditDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editTitle.trim() || editTitle.length < 3) return;
-    editTask(taskId, boardId, {
-      title: editTitle.trim(),
-      description: editDescription.trim(),
-      priority: editPriority,
-    });
-    setIsEditDialogOpen(false);
+
+    setIsSaving(true);
+
+    try {
+      // Simulate delay for better UX (optional)
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Call the editTask function
+      editTask(taskId, boardId, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        priority: editPriority,
+      });
+
+      // Show success toast with Sonner
+      toast.success("Task updated successfully", {
+        description: `"${editTitle.trim()}" has been updated in ${
+          currentBoard.name
+        }.`,
+        duration: 5000,
+      });
+
+      // Close the dialog
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating task:", error);
+
+      // Show error toast with Sonner
+      toast.error("Failed to update task", {
+        description:
+          "An error occurred while updating the task. Please try again.",
+        duration: 5000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteTask = (taskIdToDelete: string) => {
@@ -431,16 +462,24 @@ export default function TasksDropDown({
               <Button
                 variant="secondary"
                 onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSaving}
                 className="cursor-pointer"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                disabled={!editTitle.trim() || editTitle.length < 3}
-                className="cursor-pointer"
+                disabled={!editTitle.trim() || editTitle.length < 3 || isSaving}
+                className="cursor-pointer min-w-[130px]"
               >
-                Save Changes
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </div>
           </DialogContent>

@@ -21,6 +21,7 @@ import { useProjects } from "@/contexts/projectContext";
 import { Task } from "@/contexts/projectContext";
 import PrioritySelector from "./sub-component/priority-selector";
 import { CgGoogleTasks } from "react-icons/cg";
+import { toast } from "sonner"; // Add this import
 
 // Props agar dialog ini bisa dipanggil dari mana saja
 interface TaskDialogProps {
@@ -30,6 +31,7 @@ interface TaskDialogProps {
 
 export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false); // Add this state
   const { addTaskToProject, selectedProject } = useProjects();
 
   // State untuk form
@@ -40,7 +42,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   // Validasi
   const isFormValid = title.trim().length >= 3 && title.trim().length <= 50;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedProject) {
@@ -50,21 +52,55 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
 
     if (!isFormValid) return;
 
-    // Default ke board pertama jika tidak ada boardId spesifik yang diberikan
-    const targetBoardId = boardId || selectedProject.boards[0]?.id;
-    if (!targetBoardId) {
-      console.error("No board available to add the task to.");
-      return;
+    setIsCreating(true);
+
+    try {
+      // Simulate delay for better UX (optional)
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Default ke board pertama jika tidak ada boardId spesifik yang diberikan
+      const targetBoardId = boardId || selectedProject.boards[0]?.id;
+      if (!targetBoardId) {
+        console.error("No board available to add the task to.");
+        toast.error("Failed to create task", {
+          description: "No board available to add the task to.",
+          duration: 5000,
+        });
+        return;
+      }
+
+      addTaskToProject(
+        { title: title.trim(), description, priority },
+        targetBoardId
+      );
+
+      // Get board name for toast
+      const targetBoard = selectedProject.boards.find(
+        (board) => board.id === targetBoardId
+      );
+      const boardName = targetBoard?.name || "Unknown Board";
+
+      // Show success toast
+      toast.success("Task created successfully", {
+        description: `"${title.trim()}" has been added to ${boardName}.`,
+        duration: 5000,
+      });
+
+      // Reset form dan tutup dialog
+      resetForm();
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error creating task:", error);
+
+      // Show error toast
+      toast.error("Failed to create task", {
+        description:
+          "An error occurred while creating the task. Please try again.",
+        duration: 5000,
+      });
+    } finally {
+      setIsCreating(false);
     }
-
-    addTaskToProject(
-      { title: title.trim(), description, priority },
-      targetBoardId
-    );
-
-    // Reset form dan tutup dialog
-    resetForm();
-    setIsOpen(false);
   };
 
   const resetForm = () => {
@@ -143,16 +179,24 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
               type="button"
               variant="secondary"
               onClick={handleCancel}
+              disabled={isCreating}
               className="cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="cursor-pointer"
-              disabled={!isFormValid}
+              className="cursor-pointer min-w-[130px]"
+              disabled={!isFormValid || isCreating}
             >
-              Create Task
+              {isCreating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                "Create Task"
+              )}
             </Button>
           </div>
         </form>

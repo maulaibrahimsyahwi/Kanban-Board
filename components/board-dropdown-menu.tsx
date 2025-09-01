@@ -70,19 +70,6 @@ export default function BoardDropDown({
 
           <DropdownMenuSeparator />
 
-          <TaskDialog
-            boardId={board.id}
-            trigger={
-              <DropdownMenuItem
-                className="flex items-center gap-2 p-[10px] cursor-pointer"
-                onSelect={(e) => e.preventDefault()}
-              >
-                <MdOutlineAdd className="flex-shrink-0 text-lg" />
-                <span>Add Task</span>
-              </DropdownMenuItem>
-            }
-          />
-
           <DropdownMenuItem
             className="flex items-center gap-2 p-[10px] cursor-pointer"
             onClick={() => setIsEditDialogOpen(true)} // Panggil dialog edit
@@ -90,8 +77,6 @@ export default function BoardDropDown({
             <FaRegEdit className="flex-shrink-0" />
             <span>Edit Board</span>
           </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
 
           <DeleteBoardDialog
             board={board}
