@@ -19,16 +19,16 @@ import { HiFolderPlus } from "react-icons/hi2";
 const MAX_PROJECT_NAME_LENGTH = 30;
 
 interface ProjectDialogProps {
-  trigger?: React.ReactNode;
+  children?: React.ReactNode; // supaya bisa custom trigger
 }
 
-export default function ProjectDialog({}: ProjectDialogProps) {
+export default function ProjectDialog({ children }: ProjectDialogProps) {
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
   const { addProject, projects } = useProjects();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Function to check if project name already exists
+  // cek nama project duplikat
   const isProjectNameExists = (name: string) => {
     return projects.some(
       (project) => project.name.toLowerCase() === name.toLowerCase()
@@ -38,19 +38,14 @@ export default function ProjectDialog({}: ProjectDialogProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
 
-    // Batasi input maksimal 30 karakter
-    if (value.length > MAX_PROJECT_NAME_LENGTH) {
-      return; // Tidak izinkan input lebih dari 30 karakter
-    }
+    if (value.length > MAX_PROJECT_NAME_LENGTH) return;
 
     setProjectName(value);
 
-    // Clear error when user starts typing
     if (error) {
       setError("");
     }
 
-    // Check for duplicate name in real-time
     const trimmedValue = value.trim();
     if (trimmedValue && isProjectNameExists(trimmedValue)) {
       setError("A project with this name already exists");
@@ -78,7 +73,6 @@ export default function ProjectDialog({}: ProjectDialogProps) {
       return;
     }
 
-    // If validation passes, create the project
     addProject(trimmedName);
     setProjectName("");
     setError("");
@@ -88,7 +82,6 @@ export default function ProjectDialog({}: ProjectDialogProps) {
   const handleDialogClose = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      // Reset form when dialog closes
       setProjectName("");
       setError("");
     }
@@ -97,16 +90,20 @@ export default function ProjectDialog({}: ProjectDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
-        <Button className="rounded-3xl px-5 cursor-pointer">
-          <HiFolderPlus className="mr-2 size-5" />
-          Create Project
-        </Button>
+        {children ?? (
+          <Button className="rounded-3xl px-5 cursor-pointer">
+            <HiFolderPlus className="mr-2 size-5" />
+            Create Project
+          </Button>
+        )}
       </DialogTrigger>
+
       <DialogContent className="poppins sm:max-w-[425px] poppins top-50 translate-y-0">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -140,12 +137,14 @@ export default function ProjectDialog({}: ProjectDialogProps) {
               </div>
             </div>
           </div>
+
           {error && (
             <div className="grid grid-cols-4 gap-4 -mt-2">
               <div></div>
               <p className="col-span-3 text-sm text-red-500 mb-2">{error}</p>
             </div>
           )}
+
           <DialogFooter>
             <DialogClose asChild>
               <Button
