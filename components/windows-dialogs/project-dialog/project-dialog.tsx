@@ -18,7 +18,11 @@ import { HiFolderPlus } from "react-icons/hi2";
 
 const MAX_PROJECT_NAME_LENGTH = 30;
 
-export default function ProjectDialog() {
+interface ProjectDialogProps {
+  trigger?: React.ReactNode;
+}
+
+export default function ProjectDialog({}: ProjectDialogProps) {
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
   const { addProject, projects } = useProjects();

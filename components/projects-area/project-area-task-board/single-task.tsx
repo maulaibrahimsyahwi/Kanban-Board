@@ -28,7 +28,6 @@ export default function SingleTask({
   task,
   boardId,
   taskIndex = 0,
-  totalTasks = 0,
   isDragPreview = false,
 }: SingleTaskProps) {
   const taskRef = useRef<HTMLDivElement>(null);
@@ -147,7 +146,7 @@ export default function SingleTask({
         },
       })
     );
-  }, [task, boardId, taskIndex, reorderTasksInBoard]);
+  }, [task, boardId, taskIndex]);
 
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
@@ -241,7 +240,7 @@ export default function SingleTask({
             </p>
           )}
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-            <span>Created: {formatDateSafely(task.createdAt)}</span>
+            <span>{formatDateSafely(task.createdAt)}</span>
             <span className="bg-primary/10 text-primary px-2 py-1 rounded-full">
               ID: {task.id.slice(-6)}
             </span>

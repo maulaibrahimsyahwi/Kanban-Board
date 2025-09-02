@@ -20,7 +20,7 @@ export default function SingleBoard({
   const { name: boardName, tasks, id: boardId } = board;
   const boardRef = useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = useState(false);
-  const { moveTask, reorderTasksInBoard } = useProjects(); // Add reorderTasksInBoard
+  const { moveTask } = useProjects(); // Add reorderTasksInBoard
 
   useEffect(() => {
     const element = boardRef.current;
@@ -71,7 +71,7 @@ export default function SingleBoard({
       } p-3 md:p-4 single-board`}
     >
       {/* Board Header */}
-      <div className="bg-muted/50 flex justify-between p-2 sm:p-3 md:p-4 rounded-lg items-center mb-3 md:mb-4 flex-shrink-0 min-h-[3rem] sm:min-h-[3.5rem] group">
+      <div className="bg-muted/50 flex justify-between p-2 sm:p-3 md:p-4 rounded-lg items-center mb-3 md:mb-4 flex-shrink-0 min-h-[3rem] sm:min-h-[3.5rem] group ">
         <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1">
           <span className="font-medium text-xs sm:text-sm md:text-base text-foreground truncate leading-tight">
             {boardName}
