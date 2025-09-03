@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MdKeyboardDoubleArrowDown } from "react-icons/md";
 import { MdKeyboardDoubleArrowRight } from "react-icons/md";
 import { MdOutlineKeyboardDoubleArrowUp } from "react-icons/md";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react"; // Ditambahkan memo
 import {
   draggable,
   dropTargetForElements,
@@ -24,12 +24,12 @@ interface SingleTaskProps {
   isDragPreview?: boolean;
 }
 
-export default function SingleTask({
+const SingleTask = ({
   task,
   boardId,
   taskIndex = 0,
   isDragPreview = false,
-}: SingleTaskProps) {
+}: SingleTaskProps) => {
   const taskRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggedOver, setIsDraggedOver] = useState(false);
@@ -37,7 +37,6 @@ export default function SingleTask({
   const [isAnimating, setIsAnimating] = useState(false);
 
   const { reorderTasksInBoard } = useProjects();
-
   useEffect(() => {
     const element = taskRef.current;
     if (!element || isDragPreview) return;
@@ -89,7 +88,6 @@ export default function SingleTask({
             boardId: boardId,
             taskIndex: taskIndex,
           };
-
           return attachClosestEdge(data, {
             input,
             element,
@@ -124,10 +122,8 @@ export default function SingleTask({
             const closestEdge = self.data.closestEdge as Edge;
 
             if (sourceIndex === targetIndex) return;
-
             // Add animation trigger
             setIsAnimating(true);
-
             // Trigger reorder with animation
             setTimeout(() => {
               const destinationIndex = getReorderDestinationIndex({
@@ -146,7 +142,7 @@ export default function SingleTask({
         },
       })
     );
-  }, [task, boardId, taskIndex]);
+  }, [task, boardId, taskIndex, reorderTasksInBoard, isDragPreview]);
 
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
@@ -177,14 +173,11 @@ export default function SingleTask({
 
   const priorityConfig = getPriorityConfig(task.priority);
   const PriorityIcon = priorityConfig.icon;
-
   // Drop indicator styles
   const getDropIndicatorStyle = () => {
     if (!isDraggedOver || !closestEdge) return "";
-
     const baseStyle =
       "after:content-[''] after:absolute after:left-0 after:right-0 after:h-0.5 after:bg-primary after:z-10";
-
     if (closestEdge === "top") {
       return `${baseStyle} after:-top-1`;
     } else if (closestEdge === "bottom") {
@@ -249,4 +242,6 @@ export default function SingleTask({
       </Card>
     </div>
   );
-}
+};
+
+export default memo(SingleTask);

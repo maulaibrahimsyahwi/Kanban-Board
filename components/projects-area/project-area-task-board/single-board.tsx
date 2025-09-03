@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react"; // Ditambahkan memo
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import SingleTask from "./single-task";
 import { Board } from "@/contexts/projectContext";
@@ -12,15 +12,12 @@ interface SingleBoardProps {
   totalBoards: number;
 }
 
-export default function SingleBoard({
-  board,
-  boardIndex,
-  totalBoards,
-}: SingleBoardProps) {
+const SingleBoard = ({ board, boardIndex, totalBoards }: SingleBoardProps) => {
   const { name: boardName, tasks, id: boardId } = board;
   const boardRef = useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = useState(false);
-  const { moveTask } = useProjects(); // Add reorderTasksInBoard
+  const { moveTask } = useProjects();
+  // Add reorderTasksInBoard
 
   useEffect(() => {
     const element = boardRef.current;
@@ -127,4 +124,6 @@ export default function SingleBoard({
       </div>
     </div>
   );
-}
+};
+
+export default memo(SingleBoard);
