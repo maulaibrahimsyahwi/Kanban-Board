@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Project } from "@/contexts/projectContext";
+import { Project } from "@/types";
 
 interface UseSearchFilterProps {
   projects: Project[];

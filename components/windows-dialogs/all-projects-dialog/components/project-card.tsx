@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CheckCircle2, MoreVertical, Trash2 } from "lucide-react";
 import { useProjects } from "@/contexts/projectContext";
-import { Project } from "@/contexts/projectContext";
+import { Project } from "@/types";
 import { formatDateSafely } from "@/lib/utils";
 
 interface ProjectCardProps {

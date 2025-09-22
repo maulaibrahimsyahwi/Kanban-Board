@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 import { toast } from "sonner";
 import { formatDateSafely } from "@/lib/utils";
 

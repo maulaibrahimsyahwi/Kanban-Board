@@ -12,7 +12,7 @@ import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hi
 import { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/types";
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import TasksDropDown from "../../drop-downs/task-drop-down";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 import { formatDateSafely } from "@/lib/utils";
 import { useProjects } from "@/contexts/projectContext";
 

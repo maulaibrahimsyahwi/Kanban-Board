@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 
 interface EditTaskDialogProps {
   task: Task;

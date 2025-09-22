@@ -1,5 +1,5 @@
 import { CommandItem } from "@/components/ui/command";
-import { Project } from "@/contexts/projectContext";
+import { Project } from "@/types";
 import { Check } from "lucide-react";
 
 export function SingleProjectCommandItem({

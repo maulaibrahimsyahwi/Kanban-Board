@@ -1,31 +1,77 @@
-import { useState } from "react";
+import { useReducer, useMemo } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Project, Task } from "@/contexts/projectContext";
+import { Project, Task } from "@/types";
 import { toast } from "sonner";
 import { useSearchFilter } from "./use-search-filter";
+
+interface DialogState {
+  searchQuery: string;
+  activeTab: "projects" | "boards";
+  deleteProjectId: string | null;
+  deleteAllConfirmOpen: boolean;
+  selectedTaskForEdit: {
+    task: Task;
+    boardId: string;
+    boardName: string;
+    projectName: string;
+  } | null;
+  isDeleting: boolean;
+}
+
+const initialState: DialogState = {
+  searchQuery: "",
+  activeTab: "projects",
+  deleteProjectId: null,
+  deleteAllConfirmOpen: false,
+  selectedTaskForEdit: null,
+  isDeleting: false,
+};
+
+type DialogAction =
+  | { type: "SET_SEARCH_QUERY"; payload: string }
+  | { type: "SET_ACTIVE_TAB"; payload: "projects" | "boards" }
+  | { type: "OPEN_DELETE_PROJECT_CONFIRM"; payload: string }
+  | { type: "CLOSE_DELETE_PROJECT_CONFIRM" }
+  | { type: "OPEN_DELETE_ALL_CONFIRM" }
+  | { type: "CLOSE_DELETE_ALL_CONFIRM" }
+  | { type: "SET_TASK_FOR_EDIT"; payload: DialogState["selectedTaskForEdit"] }
+  | { type: "SET_IS_DELETING"; payload: boolean };
+
+function dialogReducer(state: DialogState, action: DialogAction): DialogState {
+  switch (action.type) {
+    case "SET_SEARCH_QUERY":
+      return { ...state, searchQuery: action.payload };
+    case "SET_ACTIVE_TAB":
+      return { ...state, activeTab: action.payload };
+    case "OPEN_DELETE_PROJECT_CONFIRM":
+      return { ...state, deleteProjectId: action.payload };
+    case "CLOSE_DELETE_PROJECT_CONFIRM":
+      return { ...state, deleteProjectId: null };
+    case "OPEN_DELETE_ALL_CONFIRM":
+      return { ...state, deleteAllConfirmOpen: true };
+    case "CLOSE_DELETE_ALL_CONFIRM":
+      return { ...state, deleteAllConfirmOpen: false };
+    case "SET_TASK_FOR_EDIT":
+      return { ...state, selectedTaskForEdit: action.payload };
+    case "SET_IS_DELETING":
+      return { ...state, isDeleting: action.payload };
+    default:
+      return state;
+  }
+}
 
 interface UseAllProjectsDialogProps {
   setIsOpen: (open: boolean) => void;
 }
 
 export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false);
-  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
-  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<{
-    task: Task;
-    boardId: string;
-    boardName: string;
-    projectName: string;
-  } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState("projects");
+  const [state, dispatch] = useReducer(dialogReducer, initialState);
 
   const { projects, selectedProject, selectProject, deleteProject, editTask } =
     useProjects();
 
   const { filteredProjects, filteredBoards, allBoards, allTasks } =
-    useSearchFilter({ projects, searchQuery });
+    useSearchFilter({ projects, searchQuery: state.searchQuery });
 
   const handleSelectProject = (project: Project) => {
     selectProject(project.id);
@@ -36,27 +82,27 @@ export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    setIsDeleting(true);
+    dispatch({ type: "SET_IS_DELETING", payload: true });
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
       deleteProject(projectId);
-      setDeleteProjectId(null);
+      dispatch({ type: "CLOSE_DELETE_PROJECT_CONFIRM" });
       toast.success("Project deleted", {
         description: "Project has been permanently deleted.",
       });
     } catch {
       toast.error("Failed to delete project");
     } finally {
-      setIsDeleting(false);
+      dispatch({ type: "SET_IS_DELETING", payload: false });
     }
   };
 
   const handleDeleteAllProjects = async () => {
-    setIsDeleting(true);
+    dispatch({ type: "SET_IS_DELETING", payload: true });
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       projects.forEach((project) => deleteProject(project.id));
-      setDeleteAllConfirmOpen(false);
+      dispatch({ type: "CLOSE_DELETE_ALL_CONFIRM" });
       setIsOpen(false);
       toast.success("All projects deleted", {
         description: "All projects have been permanently deleted.",
@@ -64,7 +110,7 @@ export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
     } catch {
       toast.error("Failed to delete all projects");
     } finally {
-      setIsDeleting(false);
+      dispatch({ type: "SET_IS_DELETING", payload: false });
     }
   };
 
@@ -74,43 +120,52 @@ export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
     boardId: string
   ) => {
     editTask(task.id, boardId, updatedData);
-    setSelectedTaskForEdit(null);
+    dispatch({ type: "SET_TASK_FOR_EDIT", payload: null });
     toast.success("Task updated", {
       description: `"${task.title}" has been updated.`,
     });
   };
 
-  const getTotalStats = () => {
+  const stats = useMemo(() => {
     const totalProjects = projects.length;
     const totalTasks = allTasks.length;
     const totalBoards = allBoards.length;
     return { totalProjects, totalTasks, totalBoards };
-  };
-
-  const stats = getTotalStats();
+  }, [projects, allTasks, allBoards]);
 
   return {
-    // States
-    searchQuery,
-    setSearchQuery,
-    activeTab,
-    setActiveTab,
-    deleteProjectId,
-    setDeleteProjectId,
-    deleteAllConfirmOpen,
-    setDeleteAllConfirmOpen,
-    selectedTaskForEdit,
-    setSelectedTaskForEdit,
-    isDeleting,
+    searchQuery: state.searchQuery,
+    activeTab: state.activeTab,
+    deleteProjectId: state.deleteProjectId,
+    deleteAllConfirmOpen: state.deleteAllConfirmOpen,
+    selectedTaskForEdit: state.selectedTaskForEdit,
+    isDeleting: state.isDeleting,
 
-    // Data
+    setSearchQuery: (payload: string) =>
+      dispatch({ type: "SET_SEARCH_QUERY", payload }),
+    setActiveTab: (payload: "projects" | "boards") =>
+      dispatch({ type: "SET_ACTIVE_TAB", payload }),
+
+    setDeleteProjectId: (payload: string | null) => {
+      if (payload) {
+        dispatch({ type: "OPEN_DELETE_PROJECT_CONFIRM", payload });
+      } else {
+        dispatch({ type: "CLOSE_DELETE_PROJECT_CONFIRM" });
+      }
+    },
+
+    setDeleteAllConfirmOpen: (isOpen: boolean) =>
+      dispatch({
+        type: isOpen ? "OPEN_DELETE_ALL_CONFIRM" : "CLOSE_DELETE_ALL_CONFIRM",
+      }),
+    setSelectedTaskForEdit: (payload: DialogState["selectedTaskForEdit"]) =>
+      dispatch({ type: "SET_TASK_FOR_EDIT", payload }),
+
     projects,
     selectedProject,
     filteredProjects,
     filteredBoards,
     stats,
-
-    // Handlers
     handleSelectProject,
     handleDeleteProject,
     handleDeleteAllProjects,

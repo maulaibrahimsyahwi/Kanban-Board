@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProjects } from "@/contexts/projectContext";
-import { Board } from "@/contexts/projectContext";
+import { Board } from "@/types";
 import { toast } from "sonner";
 import { FaRegEdit } from "react-icons/fa";
 

@@ -18,7 +18,7 @@ import {
 import { BiTask } from "react-icons/bi";
 import { useState } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 import PrioritySelector from "./sub-component/priority-selector";
 import { CgGoogleTasks } from "react-icons/cg";
 import { toast } from "sonner"; // Add this import

@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Board } from "@/contexts/projectContext";
+import { Board } from "@/types";
 import { TbListDetails } from "react-icons/tb";
 
 interface BoardCardProps {

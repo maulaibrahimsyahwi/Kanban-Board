@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Board } from "@/contexts/projectContext";
+import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import DeleteBoardDialog from "./delete-board-dialog";
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";

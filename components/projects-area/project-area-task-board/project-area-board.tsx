@@ -1,7 +1,7 @@
 // project-area-board.tsx - Full enhanced auto-scroll implementation
 import { useState, useRef, useCallback, useEffect } from "react";
 import SingleBoard from "./single-board";
-import { Board, Task } from "@/contexts/projectContext";
+import { Board, Task } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import EmptyBoardsState from "@/components/projects-area/empty-board-state";
 import SingleTask from "../project-area-task-board/single-task";

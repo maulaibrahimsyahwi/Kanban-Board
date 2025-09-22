@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, memo } from "react"; // Ditambahkan memo
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import SingleTask from "./single-task";
-import { Board } from "@/contexts/projectContext";
+import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
 import BoardDropDown from "@/components/board-dropdown-menu";

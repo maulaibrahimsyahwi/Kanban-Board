@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FolderOpen, Plus, Trash2 } from "lucide-react";
 import { useProjects } from "@/contexts/projectContext";
-import ProjectDialog from "@/components/windows-dialogs/project-dialog/project-dialog";
+import ProjectDialog from "@/components/windows-dialogs/project-dialog/CreateProjectDialog";
 
 interface DialogHeaderProps {
   onDeleteAll: () => void;

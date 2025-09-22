@@ -3,15 +3,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Folder, LayoutGrid } from "lucide-react";
-import { Project, Board } from "@/contexts/projectContext";
+import { Project, Board } from "@/types";
 import { ProjectCard } from "./project-card";
 import { BoardCard } from "./board-card";
 import { EmptyState } from "./empty-state";
 import { getGridClasses } from "../utils/grid-utils";
 
+// Tipe untuk nilai tab yang valid
+type ActiveTabValue = "projects" | "boards";
+
 interface DialogTabsProps {
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  // Perbaikan: Ganti tipe 'string' menjadi tipe yang lebih spesifik
+  setActiveTab: (tab: ActiveTabValue) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   stats: {
@@ -36,10 +40,17 @@ export function DialogTabs({
   onSelectProject,
   onDeleteProject,
 }: DialogTabsProps) {
+  // Pastikan nilai yang diteruskan ke onValueChange sesuai dengan tipe yang diharapkan
+  const handleTabChange = (value: string) => {
+    if (value === "projects" || value === "boards") {
+      setActiveTab(value);
+    }
+  };
+
   return (
     <Tabs
       value={activeTab}
-      onValueChange={setActiveTab}
+      onValueChange={handleTabChange} // Gunakan handler yang sudah divalidasi
       className="flex-1 flex flex-col min-h-0 px-4 sm:px-6"
     >
       {/* Controls Section */}

@@ -18,29 +18,9 @@ import {
 import { IconType } from "react-icons";
 import { v4 as uuidv4 } from "uuid";
 
-// --- TIPE DATA UTAMA ---
-export type Task = {
-  id: string;
-  title: string;
-  description: string;
-  priority: "low" | "medium" | "high";
-  createdAt: Date;
-};
-
-export type Board = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  tasks: Task[];
-};
-
-export type Project = {
-  id: string;
-  name: string;
-  icon: IconType;
-  createdAt: Date;
-  boards: Board[];
-};
+// 1. Impor tipe dan konstanta dari lokasi terpusat
+import { Task, Board, Project } from "@/types";
+import { STORAGE_KEYS } from "@/constants";
 
 // --- MAPPING ICON NAMES ---
 const iconMap: Record<string, IconType> = {
@@ -52,11 +32,16 @@ const iconMap: Record<string, IconType> = {
   FaCartShopping,
 };
 
-// --- LOCAL STORAGE KEYS ---
-const STORAGE_KEYS = {
-  PROJECTS: "kanban-projects",
-  SELECTED_PROJECT: "kanban-selected-project",
-  HAS_VISITED: "kanban-has-visited",
+// --- TIPE DATA UNTUK DESERIALISASI (MENGHINDARI 'ANY') ---
+type SerializedTask = Omit<Task, "createdAt"> & { createdAt: string };
+type SerializedBoard = Omit<Board, "createdAt" | "tasks"> & {
+  createdAt: string;
+  tasks: SerializedTask[];
+};
+type SerializedProject = Omit<Project, "createdAt" | "boards" | "icon"> & {
+  iconName: string;
+  createdAt: string;
+  boards: SerializedBoard[];
 };
 
 // Helper function untuk cek apakah localStorage tersedia
@@ -99,15 +84,15 @@ const serializeProjects = (projects: Project[]): string => {
 
 const deserializeProjects = (data: string): Project[] => {
   try {
-    const parsedData = JSON.parse(data);
-    return parsedData.map((project: any) => ({
+    const parsedData: SerializedProject[] = JSON.parse(data);
+    return parsedData.map((project) => ({
       ...project,
       icon: iconMap[project.iconName] || FaDiagramProject,
       createdAt: new Date(project.createdAt),
-      boards: project.boards.map((board: any) => ({
+      boards: project.boards.map((board) => ({
         ...board,
         createdAt: new Date(board.createdAt),
-        tasks: board.tasks.map((task: any) => ({
+        tasks: board.tasks.map((task) => ({
           ...task,
           createdAt: new Date(task.createdAt),
         })),
@@ -172,6 +157,7 @@ const isFirstTimeUser = (): boolean => {
     const hasVisited = localStorage.getItem(STORAGE_KEYS.HAS_VISITED);
     return hasVisited === null || hasVisited === "undefined";
   } catch (error) {
+    console.error("Error checking first time user status:", error);
     return true;
   }
 };
@@ -181,7 +167,7 @@ const markUserAsVisited = (): void => {
   try {
     localStorage.setItem(STORAGE_KEYS.HAS_VISITED, "true");
   } catch (error) {
-    console.warn("Cannot save visited status to localStorage");
+    console.warn("Cannot save visited status to localStorage:", error);
   }
 };
 

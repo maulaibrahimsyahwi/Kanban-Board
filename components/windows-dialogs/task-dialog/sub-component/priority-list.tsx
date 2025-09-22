@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 
 import { IoIosArrowDown } from "react-icons/io";
 import { RiArrowDownDoubleFill } from "react-icons/ri";

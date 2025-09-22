@@ -4,7 +4,7 @@ import {
   CommandList,
   CommandEmpty,
 } from "@/components/ui/command";
-import { Project } from "@/contexts/projectContext";
+import { Project } from "@/types";
 import { SingleProjectCommandItem } from "./singleProjectItem";
 
 interface ProjectCommandItemsProps {

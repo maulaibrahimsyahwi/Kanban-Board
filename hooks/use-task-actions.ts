@@ -1,7 +1,7 @@
 // hooks/use-task-actions.ts
 import { useState, useMemo } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 import { toast } from "sonner";
 
 export function useTaskActions(taskId: string, boardId: string) {

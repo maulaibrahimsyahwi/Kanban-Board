@@ -10,7 +10,7 @@ import {
   DialogPortal,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Task } from "@/contexts/projectContext";
+import { Task } from "@/types";
 import TaskName from "./sub-component/task-name";
 import TaskDescription from "./sub-component/task-description";
 import PrioritySelector from "./sub-component/priority-selector";

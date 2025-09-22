@@ -1,7 +1,7 @@
 import { Separator } from "../ui/separator";
 import { ModeToggle } from "../mode-toggle";
 import AppNameAndLogo from "./logo-app";
-import ProjectDialog from "../windows-dialogs/project-dialog/project-dialog";
+import ProjectDialog from "../windows-dialogs/project-dialog/CreateProjectDialog";
 
 export default function NavBar() {
   return (
