@@ -1,4 +1,3 @@
-// components/drop-downs/task-drop-down.tsx
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
@@ -21,6 +20,7 @@ import { IoArrowBack, IoArrowForward } from "react-icons/io5";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
 import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
+import { useProjects } from "@/contexts/projectContext";
 
 interface TasksDropDownProps {
   taskId: string;
@@ -28,28 +28,34 @@ interface TasksDropDownProps {
 }
 
 export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
+  const { selectedProject } = useProjects();
   const {
-    // Data
     task,
     currentBoard,
     previousBoard,
     nextBoard,
     otherBoards,
-    // State UI
     isEditDialogOpen,
     isDropdownOpen,
     isSaving,
-    // State Form
     editTitle,
     editDescription,
     editPriority,
-    // Setters
+    editProgress,
+    editStartDate,
+    editDueDate,
+    editLabels,
+    editBoardId,
     setIsDropdownOpen,
     setIsEditDialogOpen,
     setEditTitle,
     setEditDescription,
     setEditPriority,
-    // Handlers
+    setEditProgress,
+    setEditStartDate,
+    setEditDueDate,
+    setEditLabels,
+    setEditBoardId,
     handleEditTask,
     handleSaveEdit,
     handleDeleteTask,
@@ -58,7 +64,6 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
     handleMoveTask,
   } = useTaskActions(taskId, boardId);
 
-  // Logika alignment dropdown (TETAP SAMA)
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [dropdownAlign, setDropdownAlign] = useState<"start" | "end">("end");
 
@@ -67,7 +72,6 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
       const rect = triggerRef.current.getBoundingClientRect();
       const distanceToRight = window.innerWidth - rect.right;
       if (distanceToRight < 280) {
-        // dropdown width
         setDropdownAlign("start");
       } else {
         setDropdownAlign("end");
@@ -75,7 +79,7 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
     }
   }, [isDropdownOpen]);
 
-  if (!task || !currentBoard) {
+  if (!task || !currentBoard || !selectedProject) {
     return null;
   }
 
@@ -83,7 +87,6 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
     return name.length <= maxLength ? name : name.slice(0, maxLength) + "...";
   };
 
-  // STRUKTUR JSX DROPDOWN DI BAWAH INI SAMA PERSIS DENGAN FILE ASLI ANDA
   return (
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -205,9 +208,20 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
         title={editTitle}
         description={editDescription}
         priority={editPriority}
+        progress={editProgress}
+        startDate={editStartDate}
+        dueDate={editDueDate}
+        editLabels={editLabels}
+        editBoardId={editBoardId}
+        boards={selectedProject.boards}
         setTitle={setEditTitle}
         setDescription={setEditDescription}
         setPriority={setEditPriority}
+        setProgress={setEditProgress}
+        setStartDate={setEditStartDate}
+        setDueDate={setEditDueDate}
+        setEditLabels={setEditLabels}
+        setEditBoardId={setEditBoardId}
         boardName={currentBoard.name}
       />
     </>

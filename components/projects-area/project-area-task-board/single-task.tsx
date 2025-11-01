@@ -1,8 +1,15 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MdKeyboardDoubleArrowDown } from "react-icons/md";
-import { MdKeyboardDoubleArrowRight } from "react-icons/md";
-import { MdOutlineKeyboardDoubleArrowUp } from "react-icons/md";
-import { useEffect, useRef, useState, memo } from "react"; // Ditambahkan memo
+import {
+  BellRing,
+  AlertCircle,
+  Circle,
+  ArrowDown,
+  CheckCircle2,
+  Loader2,
+  CircleDot,
+  CalendarDays,
+} from "lucide-react";
+import { useEffect, useRef, useState, memo } from "react";
 import {
   draggable,
   dropTargetForElements,
@@ -15,6 +22,7 @@ import TasksDropDown from "../../drop-downs/task-drop-down";
 import { Task } from "@/types";
 import { formatDateSafely } from "@/lib/utils";
 import { useProjects } from "@/contexts/projectContext";
+import { cn } from "@/lib/utils";
 
 interface SingleTaskProps {
   task: Task;
@@ -23,6 +31,64 @@ interface SingleTaskProps {
   totalTasks?: number;
   isDragPreview?: boolean;
 }
+
+const getProgressConfig = (progress: Task["progress"]) => {
+  switch (progress) {
+    case "completed":
+      return {
+        icon: CheckCircle2,
+        label: "Selesai",
+        className: "text-green-600 dark:text-green-500",
+      };
+    case "in-progress":
+      return {
+        icon: Loader2,
+        label: "Dalam proses",
+        className: "text-blue-600 dark:text-blue-400",
+      };
+    case "not-started":
+    default:
+      return {
+        icon: CircleDot,
+        label: "Belum dimulai",
+        className: "text-muted-foreground",
+      };
+  }
+};
+
+const getPriorityConfig = (priority: Task["priority"]) => {
+  switch (priority) {
+    case "urgent":
+      return {
+        icon: BellRing,
+        label: "Mendesak",
+        className: "text-red-600 dark:text-red-400",
+        bgColor: "bg-red-500/10",
+      };
+    case "important":
+      return {
+        icon: AlertCircle,
+        label: "Penting",
+        className: "text-orange-600 dark:text-orange-400",
+        bgColor: "bg-orange-500/10",
+      };
+    case "medium":
+      return {
+        icon: Circle,
+        label: "Sedang",
+        className: "text-green-600 dark:text-green-400",
+        bgColor: "bg-green-500/10",
+      };
+    case "low":
+    default:
+      return {
+        icon: ArrowDown,
+        label: "Rendah",
+        className: "text-blue-600 dark:text-blue-400",
+        bgColor: "bg-blue-500/10",
+      };
+  }
+};
 
 const SingleTask = ({
   task,
@@ -42,7 +108,6 @@ const SingleTask = ({
     if (!element || isDragPreview) return;
 
     return combine(
-      // Draggable behavior
       draggable({
         element,
         getInitialData: () => ({
@@ -54,7 +119,6 @@ const SingleTask = ({
         }),
         onDragStart: () => {
           setIsDragging(true);
-          // Disable smooth scrolling during drag
           const scrollContainer = element.closest(".task-scroll-container");
           if (scrollContainer) {
             scrollContainer.classList.add("disable-scroll-behavior");
@@ -62,7 +126,6 @@ const SingleTask = ({
         },
         onDrop: () => {
           setIsDragging(false);
-          // Re-enable smooth scrolling
           const scrollContainer = element.closest(".task-scroll-container");
           if (scrollContainer) {
             scrollContainer.classList.remove("disable-scroll-behavior");
@@ -70,11 +133,9 @@ const SingleTask = ({
         },
       }),
 
-      // Drop target for reordering within the same board
       dropTargetForElements({
         element,
         canDrop: ({ source }) => {
-          // Only allow drops from tasks in the same board
           return (
             source.data.type === "task" &&
             source.data.boardId === boardId &&
@@ -122,9 +183,7 @@ const SingleTask = ({
             const closestEdge = self.data.closestEdge as Edge;
 
             if (sourceIndex === targetIndex) return;
-            // Add animation trigger
             setIsAnimating(true);
-            // Trigger reorder with animation
             setTimeout(() => {
               const destinationIndex = getReorderDestinationIndex({
                 startIndex: sourceIndex,
@@ -135,7 +194,6 @@ const SingleTask = ({
 
               reorderTasksInBoard(boardId, sourceIndex, destinationIndex);
 
-              // Clear animation state after completion
               setTimeout(() => setIsAnimating(false), 300);
             }, 0);
           }
@@ -144,36 +202,12 @@ const SingleTask = ({
     );
   }, [task, boardId, taskIndex, reorderTasksInBoard, isDragPreview]);
 
-  const getPriorityConfig = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return {
-          icon: MdOutlineKeyboardDoubleArrowUp,
-          bgColor: "bg-red-500/15",
-          textColor: "text-red-900 dark:text-red-400",
-          label: "High",
-        };
-      case "medium":
-        return {
-          icon: MdKeyboardDoubleArrowRight,
-          bgColor: "bg-yellow-500/15",
-          textColor: "text-yellow-900 dark:text-yellow-400",
-          label: "Medium",
-        };
-      case "low":
-      default:
-        return {
-          icon: MdKeyboardDoubleArrowDown,
-          bgColor: "bg-green-500/15",
-          textColor: "text-green-900 dark:text-green-400",
-          label: "Low",
-        };
-    }
-  };
-
   const priorityConfig = getPriorityConfig(task.priority);
   const PriorityIcon = priorityConfig.icon;
-  // Drop indicator styles
+
+  const progressConfig = getProgressConfig(task.progress);
+  const ProgressIcon = progressConfig.icon;
+
   const getDropIndicatorStyle = () => {
     if (!isDraggedOver || !closestEdge) return "";
     const baseStyle =
@@ -187,27 +221,37 @@ const SingleTask = ({
     return "";
   };
 
+  const isOverdue =
+    task.dueDate &&
+    task.progress !== "completed" &&
+    new Date(task.dueDate) < new Date();
+
   return (
     <div className={`relative ${getDropIndicatorStyle()}`}>
       <Card
         ref={taskRef}
         data-testid="task-card"
-        className={`shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card relative ${
-          !isDragPreview ? "cursor-grab active:cursor-grabbing" : ""
-        } ${
+        className={cn(
+          "shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card relative",
+          !isDragPreview ? "cursor-grab active:cursor-grabbing" : "",
           isDragging
             ? "opacity-50 shadow-lg scale-105 rotate-2 z-50 task-dragging"
-            : ""
-        } ${isDragPreview ? "transform rotate-6 opacity-90" : ""} ${
-          isDraggedOver && !isDragging ? "task-drag-over" : ""
-        } ${isAnimating ? "task-animating" : ""}`}
+            : "",
+          isDragPreview ? "transform rotate-6 opacity-90" : "",
+          isDraggedOver && !isDragging ? "task-drag-over" : "",
+          isAnimating ? "task-animating" : ""
+        )}
       >
         <CardHeader className="p-4">
           <div className="flex justify-between items-center">
             <div
-              className={`p-1 py-[4px] ${priorityConfig.bgColor} rounded-3xl px-3 font-medium ${priorityConfig.textColor} flex items-center gap-1 text-sm`}
+              className={cn(
+                "p-1 py-[4px] rounded-3xl px-3 font-medium flex items-center gap-1 text-sm",
+                priorityConfig.bgColor,
+                priorityConfig.className
+              )}
             >
-              <PriorityIcon className="mb-[2px] text-sm" />
+              <PriorityIcon className="w-3.5 h-3.5" />
               <span className="text-xs font-semibold">
                 {priorityConfig.label}
               </span>
@@ -232,6 +276,57 @@ const SingleTask = ({
               {task.description}
             </p>
           )}
+
+          <div className="flex flex-col gap-2 pt-2 mt-2 border-t border-border/50">
+            {task.labels && task.labels.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {task.labels.map((label) => (
+                  <div
+                    key={label.name}
+                    className={cn(
+                      "px-2 py-0.5 rounded text-xs font-medium w-fit",
+                      label.color
+                    )}
+                  >
+                    {label.name}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div
+              className={cn(
+                "flex items-center gap-2 text-sm",
+                progressConfig.className
+              )}
+            >
+              <ProgressIcon
+                className={cn(
+                  "w-4 h-4",
+                  task.progress === "in-progress" && "animate-spin"
+                )}
+              />
+              <span className="text-xs font-medium">
+                {progressConfig.label}
+              </span>
+            </div>
+
+            {task.dueDate && (
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-sm",
+                  isOverdue ? "text-red-600" : "text-muted-foreground"
+                )}
+              >
+                <CalendarDays className="w-4 h-4" />
+                <span className="text-xs font-medium">
+                  {isOverdue ? "Terlewat: " : "Tenggat: "}
+                  {formatDateSafely(task.dueDate)}
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
             <span>{formatDateSafely(task.createdAt)}</span>
             <span className="bg-primary/10 text-primary px-2 py-1 rounded-full">

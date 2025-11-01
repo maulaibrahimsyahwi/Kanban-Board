@@ -1,4 +1,3 @@
-// components/windows-dialogs/task-dialog/taskdialog.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -16,31 +15,41 @@ import {
   TaskDescription,
 } from "./sub-component/task-input-components";
 import { BiTask } from "react-icons/bi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProjects } from "@/contexts/projectContext";
 import { Task } from "@/types";
 import PrioritySelector from "./sub-component/priority-selector";
+import LabelSelector from "./sub-component/label-selector";
 import { CgGoogleTasks } from "react-icons/cg";
-import { toast } from "sonner"; // Add this import
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 
-// Props agar dialog ini bisa dipanggil dari mana saja
 interface TaskDialogProps {
-  boardId?: string; // Board spesifik jika dipanggil dari dalam board
-  trigger?: React.ReactNode; // Custom trigger (misal: tombol "+ Add new task")
+  boardId?: string;
+  trigger?: React.ReactNode;
 }
 
 export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false); // Add this state
+  const [isCreating, setIsCreating] = useState(false);
   const { addTaskToProject, selectedProject } = useProjects();
 
-  // State untuk form
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<Task["priority"]>("low");
+  const [priority, setPriority] = useState<Task["priority"]>("medium");
+  const [progress, setProgress] = useState<Task["progress"]>("not-started");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [labels, setLabels] = useState<Task["labels"]>([]);
+  const [selectedBoardId, setSelectedBoardId] = useState(boardId);
 
-  // Validasi
-  const isFormValid = title.trim().length >= 3 && title.trim().length <= 50;
+  useEffect(() => {
+    setSelectedBoardId(boardId);
+  }, [boardId]);
+
+  const isFormValid =
+    title.trim().length >= 3 && title.trim().length <= 50 && selectedBoardId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,44 +64,44 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
     setIsCreating(true);
 
     try {
-      // Simulate delay for better UX (optional)
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Default ke board pertama jika tidak ada boardId spesifik yang diberikan
-      const targetBoardId = boardId || selectedProject.boards[0]?.id;
+      const targetBoardId = selectedBoardId;
       if (!targetBoardId) {
-        console.error("No board available to add the task to.");
         toast.error("Failed to create task", {
-          description: "No board available to add the task to.",
-          duration: 5000,
+          description: "No board selected.",
         });
         return;
       }
 
       addTaskToProject(
-        { title: title.trim(), description, priority },
+        {
+          title: title.trim(),
+          description,
+          priority,
+          progress,
+          startDate: startDate,
+          dueDate: dueDate,
+          labels: labels,
+        },
         targetBoardId
       );
 
-      // Get board name for toast
       const targetBoard = selectedProject.boards.find(
         (board) => board.id === targetBoardId
       );
       const boardName = targetBoard?.name || "Unknown Board";
 
-      // Show success toast
       toast.success("Task created successfully", {
         description: `"${title.trim()}" has been added to ${boardName}.`,
         duration: 5000,
       });
 
-      // Reset form dan tutup dialog
       resetForm();
       setIsOpen(false);
     } catch (error) {
       console.error("Error creating task:", error);
 
-      // Show error toast
       toast.error("Failed to create task", {
         description:
           "An error occurred while creating the task. Please try again.",
@@ -106,7 +115,12 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   const resetForm = () => {
     setTitle("");
     setDescription("");
-    setPriority("low");
+    setPriority("medium");
+    setProgress("not-started");
+    setStartDate(null);
+    setDueDate(null);
+    setLabels([]);
+    setSelectedBoardId(boardId);
   };
 
   const handleCancel = () => {
@@ -131,14 +145,13 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <Button className="rounded-3xl px-4 cursor-pointer">
-            {" "}
             <CgGoogleTasks />
             New Task
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins sm:max-w-[425px] poppins top-10 translate-y-0 overflow-hidden">
+      <DialogContent className="poppins sm:max-w-md poppins top-10 translate-y-0 overflow-y-auto max-h-[90vh]">
         <DialogHeader className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-muted rounded-full flex justify-center items-center">
@@ -157,19 +170,89 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
 
         <Separator className="my-1" />
 
-        <form onSubmit={handleSubmit} className="space-y-6 overflow-hidden">
+        <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
           <div className="space-y-4">
-            {/* Task Title */}
             <TaskName value={title} onChange={setTitle} />
-
-            {/* Task Description */}
             <TaskDescription value={description} onChange={setDescription} />
 
-            {/* Priority */}
-            <PrioritySelector
-              selectedPriority={priority}
-              onSelectPriority={setPriority}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <LabelSelector
+                  selectedLabels={labels}
+                  onLabelsChange={setLabels}
+                />
+                <div className="space-y-2">
+                  <Label htmlFor="board-select" className="text-sm font-medium">
+                    Wadah
+                  </Label>
+                  <select
+                    id="board-select"
+                    value={selectedBoardId || ""}
+                    onChange={(e) => setSelectedBoardId(e.target.value)}
+                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
+                  >
+                    <option value="" disabled>
+                      Pilih wadah...
+                    </option>
+                    {selectedProject.boards.map((board) => (
+                      <option key={board.id} value={board.id}>
+                        {board.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="progress-select"
+                    className="text-sm font-medium"
+                  >
+                    Kemajuan
+                  </Label>
+                  <select
+                    id="progress-select"
+                    value={progress}
+                    onChange={(e) =>
+                      setProgress(e.target.value as Task["progress"])
+                    }
+                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
+                  >
+                    <option value="not-started">Belum dimulai</option>
+                    <option value="in-progress">Dalam proses</option>
+                    <option value="completed">Selesai</option>
+                  </select>
+                </div>
+                <PrioritySelector
+                  selectedPriority={priority}
+                  onSelectPriority={setPriority}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date" className="text-sm font-medium">
+                  Tanggal mulai
+                </Label>
+                <DatePicker
+                  date={startDate}
+                  onDateChange={setStartDate}
+                  placeholder="Pilih tanggal"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="due-date" className="text-sm font-medium">
+                  Tenggat waktu
+                </Label>
+                <DatePicker
+                  date={dueDate}
+                  onDateChange={setDueDate}
+                  placeholder="Pilih tanggal"
+                />
+              </div>
+            </div>
           </div>
 
           <Separator className="my-4" />

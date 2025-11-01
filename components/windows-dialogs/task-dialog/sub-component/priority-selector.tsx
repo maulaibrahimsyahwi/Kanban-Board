@@ -7,43 +7,48 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Task } from "@/types";
-
-import { IoIosArrowDown } from "react-icons/io";
-import { RiArrowDownDoubleFill } from "react-icons/ri";
-import { MdKeyboardDoubleArrowRight } from "react-icons/md";
-import { MdOutlineKeyboardDoubleArrowUp } from "react-icons/md";
-import { IconType } from "react-icons/lib";
+import {
+  BellRing,
+  AlertCircle,
+  Circle,
+  ArrowDown,
+  ChevronDown,
+} from "lucide-react";
+import { IconType } from "lucide-react";
 import { IoCheckmark } from "react-icons/io5";
+import { cn } from "@/lib/utils";
 
 type PriorityItem = {
   id: Task["priority"];
   name: string;
   icon: IconType;
-  textColor: string;
-  backgroundColor: string;
+  className: string;
 };
 
 const PriorityListArray: PriorityItem[] = [
   {
-    id: "low",
-    name: "Low",
-    icon: RiArrowDownDoubleFill,
-    textColor: "text-green-700 dark:text-green-400",
-    backgroundColor: "bg-green-500/10",
+    id: "urgent",
+    name: "Mendesak",
+    icon: BellRing,
+    className: "text-red-600 dark:text-red-400",
+  },
+  {
+    id: "important",
+    name: "Penting",
+    icon: AlertCircle,
+    className: "text-orange-600 dark:text-orange-400",
   },
   {
     id: "medium",
-    name: "Medium",
-    icon: MdKeyboardDoubleArrowRight,
-    textColor: "text-yellow-700 dark:text-yellow-400",
-    backgroundColor: "bg-yellow-500/10",
+    name: "Sedang",
+    icon: Circle,
+    className: "text-green-600 dark:text-green-400",
   },
   {
-    id: "high",
-    name: "High",
-    icon: MdOutlineKeyboardDoubleArrowUp,
-    textColor: "text-red-700 dark:text-red-400",
-    backgroundColor: "bg-red-500/10",
+    id: "low",
+    name: "Rendah",
+    icon: ArrowDown,
+    className: "text-blue-600 dark:text-blue-400",
   },
 ];
 
@@ -58,47 +63,41 @@ export default function PrioritySelector({
 }: PrioritySelectorProps) {
   const selectedPriorityItem =
     PriorityListArray.find((p) => p.id === selectedPriority) ||
-    PriorityListArray[0];
+    PriorityListArray[2];
 
   const handleSelectPriority = (priorityItem: PriorityItem) => {
     onSelectPriority(priorityItem.id);
   };
 
-  // Function to render the selected priority
   function renderSelectedPriority() {
     return (
-      <div className="flex items-center gap-2">
-        <div
-          className={`size-6 ${selectedPriorityItem.backgroundColor} rounded-md flex items-center justify-center text-lg ${selectedPriorityItem.textColor}`}
-        >
-          <selectedPriorityItem.icon />
-        </div>
-        <span className={`${selectedPriorityItem.textColor} font-medium`}>
-          {selectedPriorityItem.name}
-        </span>
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          selectedPriorityItem.className
+        )}
+      >
+        <selectedPriorityItem.icon className="w-4 h-4" />
+        <span className="font-medium">{selectedPriorityItem.name}</span>
       </div>
     );
   }
 
-  // Function to render each dropdown item
   function renderDropDownItem(priorityItem: PriorityItem) {
     const isSelected = priorityItem.id === selectedPriority;
 
     return (
       <DropdownMenuItem
         key={priorityItem.id}
-        className="flex justify-between items-center cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800"
+        className={cn(
+          "flex justify-between items-center cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800",
+          priorityItem.className
+        )}
         onClick={() => handleSelectPriority(priorityItem)}
       >
         <div className="flex items-center gap-2">
-          <div
-            className={`size-6 ${priorityItem.backgroundColor} rounded-md flex items-center justify-center text-lg ${priorityItem.textColor}`}
-          >
-            <priorityItem.icon />
-          </div>
-          <span className={`${priorityItem.textColor}`}>
-            {priorityItem.name}
-          </span>
+          <priorityItem.icon className="w-4 h-4" />
+          <span>{priorityItem.name}</span>
         </div>
         {isSelected && <IoCheckmark className="text-primary" />}
       </DropdownMenuItem>
@@ -107,7 +106,7 @@ export default function PrioritySelector({
 
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Priority</Label>
+      <Label className="text-sm font-medium">Prioritas</Label>
       <div className="w-full">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -117,7 +116,7 @@ export default function PrioritySelector({
               type="button"
             >
               {renderSelectedPriority()}
-              <IoIosArrowDown className="text-muted-foreground" />
+              <ChevronDown className="text-muted-foreground w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

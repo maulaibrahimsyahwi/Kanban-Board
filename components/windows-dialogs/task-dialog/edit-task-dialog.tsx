@@ -1,4 +1,3 @@
-// components/windows-dialogs/task-dialog/edit-task-dialog.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,42 +8,38 @@ import {
   DialogTitle,
   DialogPortal,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Task } from "@/types";
+import { Label } from "@/components/ui/label";
+import { Task, Board } from "@/types";
 import TaskName from "./sub-component/task-name";
 import TaskDescription from "./sub-component/task-description";
 import PrioritySelector from "./sub-component/priority-selector";
+import LabelSelector from "./sub-component/label-selector";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
   isSaving: boolean;
   onClose: () => void;
   onSave: () => void;
-  // Props untuk data form
   title: string;
   description: string;
   priority: Task["priority"];
-  // Setters untuk data form
+  progress: Task["progress"];
+  startDate: Date | null;
+  dueDate: Date | null;
+  editLabels: Task["labels"];
+  editBoardId: string;
+  boards: Board[];
   setTitle: (value: string) => void;
   setDescription: (value: string) => void;
   setPriority: (value: Task["priority"]) => void;
-  // Info tambahan
+  setProgress: (value: Task["progress"]) => void;
+  setStartDate: (date: Date | null) => void;
+  setDueDate: (date: Date | null) => void;
+  setEditLabels: (value: Task["labels"]) => void;
+  setEditBoardId: (value: string) => void;
   boardName: string;
 }
-
-// Fungsi helper warna, sama seperti di file asli
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400";
-    case "low":
-      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200";
-  }
-};
 
 export default function EditTaskDialog({
   isOpen,
@@ -54,9 +49,20 @@ export default function EditTaskDialog({
   title,
   description,
   priority,
+  progress,
+  startDate,
+  dueDate,
+  editLabels,
+  editBoardId,
+  boards,
   setTitle,
   setDescription,
   setPriority,
+  setProgress,
+  setStartDate,
+  setDueDate,
+  setEditLabels,
+  setEditBoardId,
   boardName,
 }: EditTaskDialogProps) {
   const truncateBoardName = (name: string, maxLength: number = 30) => {
@@ -66,7 +72,7 @@ export default function EditTaskDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogPortal>
-        <DialogContent className="max-w-md poppins overflow-hidden">
+        <DialogContent className="max-w-md poppins overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
             <p className="text-sm text-muted-foreground">
@@ -74,27 +80,95 @@ export default function EditTaskDialog({
             </p>
           </DialogHeader>
           <div className="space-y-4 py-4 overflow-hidden">
-            <div className="space-y-2">
-              <TaskName value={title} onChange={setTitle} onEnter={onSave} />
-            </div>
+            <TaskName value={title} onChange={setTitle} onEnter={onSave} />
             <TaskDescription
               value={description}
               onChange={setDescription}
               onEnter={onSave}
             />
-            <PrioritySelector
-              selectedPriority={priority}
-              onSelectPriority={setPriority}
-            />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Current:</span>
-              <Badge
-                variant="outline"
-                className={`text-xs ${getPriorityColor(priority)}`}
-              >
-                {priority.charAt(0).toUpperCase() + priority.slice(1)}
-              </Badge>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <LabelSelector
+                  selectedLabels={editLabels}
+                  onLabelsChange={setEditLabels}
+                />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-board-select"
+                    className="text-sm font-medium"
+                  >
+                    Wadah
+                  </Label>
+                  <select
+                    id="edit-board-select"
+                    value={editBoardId}
+                    onChange={(e) => setEditBoardId(e.target.value)}
+                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
+                  >
+                    {boards.map((board) => (
+                      <option key={board.id} value={board.id}>
+                        {board.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-progress-select"
+                    className="text-sm font-medium"
+                  >
+                    Kemajuan
+                  </Label>
+                  <select
+                    id="edit-progress-select"
+                    value={progress}
+                    onChange={(e) =>
+                      setProgress(e.target.value as Task["progress"])
+                    }
+                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
+                  >
+                    <option value="not-started">Belum dimulai</option>
+                    <option value="in-progress">Dalam proses</option>
+                    <option value="completed">Selesai</option>
+                  </select>
+                </div>
+                <PrioritySelector
+                  selectedPriority={priority}
+                  onSelectPriority={setPriority}
+                />
+              </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="edit-start-date"
+                  className="text-sm font-medium"
+                >
+                  Tanggal mulai
+                </Label>
+                <DatePicker
+                  date={startDate}
+                  onDateChange={setStartDate}
+                  placeholder="Pilih tanggal"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-due-date" className="text-sm font-medium">
+                  Tenggat waktu
+                </Label>
+                <DatePicker
+                  date={dueDate}
+                  onDateChange={setDueDate}
+                  placeholder="Pilih tanggal"
+                />
+              </div>
+            </div>
+
             <div className="text-xs text-muted-foreground pt-2 border-t">
               <div>
                 Press <span className="font-bold">Enter </span> in title field

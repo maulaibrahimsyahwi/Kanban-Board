@@ -1,15 +1,20 @@
 import { IconType } from "react-icons";
 
-// Tipe data dasar untuk Task
 export type Task = {
   id: string;
   title: string;
   description: string;
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "important" | "urgent";
   createdAt: Date;
+  progress: "not-started" | "in-progress" | "completed";
+  startDate: Date | null;
+  dueDate: Date | null;
+  labels: {
+    name: string;
+    color: string;
+  }[];
 };
 
-// Tipe data dasar untuk Board
 export type Board = {
   id: string;
   name: string;
@@ -17,7 +22,6 @@ export type Board = {
   tasks: Task[];
 };
 
-// Tipe data dasar untuk Project
 export type Project = {
   id: string;
   name: string;
