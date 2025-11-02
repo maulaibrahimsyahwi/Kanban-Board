@@ -19,6 +19,7 @@ import { TaskChecklist } from "./sub-component/task-checklist";
 import ProgressSelector from "./sub-component/progress-selector";
 import { Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
+import React, { Dispatch, SetStateAction } from "react";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
@@ -46,7 +47,9 @@ interface EditTaskDialogProps {
   editChecklist: Task["checklist"];
   editCardDisplayPreference: Task["cardDisplayPreference"];
   setEditChecklist: (items: Task["checklist"]) => void;
-  setEditCardDisplayPreference: (value: Task["cardDisplayPreference"]) => void;
+  setEditCardDisplayPreference: Dispatch<
+    SetStateAction<Task["cardDisplayPreference"]>
+  >;
 }
 
 export default function EditTaskDialog({
