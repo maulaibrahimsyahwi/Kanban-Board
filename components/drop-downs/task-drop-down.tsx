@@ -20,7 +20,7 @@ import { Task, Board } from "@/types";
 interface TasksDropDownProps {
   task: Task;
   currentBoard: Board;
-  otherBoards: Board[];
+  otherBoards?: Board[];
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
   editLabels: Task["labels"];
