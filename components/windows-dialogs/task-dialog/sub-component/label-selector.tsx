@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -20,8 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Task } from "@/types";
 import { DEFAULT_LABELS, TaskLabel } from "@/constants";
-import { Tag, X, Pencil } from "lucide-react";
-import { IoCheckmark } from "react-icons/io5";
+import { X, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const COLOR_PALETTE: { name: string; class: string }[] = [

@@ -39,7 +39,7 @@ const PriorityListArray: PriorityItem[] = [
     backgroundColor: "bg-yellow-500/10",
   },
   {
-    id: "high",
+    id: "important",
     name: "High",
     icon: MdOutlineKeyboardDoubleArrowUp,
     textColor: "text-red-700",
@@ -64,7 +64,6 @@ export default function PrioritySelector({
     onSelectPriority(priorityItem.id);
   };
 
-  // Function to render the selected priority
   function renderSelectedPriority() {
     return (
       <div className="flex items-center gap-2">
@@ -80,7 +79,6 @@ export default function PrioritySelector({
     );
   }
 
-  // Function to render each dropdown item
   function renderDropDownItem(priorityItem: PriorityItem) {
     const isSelected = priorityItem.id === selectedPriority;
 
