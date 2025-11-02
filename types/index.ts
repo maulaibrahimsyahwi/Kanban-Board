@@ -37,3 +37,16 @@ export type Project = {
   createdAt: Date;
   boards: Board[];
 };
+
+export type DueDateFilter =
+  | "overdue"
+  | "today"
+  | "tomorrow"
+  | "this-week"
+  | "next-week"
+  | "upcoming"
+  | "no-date";
+
+export type PriorityFilter = Task["priority"];
+
+export type ProgressFilter = Task["progress"];
