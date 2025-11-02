@@ -2,13 +2,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   BellRing,
   AlertCircle,
-  Circle,
   ArrowDown,
-  CheckCircle2,
-  Loader2,
-  CircleDot,
   CalendarDays,
+  AlignLeft,
 } from "lucide-react";
+import { FaRegCircle } from "react-icons/fa";
+import { FaCircleCheck } from "react-icons/fa6";
+import { BsCircleHalf } from "react-icons/bs";
+import { GoDotFill } from "react-icons/go";
 import { useEffect, useRef, useState, memo } from "react";
 import {
   draggable,
@@ -20,9 +21,12 @@ import { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/types";
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import TasksDropDown from "../../drop-downs/task-drop-down";
 import { Task } from "@/types";
-import { formatDateSafely } from "@/lib/utils";
 import { useProjects } from "@/contexts/projectContext";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { useTaskActions } from "@/hooks/use-task-actions";
+import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
+import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
 
 interface SingleTaskProps {
   task: Task;
@@ -36,22 +40,25 @@ const getProgressConfig = (progress: Task["progress"]) => {
   switch (progress) {
     case "completed":
       return {
-        icon: CheckCircle2,
+        icon: FaCircleCheck,
         label: "Selesai",
         className: "text-green-600 dark:text-green-500",
+        bgColor: "bg-green-500/10",
       };
     case "in-progress":
       return {
-        icon: Loader2,
+        icon: BsCircleHalf,
         label: "Dalam proses",
         className: "text-blue-600 dark:text-blue-400",
+        bgColor: "bg-blue-500/10",
       };
     case "not-started":
     default:
       return {
-        icon: CircleDot,
+        icon: FaRegCircle,
         label: "Belum dimulai",
         className: "text-muted-foreground",
+        bgColor: "bg-muted",
       };
   }
 };
@@ -74,7 +81,7 @@ const getPriorityConfig = (priority: Task["priority"]) => {
       };
     case "medium":
       return {
-        icon: Circle,
+        icon: GoDotFill,
         label: "Sedang",
         className: "text-green-600 dark:text-green-400",
         bgColor: "bg-green-500/10",
@@ -101,8 +108,12 @@ const SingleTask = ({
   const [isDraggedOver, setIsDraggedOver] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [wasDragged, setWasDragged] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { reorderTasksInBoard } = useProjects();
+  const { reorderTasksInBoard, selectedProject } = useProjects();
+  const taskActions = useTaskActions(task.id, boardId);
+
   useEffect(() => {
     const element = taskRef.current;
     if (!element || isDragPreview) return;
@@ -119,6 +130,7 @@ const SingleTask = ({
         }),
         onDragStart: () => {
           setIsDragging(true);
+          setWasDragged(true);
           const scrollContainer = element.closest(".task-scroll-container");
           if (scrollContainer) {
             scrollContainer.classList.add("disable-scroll-behavior");
@@ -208,6 +220,12 @@ const SingleTask = ({
   const progressConfig = getProgressConfig(task.progress);
   const ProgressIcon = progressConfig.icon;
 
+  const checklistItems = task.checklist || [];
+  const completedChecklistItems = checklistItems.filter(
+    (item) => item.isDone
+  ).length;
+  const totalChecklistItems = checklistItems.length;
+
   const getDropIndicatorStyle = () => {
     if (!isDraggedOver || !closestEdge) return "";
     const baseStyle =
@@ -221,16 +239,69 @@ const SingleTask = ({
     return "";
   };
 
-  const isOverdue =
-    task.dueDate &&
-    task.progress !== "completed" &&
-    new Date(task.dueDate) < new Date();
+  const renderDueDateFooter = (
+    dueDate: Date | null,
+    progress: Task["progress"]
+  ) => {
+    if (!dueDate) {
+      return <span></span>;
+    }
+
+    const taskDueDate = new Date(dueDate);
+    const now = new Date();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDateOnly = new Date(taskDueDate.getTime());
+    dueDateOnly.setHours(0, 0, 0, 0);
+
+    const isOverdue = dueDateOnly < today && progress !== "completed";
+    const isCurrentYear = taskDueDate.getFullYear() === now.getFullYear();
+
+    const formattedDate = isCurrentYear
+      ? format(taskDueDate, "dd/MM")
+      : format(taskDueDate, "dd/MM/yyyy");
+
+    const boxColorClasses = isOverdue
+      ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+      : "bg-muted text-muted-foreground";
+
+    const iconColorClasses = isOverdue
+      ? "text-red-600 dark:text-red-400"
+      : "text-muted-foreground";
+
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-1.5 px-2 py-1 rounded-md",
+          boxColorClasses
+        )}
+      >
+        <CalendarDays className={cn("w-3.5 h-3.5", iconColorClasses)} />
+        <span className="text-xs font-medium">{formattedDate}</span>
+      </div>
+    );
+  };
+
+  const handleCardClick = () => {
+    if (wasDragged) {
+      setWasDragged(false);
+      return;
+    }
+    taskActions.handleEditTask();
+  };
+
+  if (!taskActions.currentBoard || !selectedProject) {
+    return null;
+  }
 
   return (
     <div className={`relative ${getDropIndicatorStyle()}`}>
       <Card
         ref={taskRef}
         data-testid="task-card"
+        onClick={handleCardClick}
         className={cn(
           "shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card relative",
           !isDragPreview ? "cursor-grab active:cursor-grabbing" : "",
@@ -261,7 +332,10 @@ const SingleTask = ({
                 onClick={(e) => e.stopPropagation()}
                 className="dropdown-trigger-button"
               >
-                <TasksDropDown taskId={task.id} boardId={boardId} />
+                <TasksDropDown
+                  {...taskActions}
+                  onOpenDeleteDialog={() => setIsDeleteOpen(true)}
+                />
               </div>
             )}
           </div>
@@ -271,11 +345,51 @@ const SingleTask = ({
           <h3 className="font-bold text-lg text-foreground line-clamp-2">
             {task.title}
           </h3>
-          {task.description && (
-            <p className="text-sm text-muted-foreground line-clamp-3">
+
+          {task.cardDisplayPreference === "description" && task.description && (
+            <p className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-line">
               {task.description}
             </p>
           )}
+
+          {task.cardDisplayPreference === "checklist" &&
+            totalChecklistItems > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                  {completedChecklistItems === totalChecklistItems ? (
+                    <FaCircleCheck className="w-3.5 h-3.5 text-primary" />
+                  ) : (
+                    <FaRegCircle className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {completedChecklistItems} / {totalChecklistItems} item
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1.5 pl-5">
+                  {checklistItems.slice(0, 5).map((item) => (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "text-xs text-muted-foreground flex items-center gap-1.5",
+                        item.isDone && "line-through opacity-70"
+                      )}
+                    >
+                      {item.isDone ? (
+                        <FaCircleCheck className="w-3 h-3" />
+                      ) : (
+                        <FaRegCircle className="w-3 h-3" />
+                      )}
+                      <span className="truncate">{item.text}</span>
+                    </div>
+                  ))}
+                  {totalChecklistItems > 5 && (
+                    <span className="text-xs text-muted-foreground">
+                      + {totalChecklistItems - 5} lainnya...
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
           <div className="flex flex-col gap-2 pt-2 mt-2 border-t border-border/50">
             {task.labels && task.labels.length > 0 && (
@@ -294,47 +408,83 @@ const SingleTask = ({
               </div>
             )}
 
-            <div
-              className={cn(
-                "flex items-center gap-2 text-sm",
-                progressConfig.className
-              )}
-            >
-              <ProgressIcon
-                className={cn(
-                  "w-4 h-4",
-                  task.progress === "in-progress" && "animate-spin"
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {task.cardDisplayPreference !== "description" &&
+                task.description && (
+                  <div
+                    className="flex items-center gap-1"
+                    title="Tugas ini memiliki deskripsi"
+                  >
+                    <AlignLeft className="w-3.5 h-3.5" />
+                  </div>
                 )}
-              />
-              <span className="text-xs font-medium">
-                {progressConfig.label}
-              </span>
+              {task.cardDisplayPreference !== "checklist" &&
+                totalChecklistItems > 0 && (
+                  <div
+                    className="flex items-center gap-1"
+                    title="Tugas ini memiliki daftar periksa"
+                  >
+                    <FaCircleCheck className="w-3.5 h-3.5" />
+                    <span>
+                      {completedChecklistItems}/{totalChecklistItems}
+                    </span>
+                  </div>
+                )}
             </div>
-
-            {task.dueDate && (
-              <div
-                className={cn(
-                  "flex items-center gap-2 text-sm",
-                  isOverdue ? "text-red-600" : "text-muted-foreground"
-                )}
-              >
-                <CalendarDays className="w-4 h-4" />
-                <span className="text-xs font-medium">
-                  {isOverdue ? "Terlewat: " : "Tenggat: "}
-                  {formatDateSafely(task.dueDate)}
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-            <span>{formatDateSafely(task.createdAt)}</span>
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-full">
-              ID: {task.id.slice(-6)}
-            </span>
+            {renderDueDateFooter(task.dueDate, task.progress)}
+            <div
+              className={cn(
+                "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
+                progressConfig.bgColor,
+                progressConfig.className
+              )}
+            >
+              <ProgressIcon className="w-3.5 h-3.5" />
+              <span>{progressConfig.label}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <EditTaskDialog
+        isOpen={taskActions.isEditDialogOpen}
+        isSaving={taskActions.isSaving}
+        onClose={() => taskActions.setIsEditDialogOpen(false)}
+        onSave={taskActions.handleSaveEdit}
+        title={taskActions.editTitle}
+        description={taskActions.editDescription}
+        priority={taskActions.editPriority}
+        progress={taskActions.editProgress}
+        startDate={taskActions.editStartDate}
+        dueDate={taskActions.editDueDate}
+        editLabels={taskActions.editLabels}
+        editBoardId={taskActions.editBoardId}
+        boards={selectedProject.boards}
+        setTitle={taskActions.setEditTitle}
+        setDescription={taskActions.setEditDescription}
+        setPriority={taskActions.setEditPriority}
+        setProgress={taskActions.setEditProgress}
+        setStartDate={taskActions.setEditStartDate}
+        setDueDate={taskActions.setEditDueDate}
+        setEditLabels={taskActions.setEditLabels}
+        setEditBoardId={taskActions.setEditBoardId}
+        boardName={taskActions.currentBoard.name}
+        editChecklist={taskActions.editChecklist}
+        editCardDisplayPreference={taskActions.editCardDisplayPreference}
+        setEditChecklist={taskActions.setEditChecklist}
+        setEditCardDisplayPreference={taskActions.setEditCardDisplayPreference}
+      />
+
+      <DeleteTaskDialog
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        task={task}
+        boardName={taskActions.currentBoard.name}
+        onDelete={taskActions.handleDeleteTask}
+      />
     </div>
   );
 };

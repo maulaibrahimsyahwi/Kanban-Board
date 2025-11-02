@@ -6,18 +6,19 @@ import { ChangeEvent, useState, useEffect, KeyboardEvent } from "react";
 interface TaskDescriptionProps {
   value: string;
   onChange: (value: string) => void;
-  onEnter?: () => void; // Optional callback untuk Ctrl+Enter
+  onEnter?: () => void;
+  actionSlot?: React.ReactNode;
 }
 
 export default function TaskDescription({
   value,
   onChange,
   onEnter,
+  actionSlot,
 }: TaskDescriptionProps) {
   const [hasError, setHasError] = useState(false);
-  const maxLength = 200;
+  const maxLength = 500;
 
-  // Update error when value changes
   useEffect(() => {
     setHasError(value.length > maxLength);
   }, [value]);
@@ -25,11 +26,12 @@ export default function TaskDescription({
   function handleTextChange(e: ChangeEvent<HTMLTextAreaElement>) {
     const textInput = e.target.value;
 
-    // Always call onChange, but set error if over limit
-    onChange(textInput);
-
-    // Update error state
-    setHasError(textInput.length > maxLength);
+    if (textInput.length <= maxLength) {
+      onChange(textInput);
+      setHasError(false);
+    } else {
+      setHasError(true);
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -41,7 +43,12 @@ export default function TaskDescription({
 
   return (
     <div className="flex flex-col gap-2 mt-4">
-      <Label className="opacity-75 text-sm font-medium">Task Description</Label>
+      <div className="flex justify-between items-center">
+        <Label className="opacity-75 text-sm font-medium">
+          Task Description
+        </Label>
+        {actionSlot}
+      </div>
       <Textarea
         value={value}
         onChange={handleTextChange}
@@ -50,10 +57,10 @@ export default function TaskDescription({
         className={`resize-none min-h-[100px] max-h-[200px] overflow-y-auto ${
           hasError ? "border-red-500" : ""
         }`}
+        maxLength={maxLength}
       />
 
       <div className="flex justify-between items-center">
-        {/* Error container - only show when there's an error */}
         {hasError && (
           <div className="text-red-500 text-[12px] flex items-center gap-1">
             <FaCircleExclamation />
@@ -61,7 +68,6 @@ export default function TaskDescription({
           </div>
         )}
 
-        {/* Character counter */}
         <div className="ml-auto">
           <p
             className={`text-[12px] ${

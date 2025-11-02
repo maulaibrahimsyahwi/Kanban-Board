@@ -14,7 +14,11 @@ import TaskName from "./sub-component/task-name";
 import TaskDescription from "./sub-component/task-description";
 import PrioritySelector from "./sub-component/priority-selector";
 import LabelSelector from "./sub-component/label-selector";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker } from "../../ui/date-picker";
+import { TaskChecklist } from "./sub-component/task-checklist";
+import ProgressSelector from "./sub-component/progress-selector";
+import { Edit } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
@@ -39,6 +43,10 @@ interface EditTaskDialogProps {
   setEditLabels: (value: Task["labels"]) => void;
   setEditBoardId: (value: string) => void;
   boardName: string;
+  editChecklist: Task["checklist"];
+  editCardDisplayPreference: Task["cardDisplayPreference"];
+  setEditChecklist: (items: Task["checklist"]) => void;
+  setEditCardDisplayPreference: (value: Task["cardDisplayPreference"]) => void;
 }
 
 export default function EditTaskDialog({
@@ -64,17 +72,43 @@ export default function EditTaskDialog({
   setEditLabels,
   setEditBoardId,
   boardName,
+  editChecklist,
+  editCardDisplayPreference,
+  setEditChecklist,
+  setEditCardDisplayPreference,
 }: EditTaskDialogProps) {
   const truncateBoardName = (name: string, maxLength: number = 30) => {
     return name.length <= maxLength ? name : name.slice(0, maxLength) + "...";
   };
 
+  const handleDisplayPreferenceChange = (
+    preference: "description" | "checklist"
+  ) => {
+    setEditCardDisplayPreference((current: Task["cardDisplayPreference"]) =>
+      current === preference ? "none" : preference
+    );
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onSave();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogPortal>
-        <DialogContent className="max-w-md poppins overflow-y-auto max-h-[90vh]">
+        <DialogContent
+          className={cn(
+            "max-w-lg poppins overflow-y-auto max-h-[90vh]",
+            "dialog-scrollable-content"
+          )}
+        >
           <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Edit Task
+            </DialogTitle>
             <p className="text-sm text-muted-foreground">
               Editing task in &quot;{truncateBoardName(boardName)}&quot; board
             </p>
@@ -85,9 +119,52 @@ export default function EditTaskDialog({
               value={description}
               onChange={setDescription}
               onEnter={onSave}
+              actionSlot={
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="editDisplayDesc"
+                    name="editCardDisplay"
+                    checked={editCardDisplayPreference === "description"}
+                    onChange={() =>
+                      handleDisplayPreferenceChange("description")
+                    }
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <Label
+                    htmlFor="editDisplayDesc"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Tampilkan pada kartu
+                  </Label>
+                </div>
+              }
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <TaskChecklist
+              items={editChecklist}
+              onChange={setEditChecklist}
+              actionSlot={
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="editDisplayChecklist"
+                    name="editCardDisplay"
+                    checked={editCardDisplayPreference === "checklist"}
+                    onChange={() => handleDisplayPreferenceChange("checklist")}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <Label
+                    htmlFor="editDisplayChecklist"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Tampilkan pada kartu
+                  </Label>
+                </div>
+              }
+            />
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="space-y-4">
                 <LabelSelector
                   selectedLabels={editLabels}
@@ -116,26 +193,10 @@ export default function EditTaskDialog({
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-progress-select"
-                    className="text-sm font-medium"
-                  >
-                    Kemajuan
-                  </Label>
-                  <select
-                    id="edit-progress-select"
-                    value={progress}
-                    onChange={(e) =>
-                      setProgress(e.target.value as Task["progress"])
-                    }
-                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
-                  >
-                    <option value="not-started">Belum dimulai</option>
-                    <option value="in-progress">Dalam proses</option>
-                    <option value="completed">Selesai</option>
-                  </select>
-                </div>
+                <ProgressSelector
+                  selectedProgress={progress}
+                  onSelectProgress={setProgress}
+                />
                 <PrioritySelector
                   selectedPriority={priority}
                   onSelectPriority={setPriority}
@@ -166,17 +227,6 @@ export default function EditTaskDialog({
                   onDateChange={setDueDate}
                   placeholder="Pilih tanggal"
                 />
-              </div>
-            </div>
-
-            <div className="text-xs text-muted-foreground pt-2 border-t">
-              <div>
-                Press <span className="font-bold">Enter </span> in title field
-                to save
-              </div>
-              <div>
-                Press <span className="font-bold">Ctrl + Enter </span> in
-                description to save
               </div>
             </div>
           </div>

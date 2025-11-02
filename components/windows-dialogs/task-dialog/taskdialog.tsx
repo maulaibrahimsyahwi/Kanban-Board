@@ -20,10 +20,14 @@ import { useProjects } from "@/contexts/projectContext";
 import { Task } from "@/types";
 import PrioritySelector from "./sub-component/priority-selector";
 import LabelSelector from "./sub-component/label-selector";
+import { TaskChecklist } from "./sub-component/task-checklist";
 import { CgGoogleTasks } from "react-icons/cg";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker } from "../../ui/date-picker";
+import { Plus } from "lucide-react";
+import ProgressSelector from "./sub-component/progress-selector";
+import { cn } from "@/lib/utils";
 
 interface TaskDialogProps {
   boardId?: string;
@@ -44,12 +48,24 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   const [labels, setLabels] = useState<Task["labels"]>([]);
   const [selectedBoardId, setSelectedBoardId] = useState(boardId);
 
+  const [checklist, setChecklist] = useState<Task["checklist"]>([]);
+  const [cardDisplayPreference, setCardDisplayPreference] =
+    useState<Task["cardDisplayPreference"]>("none");
+
   useEffect(() => {
     setSelectedBoardId(boardId);
   }, [boardId]);
 
   const isFormValid =
     title.trim().length >= 3 && title.trim().length <= 50 && selectedBoardId;
+
+  const handleDisplayPreferenceChange = (
+    preference: "description" | "checklist"
+  ) => {
+    setCardDisplayPreference((current: Task["cardDisplayPreference"]) =>
+      current === preference ? "none" : preference
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +99,8 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           startDate: startDate,
           dueDate: dueDate,
           labels: labels,
+          checklist: checklist,
+          cardDisplayPreference: cardDisplayPreference,
         },
         targetBoardId
       );
@@ -121,6 +139,8 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
     setDueDate(null);
     setLabels([]);
     setSelectedBoardId(boardId);
+    setChecklist([]);
+    setCardDisplayPreference("none");
   };
 
   const handleCancel = () => {
@@ -151,7 +171,12 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="poppins sm:max-w-md poppins top-10 translate-y-0 overflow-y-auto max-h-[90vh]">
+      <DialogContent
+        className={cn(
+          "poppins sm:max-w-lg poppins top-10 translate-y-0 overflow-y-auto max-h-[90vh]",
+          "dialog-scrollable-content"
+        )}
+      >
         <DialogHeader className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-muted rounded-full flex justify-center items-center">
@@ -173,9 +198,55 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
           <div className="space-y-4">
             <TaskName value={title} onChange={setTitle} />
-            <TaskDescription value={description} onChange={setDescription} />
+            <TaskDescription
+              value={description}
+              onChange={setDescription}
+              actionSlot={
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="displayDesc"
+                    name="cardDisplay"
+                    checked={cardDisplayPreference === "description"}
+                    onChange={() =>
+                      handleDisplayPreferenceChange("description")
+                    }
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <Label
+                    htmlFor="displayDesc"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Tampilkan pada kartu
+                  </Label>
+                </div>
+              }
+            />
 
-            <div className="grid grid-cols-2 gap-4">
+            <TaskChecklist
+              items={checklist}
+              onChange={setChecklist}
+              actionSlot={
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="displayChecklist"
+                    name="cardDisplay"
+                    checked={cardDisplayPreference === "checklist"}
+                    onChange={() => handleDisplayPreferenceChange("checklist")}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <Label
+                    htmlFor="displayChecklist"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Tampilkan pada kartu
+                  </Label>
+                </div>
+              }
+            />
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="space-y-4">
                 <LabelSelector
                   selectedLabels={labels}
@@ -204,26 +275,10 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="progress-select"
-                    className="text-sm font-medium"
-                  >
-                    Kemajuan
-                  </Label>
-                  <select
-                    id="progress-select"
-                    value={progress}
-                    onChange={(e) =>
-                      setProgress(e.target.value as Task["progress"])
-                    }
-                    className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
-                  >
-                    <option value="not-started">Belum dimulai</option>
-                    <option value="in-progress">Dalam proses</option>
-                    <option value="completed">Selesai</option>
-                  </select>
-                </div>
+                <ProgressSelector
+                  selectedProgress={progress}
+                  onSelectProgress={setProgress}
+                />
                 <PrioritySelector
                   selectedPriority={priority}
                   onSelectPriority={setPriority}
@@ -278,7 +333,10 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
                   Creating...
                 </>
               ) : (
-                "Create Task"
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create Task
+                </>
               )}
             </Button>
           </div>

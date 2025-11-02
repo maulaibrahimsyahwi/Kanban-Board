@@ -77,11 +77,13 @@ export default function LabelSelector({
     setSearchQuery("");
   };
 
-  const removeLabel = (e: React.MouseEvent, labelName: string) => {
+  const removeLabel = (
+    e: React.MouseEvent | React.PointerEvent,
+    labelName: string
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     onLabelsChange(selectedLabels.filter((l) => l.name !== labelName));
-    setIsDropdownOpen(false);
   };
 
   const openEditDialog = (e: React.MouseEvent, label: TaskLabel) => {
@@ -138,11 +140,7 @@ export default function LabelSelector({
                   <span>{label.name}</span>
                   <button
                     type="button"
-                    onMouseDown={(e) => removeLabel(e, label.name)}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
+                    onPointerDown={(e) => removeLabel(e, label.name)}
                     className="opacity-70 hover:opacity-100"
                   >
                     <X className="w-3.5 h-3.5" />

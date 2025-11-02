@@ -113,3 +113,30 @@
 .task-scroll-container::-webkit-scrollbar-button {
   display: none;
 }
+
+/* Scrollbar for dialog content */
+.dialog-scrollable-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.dialog-scrollable-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dialog-scrollable-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.dialog-scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.dialog-scrollable-content::-webkit-scrollbar-button {
+  display: none;
+}

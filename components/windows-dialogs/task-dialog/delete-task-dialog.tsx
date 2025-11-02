@@ -1,4 +1,3 @@
-// components/windows-dialogs/task-dialog/delete-task-dialog.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -27,6 +26,8 @@ interface DeleteTaskDialogProps {
   boardName: string;
   onDelete: (taskId: string) => void;
   trigger?: React.ReactNode;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function DeleteTaskDialog({
@@ -34,32 +35,28 @@ export default function DeleteTaskDialog({
   boardName,
   onDelete,
   trigger,
+  isOpen: controlledIsOpen,
+  onOpenChange: controlledOnOpenChange,
 }: DeleteTaskDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOpen = controlledIsOpen ?? internalIsOpen;
+  const setIsOpen = controlledOnOpenChange ?? setInternalIsOpen;
 
   const handleDelete = async () => {
     setIsDeleting(true);
 
     try {
-      // Simulasi delay untuk UX yang lebih baik
       await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Panggil function delete dari parent
       onDelete(task.id);
-
-      // Show success toast with Sonner
       toast.success("Task deleted successfully", {
         description: `${task.title} has been removed from ${boardName}.`,
         duration: 5000,
       });
-
-      // Tutup dialog
       setIsOpen(false);
     } catch {
       console.error("Error deleting task");
-
-      // Show error toast with Sonner
       toast.error("Failed to delete task", {
         description:
           "An error occurred while deleting the task. Please try again.",
@@ -103,17 +100,7 @@ export default function DeleteTaskDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger || (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
 
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
@@ -132,10 +119,8 @@ export default function DeleteTaskDialog({
           </div>
         </AlertDialogHeader>
 
-        {/* Task Info */}
         <div className="py-4">
           <div className="bg-muted rounded-lg p-4 border">
-            {/* Task Title */}
             <div className="flex items-start justify-between mb-3">
               <h4 className="font-semibold text-foreground text-lg leading-tight pr-2">
                 {task.title}
@@ -151,7 +136,6 @@ export default function DeleteTaskDialog({
               </Badge>
             </div>
 
-            {/* Task Description */}
             {task.description && (
               <>
                 <Separator className="my-3" />
@@ -166,7 +150,6 @@ export default function DeleteTaskDialog({
               </>
             )}
 
-            {/* Task Metadata */}
             <Separator className="my-3" />
             <div className="space-y-2 text-xs text-muted-foreground">
               <div className="flex justify-between items-center">
@@ -188,7 +171,6 @@ export default function DeleteTaskDialog({
             </div>
           </div>
 
-          {/* Warning Message */}
           <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex gap-2">
               <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />

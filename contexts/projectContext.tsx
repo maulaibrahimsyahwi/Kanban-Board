@@ -18,11 +18,9 @@ import {
 import { IconType } from "react-icons";
 import { v4 as uuidv4 } from "uuid";
 
-// 1. Impor tipe dan konstanta dari lokasi terpusat
 import { Task, Board, Project } from "@/types";
 import { STORAGE_KEYS } from "@/constants";
 
-// --- MAPPING ICON NAMES ---
 const iconMap: Record<string, IconType> = {
   FaMobileRetro,
   FaFlagCheckered,
@@ -32,7 +30,6 @@ const iconMap: Record<string, IconType> = {
   FaCartShopping,
 };
 
-// --- TIPE DATA UNTUK DESERIALISASI (MENGHINDARI 'ANY') ---
 type SerializedTask = Omit<Task, "createdAt"> & { createdAt: string };
 type SerializedBoard = Omit<Board, "createdAt" | "tasks"> & {
   createdAt: string;
@@ -44,7 +41,6 @@ type SerializedProject = Omit<Project, "createdAt" | "boards" | "icon"> & {
   boards: SerializedBoard[];
 };
 
-// Helper function untuk cek apakah localStorage tersedia
 const isLocalStorageAvailable = (): boolean => {
   try {
     if (typeof window === "undefined") return false;
@@ -57,7 +53,6 @@ const isLocalStorageAvailable = (): boolean => {
   }
 };
 
-// FUNGSI HELPER UNTUK SERIALIZE/DESERIALIZE
 const serializeProjects = (projects: Project[]): string => {
   try {
     const serializedProjects = projects.map((project) => ({
@@ -171,7 +166,6 @@ const markUserAsVisited = (): void => {
   }
 };
 
-// --- TIPE CONTEXT ---
 interface ProjectContextType {
   projects: Project[];
   selectedProject: Project | null;
@@ -207,7 +201,6 @@ interface ProjectContextType {
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-// --- PROVIDER COMPONENT ---
 export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
@@ -216,7 +209,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [isFirstTime, setIsFirstTime] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load data saat component mount dengan better error handling
   useEffect(() => {
     const initializeData = () => {
       try {
@@ -252,7 +244,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Save projects ke localStorage dengan throttling
   useEffect(() => {
     if (!isLoading && !isFirstTime && projects.length > 0) {
       const timeoutId = setTimeout(() => {
@@ -263,7 +254,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [projects, isLoading, isFirstTime]);
 
-  // Save selected project ke localStorage
   useEffect(() => {
     if (!isLoading && selectedProjectId) {
       saveSelectedProjectToStorage(selectedProjectId);
@@ -346,7 +336,15 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     boardId: string
   ) => {
     if (!selectedProjectId) return;
-    const newTask: Task = { ...taskData, id: uuidv4(), createdAt: new Date() };
+    const newTask: Task = {
+      ...taskData,
+      id: uuidv4(),
+      createdAt: new Date(),
+      description: taskData.description || "",
+      labels: taskData.labels || [],
+      checklist: taskData.checklist || [],
+      cardDisplayPreference: taskData.cardDisplayPreference || "none",
+    };
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
         if (project.id === selectedProjectId) {
@@ -363,7 +361,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  // Logika moveTask yang disederhanakan dan lebih efisien
   const moveTask = (taskId: string, fromBoardId: string, toBoardId: string) => {
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
@@ -422,10 +419,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
             if (board.id === boardId) {
               const tasks = [...board.tasks];
 
-              // Remove task from source position
               const [movedTask] = tasks.splice(sourceIndex, 1);
 
-              // Insert task at destination position
               tasks.splice(destinationIndex, 0, movedTask);
 
               return { ...board, tasks };
@@ -568,7 +563,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// --- CUSTOM HOOK ---
 export const useProjects = () => {
   const context = useContext(ProjectContext);
   if (context === undefined) {

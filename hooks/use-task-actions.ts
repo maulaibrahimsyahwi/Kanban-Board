@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task } from "@/types";
+import { Task, ChecklistItem } from "@/types";
 import { toast } from "sonner";
+import { DEFAULT_LABELS, TaskLabel } from "@/constants";
 
 export function useTaskActions(taskId: string, boardId: string) {
   const { selectedProject, deleteTask, moveTask, editTask } = useProjects();
@@ -42,6 +43,10 @@ export function useTaskActions(taskId: string, boardId: string) {
   const [editLabels, setEditLabels] = useState<Task["labels"]>([]);
   const [editBoardId, setEditBoardId] = useState<string>(boardId);
 
+  const [editChecklist, setEditChecklist] = useState<Task["checklist"]>([]);
+  const [editCardDisplayPreference, setEditCardDisplayPreference] =
+    useState<Task["cardDisplayPreference"]>("none");
+
   useEffect(() => {
     if (derivedData?.task) {
       setEditTitle(derivedData.task.title);
@@ -52,6 +57,10 @@ export function useTaskActions(taskId: string, boardId: string) {
       setEditDueDate(derivedData.task.dueDate);
       setEditLabels(derivedData.task.labels || []);
       setEditBoardId(boardId);
+      setEditChecklist(derivedData.task.checklist || []);
+      setEditCardDisplayPreference(
+        derivedData.task.cardDisplayPreference || "none"
+      );
     }
   }, [derivedData?.task, boardId]);
 
@@ -66,7 +75,7 @@ export function useTaskActions(taskId: string, boardId: string) {
 
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       const taskUpdates: Partial<Task> = {
         title: editTitle.trim(),
@@ -76,6 +85,8 @@ export function useTaskActions(taskId: string, boardId: string) {
         startDate: editStartDate,
         dueDate: editDueDate,
         labels: editLabels,
+        checklist: editChecklist,
+        cardDisplayPreference: editCardDisplayPreference,
       };
 
       editTask(taskId, boardId, taskUpdates);
@@ -127,6 +138,22 @@ export function useTaskActions(taskId: string, boardId: string) {
     }
   };
 
+  const handleToggleLabel = (label: TaskLabel) => {
+    if (!derivedData?.task) return;
+
+    const isSelected = editLabels.some((l) => l.name === label.name);
+    let newLabels: Task["labels"];
+
+    if (isSelected) {
+      newLabels = editLabels.filter((l) => l.name !== label.name);
+    } else {
+      newLabels = [...editLabels, { name: label.name, color: label.color }];
+    }
+
+    setEditLabels(newLabels);
+    editTask(taskId, boardId, { labels: newLabels });
+  };
+
   return {
     ...derivedData,
     isEditDialogOpen,
@@ -140,6 +167,8 @@ export function useTaskActions(taskId: string, boardId: string) {
     editDueDate,
     editLabels,
     editBoardId,
+    editChecklist,
+    editCardDisplayPreference,
     setIsDropdownOpen,
     setIsEditDialogOpen,
     setEditTitle,
@@ -150,11 +179,14 @@ export function useTaskActions(taskId: string, boardId: string) {
     setEditDueDate,
     setEditLabels,
     setEditBoardId,
+    setEditChecklist,
+    setEditCardDisplayPreference,
     handleEditTask,
     handleSaveEdit,
     handleDeleteTask,
     handleMoveToPrevious,
     handleMoveToNext,
     handleMoveTask,
+    handleToggleLabel,
   };
 }

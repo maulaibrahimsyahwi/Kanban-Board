@@ -1,5 +1,11 @@
 import { IconType } from "react-icons";
 
+export type ChecklistItem = {
+  id: string;
+  text: string;
+  isDone: boolean;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -13,6 +19,8 @@ export type Task = {
     name: string;
     color: string;
   }[];
+  checklist: ChecklistItem[];
+  cardDisplayPreference: "none" | "description" | "checklist";
 };
 
 export type Board = {

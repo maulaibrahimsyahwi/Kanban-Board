@@ -7,21 +7,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Task } from "@/types";
-import {
-  BellRing,
-  AlertCircle,
-  Circle,
-  ArrowDown,
-  ChevronDown,
-} from "lucide-react";
-import { IconType } from "lucide-react";
+import { BellRing, AlertCircle, ArrowDown, ChevronDown } from "lucide-react";
+import { GoDotFill } from "react-icons/go";
+import { type ElementType } from "react";
 import { IoCheckmark } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 
 type PriorityItem = {
   id: Task["priority"];
   name: string;
-  icon: IconType;
+  icon: ElementType;
   className: string;
 };
 
@@ -41,7 +36,7 @@ const PriorityListArray: PriorityItem[] = [
   {
     id: "medium",
     name: "Sedang",
-    icon: Circle,
+    icon: GoDotFill,
     className: "text-green-600 dark:text-green-400",
   },
   {

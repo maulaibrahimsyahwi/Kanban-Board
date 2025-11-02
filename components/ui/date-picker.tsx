@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { id } from "date-fns/locale"; // Impor locale Indonesia
+import { id } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -25,6 +25,10 @@ export function DatePicker({
   onDateChange,
   placeholder,
 }: DatePickerProps) {
+  const currentYear = new Date().getFullYear();
+  const fromYear = currentYear - 10;
+  const toYear = currentYear + 10;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -50,6 +54,9 @@ export function DatePicker({
           onSelect={(d) => onDateChange(d || null)}
           initialFocus
           locale={id}
+          captionLayout="dropdown"
+          fromYear={fromYear}
+          toYear={toYear}
         />
       </PopoverContent>
     </Popover>

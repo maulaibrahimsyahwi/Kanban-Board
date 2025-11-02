@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import React from "react";
+import { MoreHorizontal, Tag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,74 +12,38 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete, MdOutlineSwapHoriz } from "react-icons/md";
-import { IoArrowBack, IoArrowForward } from "react-icons/io5";
-
-import { useTaskActions } from "@/hooks/use-task-actions";
-import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
-import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
-import { useProjects } from "@/contexts/projectContext";
+import { cn } from "@/lib/utils";
+import { DEFAULT_LABELS, TaskLabel } from "@/constants";
+import { Task, Board } from "@/types";
 
 interface TasksDropDownProps {
-  taskId: string;
-  boardId: string;
+  task: Task;
+  currentBoard: Board;
+  otherBoards: Board[];
+  isDropdownOpen: boolean;
+  setIsDropdownOpen: (open: boolean) => void;
+  editLabels: Task["labels"];
+  handleEditTask: () => void;
+  handleMoveTask: (boardId: string) => void;
+  handleToggleLabel: (label: TaskLabel) => void;
+  onOpenDeleteDialog: () => void;
 }
 
-export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
-  const { selectedProject } = useProjects();
-  const {
-    task,
-    currentBoard,
-    previousBoard,
-    nextBoard,
-    otherBoards,
-    isEditDialogOpen,
-    isDropdownOpen,
-    isSaving,
-    editTitle,
-    editDescription,
-    editPriority,
-    editProgress,
-    editStartDate,
-    editDueDate,
-    editLabels,
-    editBoardId,
-    setIsDropdownOpen,
-    setIsEditDialogOpen,
-    setEditTitle,
-    setEditDescription,
-    setEditPriority,
-    setEditProgress,
-    setEditStartDate,
-    setEditDueDate,
-    setEditLabels,
-    setEditBoardId,
-    handleEditTask,
-    handleSaveEdit,
-    handleDeleteTask,
-    handleMoveToPrevious,
-    handleMoveToNext,
-    handleMoveTask,
-  } = useTaskActions(taskId, boardId);
-
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [dropdownAlign, setDropdownAlign] = useState<"start" | "end">("end");
-
-  useEffect(() => {
-    if (triggerRef.current && isDropdownOpen) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const distanceToRight = window.innerWidth - rect.right;
-      if (distanceToRight < 280) {
-        setDropdownAlign("start");
-      } else {
-        setDropdownAlign("end");
-      }
-    }
-  }, [isDropdownOpen]);
-
-  if (!task || !currentBoard || !selectedProject) {
+export default function TasksDropDown({
+  task,
+  currentBoard,
+  otherBoards,
+  isDropdownOpen,
+  setIsDropdownOpen,
+  editLabels,
+  handleEditTask,
+  handleMoveTask,
+  handleToggleLabel,
+  onOpenDeleteDialog,
+}: TasksDropDownProps) {
+  if (!task || !currentBoard) {
     return null;
   }
 
@@ -87,143 +51,118 @@ export default function TasksDropDown({ taskId, boardId }: TasksDropDownProps) {
     return name.length <= maxLength ? name : name.slice(0, maxLength) + "...";
   };
 
-  return (
-    <>
-      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            ref={triggerRef}
-            variant="ghost"
-            className="h-8 w-8 p-0 relative z-10"
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="poppins dropdown-content-fixed w-55 sm:w-55"
-          align={dropdownAlign}
-          side="bottom"
-          sideOffset={8}
-          alignOffset={0}
-          avoidCollisions={true}
-          collisionPadding={8}
-        >
-          <div className="px-2 py-1.5 text-sm text-muted-foreground border-b">
-            <div className="font-medium text-foreground truncate max-w-[200px] sm:max-w-[240px]">
-              {task.title}
-            </div>
-            <div className="text-xs truncate max-w-[200px] sm:max-w-[240px]">
-              {truncateBoardName(currentBoard.name, 20)} • {task.priority}{" "}
-              priority
-            </div>
-          </div>
-          <DropdownMenuItem
-            className="flex items-center gap-2 p-[10px] cursor-pointer"
-            onClick={handleEditTask}
-          >
-            <FaRegEdit className="flex-shrink-0" />
-            <span>Edit Task</span>
-          </DropdownMenuItem>
-          {previousBoard && (
-            <DropdownMenuItem
-              className="flex items-center gap-2 p-[10px] cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              onClick={handleMoveToPrevious}
-            >
-              <IoArrowBack className="flex-shrink-0 text-lg" />
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-xs sm:text-sm">Move to</span>
-                <span
-                  className="font-medium truncate max-w-[140px] sm:max-w-[160px]"
-                  title={previousBoard.name}
-                >
-                  {truncateBoardName(previousBoard.name, 10)}
-                </span>
-              </div>
-            </DropdownMenuItem>
-          )}
-          {nextBoard && (
-            <DropdownMenuItem
-              className="flex items-center gap-2 p-[10px] cursor-pointer text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-              onClick={handleMoveToNext}
-            >
-              <IoArrowForward className="flex-shrink-0 text-lg" />
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-xs sm:text-sm">Move to</span>
-                <span
-                  className="font-medium truncate max-w-[140px] sm:max-w-[160px]"
-                  title={nextBoard.name}
-                >
-                  {truncateBoardName(nextBoard.name, 10)}
-                </span>
-              </div>
-            </DropdownMenuItem>
-          )}
-          {(previousBoard || nextBoard) && <DropdownMenuSeparator />}
-          {otherBoards && otherBoards.length > 0 && (
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="flex items-center gap-2 p-[10px] cursor-pointer">
-                <MdOutlineSwapHoriz className="flex-shrink-0 text-lg" />
-                <span>Move to Board</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent
-                className="dropdown-subcontent-fixed w-40 sm:w-50"
-                alignOffset={dropdownAlign === "start" ? -10 : 10}
-              >
-                {otherBoards.map((board) => (
-                  <DropdownMenuItem
-                    key={board.id}
-                    className="cursor-pointer p-2"
-                    onClick={() => handleMoveTask(board.id)}
-                  >
-                    {truncateBoardName(board.name, 14)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          )}
-          <DropdownMenuSeparator />
-          <DeleteTaskDialog
-            task={task}
-            boardName={currentBoard.name}
-            onDelete={handleDeleteTask}
-            trigger={
-              <DropdownMenuItem
-                className="flex items-center gap-2 p-[10px] cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                onSelect={(e) => e.preventDefault()}
-              >
-                <MdOutlineDelete className="flex-shrink-0 text-lg" />
-                <span>Delete Task</span>
-              </DropdownMenuItem>
-            }
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+  const availableLabels = DEFAULT_LABELS.filter(
+    (defaultLabel) =>
+      !editLabels.some(
+        (selectedLabel) => selectedLabel.name === defaultLabel.name
+      )
+  );
 
-      <EditTaskDialog
-        isOpen={isEditDialogOpen}
-        isSaving={isSaving}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={handleSaveEdit}
-        title={editTitle}
-        description={editDescription}
-        priority={editPriority}
-        progress={editProgress}
-        startDate={editStartDate}
-        dueDate={editDueDate}
-        editLabels={editLabels}
-        editBoardId={editBoardId}
-        boards={selectedProject.boards}
-        setTitle={setEditTitle}
-        setDescription={setEditDescription}
-        setPriority={setEditPriority}
-        setProgress={setEditProgress}
-        setStartDate={setEditStartDate}
-        setDueDate={setEditDueDate}
-        setEditLabels={setEditLabels}
-        setEditBoardId={setEditBoardId}
-        boardName={currentBoard.name}
-      />
-    </>
+  return (
+    <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <button className="h-8 w-8 p-0 relative z-10 flex items-center justify-center">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="poppins dropdown-content-fixed w-55 sm:w-55"
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        alignOffset={0}
+        avoidCollisions={true}
+        collisionPadding={8}
+      >
+        <div className="px-2 py-1.5 text-sm text-muted-foreground border-b">
+          <div className="font-medium text-foreground truncate max-w-[200px] sm:max-w-[240px]">
+            {task.title}
+          </div>
+          <div className="text-xs truncate max-w-[200px] sm:max-w-[240px]">
+            {truncateBoardName(currentBoard.name, 20)} • {task.priority}{" "}
+            priority
+          </div>
+        </div>
+        <DropdownMenuItem
+          className="flex items-center gap-2 p-[10px] cursor-pointer"
+          onClick={handleEditTask}
+        >
+          <FaRegEdit className="flex-shrink-0 w-4 h-4" />
+          <span>Edit Task</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="flex items-center gap-2 p-[10px] cursor-pointer">
+            <Tag className="flex-shrink-0 w-4 h-4" />
+            <span>Labels</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent
+            className="dropdown-subcontent-fixed w-40 sm:w-50 flex flex-col gap-1"
+            alignOffset={-10}
+          >
+            {availableLabels.length === 0 && (
+              <DropdownMenuItem
+                disabled
+                className="cursor-default p-2 text-muted-foreground"
+              >
+                Semua label telah dipilih
+              </DropdownMenuItem>
+            )}
+            {availableLabels.map((label) => {
+              return (
+                <DropdownMenuItem
+                  key={label.id}
+                  className="cursor-pointer p-1"
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={() => handleToggleLabel(label)}
+                >
+                  <span
+                    className={cn(
+                      "px-2 py-0.5 rounded text-xs font-medium w-full",
+                      label.color
+                    )}
+                  >
+                    {label.name}
+                  </span>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {otherBoards && otherBoards.length > 0 && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="flex items-center gap-2 p-[10px] cursor-pointer">
+              <MdOutlineSwapHoriz className="flex-shrink-0 w-4 h-4" />
+              <span>Move to Board</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent
+              className="dropdown-subcontent-fixed w-40 sm:w-50"
+              alignOffset={-10}
+            >
+              {otherBoards.map((board) => (
+                <DropdownMenuItem
+                  key={board.id}
+                  className="cursor-pointer p-2"
+                  onClick={() => handleMoveTask(board.id)}
+                >
+                  {truncateBoardName(board.name, 14)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="flex items-center gap-2 p-[10px] cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onSelect={(e) => e.preventDefault()}
+          onClick={onOpenDeleteDialog}
+        >
+          <MdOutlineDelete className="flex-shrink-0 w-4 h-4" />
+          <span>Delete Task</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

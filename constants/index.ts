@@ -48,4 +48,29 @@ export const DEFAULT_LABELS: TaskLabel[] = [
     name: "Help Needed",
     color: "bg-purple-600 text-white",
   },
+  {
+    id: "l6",
+    name: "Design",
+    color: "bg-pink-600 text-white",
+  },
+  {
+    id: "l7",
+    name: "Testing",
+    color: "bg-orange-600 text-white",
+  },
+  {
+    id: "l8",
+    name: "UI/UX",
+    color: "bg-lime-500 text-black",
+  },
+  {
+    id: "l9",
+    name: "Deployment",
+    color: "bg-cyan-600 text-white",
+  },
+  {
+    id: "l10",
+    name: "Other",
+    color: "bg-gray-500 text-white",
+  },
 ];
