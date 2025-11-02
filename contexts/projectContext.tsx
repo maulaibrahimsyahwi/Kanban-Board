@@ -175,7 +175,8 @@ interface ProjectContextType {
   addProject: (projectName: string, iconName?: string) => void;
   addTaskToProject: (
     taskData: Omit<Task, "id" | "createdAt">,
-    boardId: string
+    boardId: string,
+    projectId: string
   ) => void;
   moveTask: (taskId: string, fromBoardId: string, toBoardId: string) => void;
   reorderTasksInBoard: (
@@ -333,9 +334,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
   const addTaskToProject = (
     taskData: Omit<Task, "id" | "createdAt">,
-    boardId: string
+    boardId: string,
+    projectId: string
   ) => {
-    if (!selectedProjectId) return;
     const newTask: Task = {
       ...taskData,
       id: uuidv4(),
@@ -347,7 +348,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     };
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
+        if (project.id === projectId) {
           const updatedBoards = project.boards.map((board) => {
             if (board.id === boardId) {
               return { ...board, tasks: [...board.tasks, newTask] };

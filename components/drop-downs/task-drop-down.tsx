@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MoreHorizontal, Tag } from "lucide-react";
+import { MoreHorizontal, Tag, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete, MdOutlineSwapHoriz } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LABELS, TaskLabel } from "@/constants";
@@ -25,10 +24,10 @@ interface TasksDropDownProps {
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
   editLabels: Task["labels"];
-  handleEditTask: () => void;
   handleMoveTask: (boardId: string) => void;
   handleToggleLabel: (label: TaskLabel) => void;
   onOpenDeleteDialog: () => void;
+  onOpenCopyDialog: () => void;
 }
 
 export default function TasksDropDown({
@@ -38,10 +37,10 @@ export default function TasksDropDown({
   isDropdownOpen,
   setIsDropdownOpen,
   editLabels,
-  handleEditTask,
   handleMoveTask,
   handleToggleLabel,
   onOpenDeleteDialog,
+  onOpenCopyDialog,
 }: TasksDropDownProps) {
   if (!task || !currentBoard) {
     return null;
@@ -86,10 +85,10 @@ export default function TasksDropDown({
         </div>
         <DropdownMenuItem
           className="flex items-center gap-2 p-[10px] cursor-pointer"
-          onClick={handleEditTask}
+          onClick={onOpenCopyDialog}
         >
-          <FaRegEdit className="flex-shrink-0 w-4 h-4" />
-          <span>Edit Task</span>
+          <Copy className="flex-shrink-0 w-4 h-4" />
+          <span>Salin Tugas</span>
         </DropdownMenuItem>
 
         <DropdownMenuSub>

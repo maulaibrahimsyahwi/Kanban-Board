@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
 import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
+import CopyTaskDialog from "@/components/windows-dialogs/task-dialog/copy-task-dialog";
 
 interface SingleTaskProps {
   task: Task;
@@ -303,7 +304,7 @@ const SingleTask = ({
         data-testid="task-card"
         onClick={handleCardClick}
         className={cn(
-          "shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card relative",
+          "shadow-sm hover:shadow-md transition-all duration-200 bg-card border-border task-card relative py-0 gap-0",
           !isDragPreview ? "cursor-grab active:cursor-grabbing" : "",
           isDragging
             ? "opacity-50 shadow-lg scale-105 rotate-2 z-50 task-dragging"
@@ -313,7 +314,7 @@ const SingleTask = ({
           isAnimating ? "task-animating" : ""
         )}
       >
-        <CardHeader className="p-4">
+        <CardHeader className="pt-3 px-4 pb-2">
           <div className="flex justify-between items-center">
             <div
               className={cn(
@@ -335,13 +336,14 @@ const SingleTask = ({
                 <TasksDropDown
                   {...taskActions}
                   onOpenDeleteDialog={() => setIsDeleteOpen(true)}
+                  onOpenCopyDialog={() => taskActions.setIsCopyDialogOpen(true)}
                 />
               </div>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-3 pb-4 px-4">
+        <CardContent className="flex flex-col gap-2 pb-3 px-4">
           <h3 className="font-bold text-lg text-foreground line-clamp-2">
             {task.title}
           </h3>
@@ -484,6 +486,13 @@ const SingleTask = ({
         task={task}
         boardName={taskActions.currentBoard.name}
         onDelete={taskActions.handleDeleteTask}
+      />
+
+      <CopyTaskDialog
+        isOpen={taskActions.isCopyDialogOpen}
+        onOpenChange={taskActions.setIsCopyDialogOpen}
+        task={task}
+        currentBoardId={boardId}
       />
     </div>
   );

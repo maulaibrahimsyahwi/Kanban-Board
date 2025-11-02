@@ -102,7 +102,8 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           checklist: checklist,
           cardDisplayPreference: cardDisplayPreference,
         },
-        targetBoardId
+        targetBoardId,
+        selectedProject.id
       );
 
       const targetBoard = selectedProject.boards.find(

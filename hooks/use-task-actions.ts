@@ -8,6 +8,7 @@ export function useTaskActions(taskId: string, boardId: string) {
   const { selectedProject, deleteTask, moveTask, editTask } = useProjects();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -157,6 +158,7 @@ export function useTaskActions(taskId: string, boardId: string) {
   return {
     ...derivedData,
     isEditDialogOpen,
+    isCopyDialogOpen,
     isDropdownOpen,
     isSaving,
     editTitle,
@@ -169,8 +171,9 @@ export function useTaskActions(taskId: string, boardId: string) {
     editBoardId,
     editChecklist,
     editCardDisplayPreference,
-    setIsDropdownOpen,
     setIsEditDialogOpen,
+    setIsCopyDialogOpen,
+    setIsDropdownOpen,
     setEditTitle,
     setEditDescription,
     setEditPriority,
