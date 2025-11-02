@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Task, Board } from "@/types";
+import { Task } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import { toast } from "sonner";
 import { Copy, Loader2 } from "lucide-react";

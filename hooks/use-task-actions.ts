@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task, ChecklistItem } from "@/types";
+import { Task } from "@/types";
 import { toast } from "sonner";
-import { DEFAULT_LABELS, TaskLabel } from "@/constants";
+import { TaskLabel } from "@/constants";
 
 export function useTaskActions(taskId: string, boardId: string) {
   const { selectedProject, deleteTask, moveTask, editTask } = useProjects();

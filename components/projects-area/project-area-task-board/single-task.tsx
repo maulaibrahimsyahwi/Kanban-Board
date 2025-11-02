@@ -293,7 +293,7 @@ const SingleTask = ({
     taskActions.handleEditTask();
   };
 
-  if (!taskActions.currentBoard || !selectedProject) {
+  if (!taskActions.task || !taskActions.currentBoard || !selectedProject) {
     return null;
   }
 
@@ -335,6 +335,8 @@ const SingleTask = ({
               >
                 <TasksDropDown
                   {...taskActions}
+                  task={taskActions.task}
+                  currentBoard={taskActions.currentBoard}
                   onOpenDeleteDialog={() => setIsDeleteOpen(true)}
                   onOpenCopyDialog={() => taskActions.setIsCopyDialogOpen(true)}
                 />
