@@ -10,10 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import {
-  TaskName,
-  TaskDescription,
-} from "./sub-component/task-input-components";
+import TaskName from "./sub-component/task-name";
+import TaskDescription from "./sub-component/task-description";
 import { BiTask } from "react-icons/bi";
 import { useState, useEffect } from "react";
 import { useProjects } from "@/contexts/projectContext";
