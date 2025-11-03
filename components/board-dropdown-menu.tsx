@@ -3,14 +3,14 @@
 
 import React, { useState } from "react"; // Tambahkan useState di sini
 import { FaRegEdit } from "react-icons/fa";
-import { MdOutlineDelete, MdOutlineAdd } from "react-icons/md";
+import { MdOutlineDelete } from "react-icons/md";
 import { MoreHorizontal } from "lucide-react";
+import { CgGoogleTasks } from "react-icons/cg";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ export default function BoardDropDown({
         boardId={board.id}
         trigger={
           <Button variant="ghost" size="sm" className="cursor-pointer">
-            <MdOutlineAdd className="w-4 h-4" />
+            <CgGoogleTasks />
           </Button>
         }
       />
@@ -67,8 +67,6 @@ export default function BoardDropDown({
               Position {boardIndex + 1}
             </div>
           </div>
-
-          <DropdownMenuSeparator />
 
           <DropdownMenuItem
             className="flex items-center gap-2 p-[10px] cursor-pointer"

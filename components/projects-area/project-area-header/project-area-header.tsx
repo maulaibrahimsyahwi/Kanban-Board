@@ -1,11 +1,8 @@
-import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
-import AddBoardDialog from "@/components/add-board-dialog";
 import FilterDropdown from "@/components/drop-downs/filter-dropdown";
 import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Calendar, BarChartHorizontal, LayoutGrid } from "lucide-react";
 import { ProjectAreaView } from "../project-area";
-import { cn } from "@/lib/utils";
 
 interface ProjectAreaHeaderProps {
   projectName: string;
@@ -90,8 +87,6 @@ export default function ProjectAreaHeader({
           <BarChartHorizontal className="w-4 h-4" />
           <span className="hidden sm:inline">Bagan</span>
         </Button>
-        <AddBoardDialog />
-        <TaskDialog />
       </div>
     </div>
   );

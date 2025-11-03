@@ -1,4 +1,3 @@
-// project-area-board.tsx - Full enhanced auto-scroll implementation
 import { useState, useRef, useCallback, useEffect } from "react";
 import SingleBoard from "./single-board";
 import { Board, Task } from "@/types";
@@ -6,6 +5,8 @@ import { useProjects } from "@/contexts/projectContext";
 import EmptyBoardsState from "@/components/projects-area/empty-board-state";
 import SingleTask from "../project-area-task-board/single-task";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import AddBoardDialog from "@/components/add-board-dialog";
+import { MdDashboardCustomize } from "react-icons/md";
 
 export default function ProjectAreaBoards({
   boards = [],
@@ -20,10 +21,8 @@ export default function ProjectAreaBoards({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<number | null>(null);
 
-  // Enhanced auto-scroll dengan kecepatan tinggi seperti Atlassian
   const startAutoScroll = useCallback(
     (direction: "left" | "right", speed: number) => {
-      // Stop existing scroll
       if (autoScrollRef.current) {
         cancelAnimationFrame(autoScrollRef.current);
       }
@@ -38,14 +37,12 @@ export default function ProjectAreaBoards({
 
         if (direction === "left") {
           container.scrollLeft -= speed;
-          // Stop jika sudah di awal
           if (container.scrollLeft <= 0) {
             autoScrollRef.current = null;
             return;
           }
         } else {
           container.scrollLeft += speed;
-          // Stop jika sudah di akhir
           const maxScroll = container.scrollWidth - container.clientWidth;
           if (container.scrollLeft >= maxScroll) {
             autoScrollRef.current = null;
@@ -68,7 +65,6 @@ export default function ProjectAreaBoards({
     }
   }, []);
 
-  // Handle auto-scroll berdasarkan posisi mouse dengan area yang lebih kecil untuk mobile/tablet
   const handleAutoScroll = useCallback(
     (clientX: number) => {
       if (!scrollContainerRef.current) return;
@@ -76,21 +72,18 @@ export default function ProjectAreaBoards({
       const container = scrollContainerRef.current;
       const rect = container.getBoundingClientRect();
 
-      // Check if we're on mobile/tablet (md and below - using 1024px as lg breakpoint)
       const isMobileTablet = window.innerWidth < 1024;
 
       let ultraFastZone, fastZone, normalZone;
 
       if (isMobileTablet) {
-        // Smaller, less sensitive zones for mobile/tablet
-        ultraFastZone = 20; // 0-25px dari edge: ultra cepat
-        fastZone = 50; // 25-60px dari edge: cepat
-        normalZone = 130; // 60-100px dari edge: normal
+        ultraFastZone = 20;
+        fastZone = 50;
+        normalZone = 130;
       } else {
-        // Larger zones for desktop
-        ultraFastZone = 40; // 0-50px dari edge: ultra cepat
-        fastZone = 100; // 50-120px dari edge: cepat
-        normalZone = 160; // 120-200px dari edge: normal
+        ultraFastZone = 40;
+        fastZone = 100;
+        normalZone = 160;
       }
 
       const containerLeft = rect.left;
@@ -98,42 +91,39 @@ export default function ProjectAreaBoards({
       const leftDistance = clientX - containerLeft;
       const rightDistance = containerRight - clientX;
 
-      // Scroll ke kiri
       if (leftDistance <= normalZone && container.scrollLeft > 0) {
-        let scrollSpeed = 8; // Base speed lebih lambat untuk mobile
+        let scrollSpeed = 8;
 
         if (leftDistance <= ultraFastZone) {
-          scrollSpeed = isMobileTablet ? 25 : 50; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 25 : 50;
         } else if (leftDistance <= fastZone) {
-          scrollSpeed = isMobileTablet ? 15 : 30; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 15 : 30;
         } else {
-          scrollSpeed = isMobileTablet ? 8 : 12; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 8 : 12;
         }
 
         startAutoScroll("left", scrollSpeed);
         return;
       }
 
-      // Scroll ke kanan
       if (
         rightDistance <= normalZone &&
         container.scrollLeft < container.scrollWidth - container.clientWidth
       ) {
-        let scrollSpeed = 8; // Base speed lebih lambat untuk mobile
+        let scrollSpeed = 8;
 
         if (rightDistance <= ultraFastZone) {
-          scrollSpeed = isMobileTablet ? 35 : 50; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 35 : 50;
         } else if (rightDistance <= fastZone) {
-          scrollSpeed = isMobileTablet ? 20 : 30; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 20 : 30;
         } else {
-          scrollSpeed = isMobileTablet ? 12 : 15; // Lebih lambat di mobile
+          scrollSpeed = isMobileTablet ? 12 : 15;
         }
 
         startAutoScroll("right", scrollSpeed);
         return;
       }
 
-      // Stop jika tidak di zona scroll
       stopAutoScroll();
     },
     [startAutoScroll, stopAutoScroll]
@@ -161,7 +151,6 @@ export default function ProjectAreaBoards({
     };
   }, []);
 
-  // Atlaskit drag and drop monitor
   useEffect(() => {
     return monitorForElements({
       onDragStart: ({ source }) => {
@@ -170,7 +159,6 @@ export default function ProjectAreaBoards({
           setActiveTask(task);
           setIsDragging(true);
 
-          // Add visual class untuk feedback
           if (scrollContainerRef.current) {
             scrollContainerRef.current.classList.add("drag-active");
           }
@@ -187,7 +175,6 @@ export default function ProjectAreaBoards({
         setIsDragging(false);
         stopAutoScroll();
 
-        // Remove visual class
         if (scrollContainerRef.current) {
           scrollContainerRef.current.classList.remove("drag-active");
         }
@@ -222,7 +209,6 @@ export default function ProjectAreaBoards({
         ref={scrollContainerRef}
         className="flex-1 overflow-x-auto overflow-y-hidden boards-container"
         style={{
-          // Disable smooth scrolling saat drag untuk response instant
           scrollBehavior: isDragging ? "auto" : "smooth",
         }}
       >
@@ -240,9 +226,26 @@ export default function ProjectAreaBoards({
               />
             </div>
           ))}
+
+          <div
+            className="single-board h-full flex-shrink-0"
+            style={{ width: `${boardWidth}px` }}
+          >
+            <AddBoardDialog
+              trigger={
+                <div className="w-full h-full p-1">
+                  <div className="w-full h-full border-2 border-dashed border-border rounded-xl md:rounded-2xl flex items-center justify-center bg-card/50 hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="text-center text-muted-foreground transition-colors group-hover:text-primary">
+                      <MdDashboardCustomize className="w-6 h-6 mx-auto mb-2" />
+                      <p className="font-semibold text-sm">Add New Board</p>
+                    </div>
+                  </div>
+                </div>
+              }
+            />
+          </div>
         </div>
 
-        {/* Drag preview */}
         {activeTask && isDragging && (
           <div
             className="fixed pointer-events-none z-50 transform rotate-6 opacity-90"
