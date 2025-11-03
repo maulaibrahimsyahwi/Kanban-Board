@@ -1,9 +1,9 @@
 "use client";
 
 import { ProjectProvider } from "@/contexts/projectContext";
-import { SidebarProvider } from "@/contexts/sidebarContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
+import "react-circular-progressbar/dist/styles.css"; // <-- TAMBAHKAN BARIS INI
 
 export default function AppWrapper({
   children,
@@ -17,21 +17,19 @@ export default function AppWrapper({
       enableSystem
       disableTransitionOnChange
     >
-      <SidebarProvider>
-        <ProjectProvider>
-          {children}
-          <Toaster
-            richColors
-            position="top-right"
-            closeButton
-            toastOptions={{
-              style: {
-                fontFamily: "var(--font-poppins)",
-              },
-            }}
-          />
-        </ProjectProvider>
-      </SidebarProvider>
+      <ProjectProvider>
+        {children}
+        <Toaster
+          richColors
+          position="top-right"
+          closeButton
+          toastOptions={{
+            style: {
+              fontFamily: "var(--font-poppins)",
+            },
+          }}
+        />
+      </ProjectProvider>
     </ThemeProvider>
   );
 }

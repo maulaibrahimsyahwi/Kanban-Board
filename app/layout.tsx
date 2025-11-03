@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./styles/globals.css";
 import AppWrapper from "./AppWrapper";
+// HAPUS BARIS DI BAWAH INI:
+// import "react-circular-progressbar/dist/styles.css";
 
 const poppins = Poppins({
   subsets: ["latin"],

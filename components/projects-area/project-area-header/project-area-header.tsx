@@ -1,15 +1,16 @@
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
 import AddBoardDialog from "@/components/add-board-dialog";
-import AllProjectsDialog from "@/components/windows-dialogs/all-projects-dialog/all-projects-dialog";
-import SidebarToggleButton from "@/components/ui/sidebar-toggle-button";
-import { Grid3X3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/contexts/sidebarContext";
 import FilterDropdown from "@/components/drop-downs/filter-dropdown";
 import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Calendar, BarChartHorizontal, LayoutGrid } from "lucide-react";
+import { ProjectAreaView } from "../project-area";
+import { cn } from "@/lib/utils";
 
 interface ProjectAreaHeaderProps {
   projectName: string;
+  currentView: ProjectAreaView;
+  setCurrentView: (view: ProjectAreaView) => void;
   dueDates: Set<DueDateFilter>;
   setDueDates: React.Dispatch<React.SetStateAction<Set<DueDateFilter>>>;
   priorities: Set<PriorityFilter>;
@@ -24,6 +25,8 @@ interface ProjectAreaHeaderProps {
 
 export default function ProjectAreaHeader({
   projectName,
+  currentView,
+  setCurrentView,
   dueDates,
   setDueDates,
   priorities,
@@ -35,7 +38,9 @@ export default function ProjectAreaHeader({
   boards,
   setBoards,
 }: ProjectAreaHeaderProps) {
-  const { isRightSidebarVisible } = useSidebar();
+  const isBoards = currentView === "boards";
+  const isCalendar = currentView === "calendar";
+  const isChart = currentView === "chart";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -43,19 +48,6 @@ export default function ProjectAreaHeader({
         <span className="text-xl md:text-2xl font-bold text-foreground truncate">
           {projectName}
         </span>
-        <AllProjectsDialog
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-fit cursor-pointer"
-            >
-              <Grid3X3 className="w-4 h-4" />
-              <span className="hidden xs:inline">All Projects</span>
-              <span className="xs:hidden">Projects</span>
-            </Button>
-          }
-        />
         <FilterDropdown
           dueDates={dueDates}
           setDueDates={setDueDates}
@@ -71,16 +63,35 @@ export default function ProjectAreaHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <Button
+          variant={isBoards ? "default" : "outline"}
+          size="sm"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setCurrentView("boards")}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          <span className="hidden sm:inline">Board</span>
+        </Button>
+        <Button
+          variant={isCalendar ? "default" : "outline"}
+          size="sm"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setCurrentView("calendar")}
+        >
+          <Calendar className="w-4 h-4" />
+          <span className="hidden sm:inline">Calendar</span>
+        </Button>
+        <Button
+          variant={isChart ? "default" : "outline"}
+          size="sm"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setCurrentView("chart")}
+        >
+          <BarChartHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">Bagan</span>
+        </Button>
         <AddBoardDialog />
         <TaskDialog />
-        {!isRightSidebarVisible && (
-          <div className="hidden xl:block">
-            <SidebarToggleButton
-              variant="outline"
-              className="text-muted-foreground hover:text-foreground"
-            />
-          </div>
-        )}
       </div>
     </div>
   );

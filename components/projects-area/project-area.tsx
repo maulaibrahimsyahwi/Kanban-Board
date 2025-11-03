@@ -3,9 +3,11 @@ import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
 import { useProjects } from "@/contexts/projectContext";
 import { useState, useMemo } from "react";
-import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
+import { DueDateFilter, PriorityFilter, ProgressFilter, Task } from "@/types";
+import ChartView from "../chart-view/ChartView";
+import CalendarView from "../calendar-view/CalendarView";
 
-// --- Fungsi Helper untuk Logika Filter Tanggal ---
+export type ProjectAreaView = "boards" | "calendar" | "chart";
 
 const getToday = () => {
   const today = new Date();
@@ -20,36 +22,39 @@ const getTomorrow = (today: Date) => {
 };
 
 const getWeekRange = (today: Date) => {
-  const startOfWeek = new Date(today);
-  const dayOfWeek = today.getDay();
-  const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Asumsi Senin adalah awal minggu
-  startOfWeek.setDate(diff);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  return { startOfWeek, endOfWeek };
+  const start = new Date(today);
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+  start.setDate(diff);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return { startOfWeek: start, endOfWeek: end };
 };
 
 const getNextWeekRange = (endOfWeek: Date) => {
   const startOfNextWeek = new Date(endOfWeek);
   startOfNextWeek.setDate(endOfWeek.getDate() + 1);
+  startOfNextWeek.setHours(0, 0, 0, 0);
+
   const endOfNextWeek = new Date(startOfNextWeek);
   endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+  endOfNextWeek.setHours(23, 59, 59, 999);
   return { startOfNextWeek, endOfNextWeek };
 };
-
-// --- Komponen Utama ---
 
 export default function ProjectArea() {
   const { selectedProject } = useProjects();
 
-  // --- State Filter Diangkat ke Sini ---
+  const [currentView, setCurrentView] = useState<ProjectAreaView>("boards");
+
   const [dueDates, setDueDates] = useState<Set<DueDateFilter>>(new Set());
   const [priorities, setPriorities] = useState<Set<PriorityFilter>>(new Set());
   const [progresses, setProgresses] = useState<Set<ProgressFilter>>(new Set());
   const [labels, setLabels] = useState<Set<string>>(new Set());
   const [boardsFilter, setBoardsFilter] = useState<Set<string>>(new Set());
 
-  // --- Logika Penyaringan ---
   const filteredBoards = useMemo(() => {
     if (!selectedProject) return [];
 
@@ -64,30 +69,28 @@ export default function ProjectArea() {
       return selectedProject.boards;
     }
 
-    // Variabel tanggal untuk perbandingan
     const today = getToday();
     const tomorrow = getTomorrow(today);
     const { startOfWeek, endOfWeek } = getWeekRange(today);
     const { startOfNextWeek, endOfNextWeek } = getNextWeekRange(endOfWeek);
 
-    // 1. Filter papan (boards) terlebih dahulu jika ada filter papan
     const boardsToDisplay =
       boardsFilter.size > 0
         ? selectedProject.boards.filter((board) => boardsFilter.has(board.id))
         : selectedProject.boards;
 
-    // 2. Filter tugas (tasks) di dalam papan yang tersisa
     return boardsToDisplay.map((board) => {
       const filteredTasks = board.tasks.filter((task) => {
-        // Cek setiap kategori filter
-        const taskDate = task.dueDate ? new Date(task.dueDate) : null;
-        if (taskDate) taskDate.setHours(0, 0, 0, 0);
-        const taskTime = taskDate?.getTime();
+        const taskDueDate = task.dueDate ? new Date(task.dueDate) : null;
+        if (taskDueDate) {
+          taskDueDate.setHours(0, 0, 0, 0);
+        }
+        const taskTime = taskDueDate?.getTime();
 
         const dueDateCheck = () => {
           if (dueDates.size === 0) return true;
-          if (dueDates.has("no-date") && taskDate === null) return true;
-          if (!taskDate || !taskTime) return false;
+          if (dueDates.has("no-date") && !taskDueDate) return true;
+          if (!taskDueDate || !taskTime) return false;
 
           if (
             dueDates.has("overdue") &&
@@ -133,7 +136,6 @@ export default function ProjectArea() {
           return task.labels.some((label) => labels.has(label.name));
         };
 
-        // Tugas harus lolos SEMUA cek filter
         return (
           dueDateCheck() && priorityCheck() && progressCheck() && labelCheck()
         );
@@ -148,7 +150,7 @@ export default function ProjectArea() {
 
   if (!selectedProject) {
     return (
-      <Card className="shadow-none p-4 md:p-7 rounded-2xl md:rounded-3xl flex justify-center items-center">
+      <Card className="shadow-none p-4 md:p-7 rounded-2xl md:rounded-3xl flex justify-center items-center h-full !border-0">
         <div className="text-center px-4">
           <h2 className="text-lg md:text-xl text-muted-foreground mb-2">
             No project created
@@ -162,11 +164,25 @@ export default function ProjectArea() {
     );
   }
 
+  const renderContent = () => {
+    switch (currentView) {
+      case "chart":
+        return <ChartView />;
+      case "calendar":
+        return <CalendarView />;
+      case "boards":
+      default:
+        return <ProjectAreaBoards boards={filteredBoards} />;
+    }
+  };
+
   return (
-    <Card className="shadow-none p-4 md:p-7 rounded-2xl md:rounded-3xl flex flex-col project-area-card">
-      <div className="flex-shrink-0 mb-4 md:mb-6">
+    <Card className="shadow-none rounded-2xl md:rounded-3xl flex flex-col project-area-card h-full !border-0 bg-transparent">
+      <div className="flex-shrink-0 p-4">
         <ProjectAreaHeader
           projectName={selectedProject.name}
+          currentView={currentView}
+          setCurrentView={setCurrentView}
           dueDates={dueDates}
           setDueDates={setDueDates}
           priorities={priorities}
@@ -179,8 +195,8 @@ export default function ProjectArea() {
           setBoards={setBoardsFilter}
         />
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden project-area-container">
-        <ProjectAreaBoards boards={filteredBoards} />
+      <div className="flex-1 min-h-0 overflow-hidden project-area-container px-4 pb-4">
+        {renderContent()}
       </div>
     </Card>
   );

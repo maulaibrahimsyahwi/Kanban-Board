@@ -20,6 +20,7 @@
   height: 100%;
   min-width: max-content;
   width: max-content;
+  align-items: flex-start; /* Ditambahkan: Mencegah board merenggang penuh */
 }
 
 /* === BOARD SIZING === */
@@ -40,8 +41,8 @@
 
 /* Task container height constraints with smooth reordering */
 .task-scroll-container {
-  flex: 1;
-  min-height: 0;
+  /* Dihapus: flex: 1; */
+  /* Dihapus: min-height: 0; */
   overflow-y: auto;
   overflow-x: visible;
   -webkit-overflow-scrolling: touch;

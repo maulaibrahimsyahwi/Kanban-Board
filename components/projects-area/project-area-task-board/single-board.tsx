@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, memo } from "react"; // Ditambahkan memo
+import { useEffect, useRef, useState, memo } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import SingleTask from "./single-task";
 import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import TaskDialog from "@/components/windows-dialogs/task-dialog/taskdialog";
 import BoardDropDown from "@/components/board-dropdown-menu";
+import { Card } from "@/components/ui/card";
+import { Plus } from "lucide-react";
 
 interface SingleBoardProps {
   board: Board;
@@ -17,7 +19,6 @@ const SingleBoard = ({ board, boardIndex, totalBoards }: SingleBoardProps) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = useState(false);
   const { moveTask } = useProjects();
-  // Add reorderTasksInBoard
 
   useEffect(() => {
     const element = boardRef.current;
@@ -49,7 +50,6 @@ const SingleBoard = ({ board, boardIndex, totalBoards }: SingleBoardProps) => {
           const taskId = source.data.taskId as string;
           const sourceBoardId = source.data.boardId as string;
 
-          // Only move to different board
           if (sourceBoardId !== boardId) {
             moveTask(taskId, sourceBoardId, boardId);
           }
@@ -90,7 +90,7 @@ const SingleBoard = ({ board, boardIndex, totalBoards }: SingleBoardProps) => {
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 sm:space-y-3 pr-1 task-scroll-container">
           {tasks.length === 0 ? (
-            <div className="flex items-center justify-center h-24 sm:h-32 md:h-40 text-center">
+            <div className="flex items-center justify-center h-8 text-center">
               <p className="text-xs sm:text-sm text-muted-foreground">
                 {isDraggedOver ? "Drop task here" : "No tasks yet"}
               </p>
@@ -106,20 +106,23 @@ const SingleBoard = ({ board, boardIndex, totalBoards }: SingleBoardProps) => {
               />
             ))
           )}
-        </div>
 
-        {/* Add Task Button */}
-        <div className="mt-2 sm:mt-3 flex-shrink-0">
-          <TaskDialog
-            boardId={boardId}
-            trigger={
-              <div className="border-2 border-dashed border-border rounded-lg p-2 sm:p-3 md:p-4 text-center hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer">
-                <span className="text-muted-foreground text-xs sm:text-sm">
-                  + Add new task
-                </span>
-              </div>
-            }
-          />
+          {/* Add Task Button (Telah Dipindahkan ke Sini) */}
+          <div className="mt-2 sm:mt-3 flex-shrink-0">
+            <TaskDialog
+              boardId={boardId}
+              trigger={
+                <Card className="shadow-sm border-border bg-card/50 hover:bg-muted/80 transition-colors cursor-pointer opacity-80 hover:opacity-100">
+                  <div className="flex items-center justify-center gap-2 p-3 text-center">
+                    <Plus className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground text-sm font-medium">
+                      Add new task
+                    </span>
+                  </div>
+                </Card>
+              }
+            />
+          </div>
         </div>
       </div>
     </div>

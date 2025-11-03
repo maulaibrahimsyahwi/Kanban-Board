@@ -1,14 +1,13 @@
 @import "tailwindcss";
 
-/* Import all other CSS files */
 @import "./layout.css";
 @import "./boards.css";
 @import "./drag-drop.css";
 @import "./animations.css";
 @import "./scrollbar.css";
 @import "./utilities.css";
+@import "./calendar.css";
 
-/* === CSS CUSTOM PROPERTIES === */
 :root {
   --primary: oklch(0.606 0.25 292.717);
   --primary-foreground: oklch(0.969 0.016 293.756);
@@ -31,7 +30,6 @@
   --ring: oklch(0.606 0.25 292.717);
   --radius: 0.5rem;
 
-  /* Layout constants */
   --board-width-mobile: 280px;
   --board-width-tablet: 320px;
   --board-width-desktop: 360px;
@@ -63,7 +61,6 @@
   --ring: oklch(0.541 0.281 293.009);
 }
 
-/* === BASE STYLES === */
 html,
 body {
   overflow-x: hidden;
@@ -79,7 +76,6 @@ body {
   font-family: var(--font-poppins), "Poppins", ui-sans-serif, system-ui;
 }
 
-/* === PERFORMANCE OPTIMIZATIONS === */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -88,12 +84,9 @@ body {
   }
 }
 
-/* State management for dialogs */
 .dialog-open {
   overflow: hidden;
 }
-/* === CUSTOM STYLES Logo Navbar === */
-/* Logo dark mode styling */
 .logo-dark-mode {
   filter: brightness(0) saturate(100%) invert(0);
 }

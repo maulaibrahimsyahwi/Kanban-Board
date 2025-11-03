@@ -1,0 +1,113 @@
+.calendar-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--card);
+}
+
+.fc {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  --fc-border-color: var(--border);
+  --fc-today-bg-color: hsl(var(--primary) / 0.05);
+  --fc-event-bg-color: hsl(var(--primary));
+  --fc-event-border-color: hsl(var(--primary));
+  --fc-event-text-color: hsl(var(--primary-foreground));
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  padding: 0.5rem 0.25rem;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.fc .fc-button {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  box-shadow: none;
+  text-transform: capitalize;
+}
+.fc .fc-button:hover {
+  background-color: var(--muted);
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.fc .fc-col-header-cell-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.5rem 0;
+}
+
+.fc .fc-daygrid-day {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.dark .fc .fc-daygrid-day {
+  background-color: hsl(var(--card) / 0.5);
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--foreground);
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+.fc .fc-event {
+  cursor: grab;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 5px;
+}
+
+.fc-event.task-progress-not-started {
+  background-color: #a0a0a0;
+  border-color: #a0a0a0;
+  color: #ffffff;
+}
+
+.fc-event.task-progress-in-progress {
+  background-color: #f59e0b;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
+.fc-event.task-progress-completed {
+  background-color: #10b981;
+  border-color: #0f9a6b;
+  color: #ffffff;
+}
+
+.fc .fc-event.fc-event-dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.fc .fc-event .fc-event-resizer {
+  cursor: ew-resize;
+}
