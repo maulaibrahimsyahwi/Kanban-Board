@@ -1,3 +1,5 @@
+"use client";
+
 import { Card } from "../ui/card";
 import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
@@ -6,8 +8,9 @@ import { useState, useMemo } from "react";
 import { DueDateFilter, PriorityFilter, ProgressFilter, Task } from "@/types";
 import ChartView from "../chart-view/ChartView";
 import CalendarView from "../calendar-view/CalendarView";
+import ListView from "./list-view/ListView";
 
-export type ProjectAreaView = "boards" | "calendar" | "chart";
+export type ProjectAreaView = "boards" | "calendar" | "chart" | "list";
 
 const getToday = () => {
   const today = new Date();
@@ -170,6 +173,8 @@ export default function ProjectArea() {
         return <ChartView />;
       case "calendar":
         return <CalendarView />;
+      case "list":
+        return <ListView filteredBoards={filteredBoards} />;
       case "boards":
       default:
         return <ProjectAreaBoards boards={filteredBoards} />;

@@ -1,7 +1,12 @@
 import FilterDropdown from "@/components/drop-downs/filter-dropdown";
 import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Calendar, BarChartHorizontal, LayoutGrid } from "lucide-react";
+import {
+  Calendar,
+  BarChartHorizontal,
+  LayoutGrid,
+  ListChecks,
+} from "lucide-react";
 import { ProjectAreaView } from "../project-area";
 
 interface ProjectAreaHeaderProps {
@@ -38,6 +43,7 @@ export default function ProjectAreaHeader({
   const isBoards = currentView === "boards";
   const isCalendar = currentView === "calendar";
   const isChart = currentView === "chart";
+  const isList = currentView === "list";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -60,6 +66,17 @@ export default function ProjectAreaHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* List (Diposisikan di awal grup) */}
+        <Button
+          variant={isList ? "default" : "outline"}
+          size="sm"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setCurrentView("list")}
+        >
+          <ListChecks className="w-4 h-4" />
+          <span className="hidden sm:inline">List</span>
+        </Button>
+        {/* Board */}
         <Button
           variant={isBoards ? "default" : "outline"}
           size="sm"
@@ -69,6 +86,7 @@ export default function ProjectAreaHeader({
           <LayoutGrid className="w-4 h-4" />
           <span className="hidden sm:inline">Board</span>
         </Button>
+        {/* Calendar (Calendar di sebelah kiri Bagan) */}
         <Button
           variant={isCalendar ? "default" : "outline"}
           size="sm"
@@ -78,6 +96,7 @@ export default function ProjectAreaHeader({
           <Calendar className="w-4 h-4" />
           <span className="hidden sm:inline">Calendar</span>
         </Button>
+        {/* Bagan (Chart) */}
         <Button
           variant={isChart ? "default" : "outline"}
           size="sm"

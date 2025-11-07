@@ -34,7 +34,8 @@ export default function BarChart({ title, data, legend }: BarChartProps) {
       <CardContent className="flex flex-col h-full px-6 pt-4">
         {/* Chart Area */}
         <div className="flex-1 flex items-stretch gap-4 px-2 min-h-[150px]">
-          {data.map((item) => {
+          {data.map((item, index) => {
+            // Tambahkan index untuk key unik
             const total = item.stacks.reduce(
               (sum, stack) => sum + stack.value,
               0
@@ -42,7 +43,8 @@ export default function BarChart({ title, data, legend }: BarChartProps) {
 
             return (
               <div
-                key={item.label}
+                // Perbaikan: Gunakan item.label + index untuk memastikan key unik
+                key={item.label + index}
                 className="flex-1 flex flex-col-reverse items-center gap-1"
               >
                 <span className="text-xs text-muted-foreground truncate">

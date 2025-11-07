@@ -50,11 +50,13 @@ const PriorityListArray: PriorityItem[] = [
 interface PrioritySelectorProps {
   selectedPriority: Task["priority"];
   onSelectPriority: (priority: Task["priority"]) => void;
+  size?: "default" | "sm";
 }
 
 export default function PrioritySelector({
   selectedPriority,
   onSelectPriority,
+  size = "default",
 }: PrioritySelectorProps) {
   const selectedPriorityItem =
     PriorityListArray.find((p) => p.id === selectedPriority) ||
@@ -68,12 +70,16 @@ export default function PrioritySelector({
     return (
       <div
         className={cn(
-          "flex items-center gap-2",
+          "flex items-center gap-1 min-w-0",
           selectedPriorityItem.className
         )}
       >
-        <selectedPriorityItem.icon className="w-4 h-4" />
-        <span className="font-medium">{selectedPriorityItem.name}</span>
+        <selectedPriorityItem.icon className="w-3 h-3 flex-shrink-0" />
+        <span
+          className={cn("font-medium truncate", size === "sm" && "text-xs")}
+        >
+          {selectedPriorityItem.name}
+        </span>
       </div>
     );
   }
@@ -100,18 +106,24 @@ export default function PrioritySelector({
   }
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">Prioritas</Label>
-      <div className="w-full">
+    <div className={cn("space-y-2", size === "sm" && "space-y-0")}>
+      {size === "default" && (
+        <Label className="text-sm font-medium">Prioritas</Label>
+      )}
+      <div className={cn(size === "default" ? "w-full" : "w-fit")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant={"outline"}
-              className="w-full h-11 flex justify-between focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                "flex justify-between focus:ring-2 focus:ring-primary/20",
+                // Mengubah w-fit menjadi w-full untuk menghindari tumpang tindih di kolom sempit
+                size === "default" ? "h-11 w-full px-4" : "h-7 px-1 py-0 w-full"
+              )}
               type="button"
             >
               {renderSelectedPriority()}
-              <ChevronDown className="text-muted-foreground w-4 h-4" />
+              <ChevronDown className="text-muted-foreground w-3 h-3 ml-1 flex-shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

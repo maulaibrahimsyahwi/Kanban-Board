@@ -48,11 +48,13 @@ const ProgressListArray: ProgressItem[] = [
 interface ProgressSelectorProps {
   selectedProgress: Task["progress"];
   onSelectProgress: (progress: Task["progress"]) => void;
+  size?: "default" | "sm";
 }
 
 export default function ProgressSelector({
   selectedProgress,
   onSelectProgress,
+  size = "default",
 }: ProgressSelectorProps) {
   const selectedProgressItem =
     ProgressListArray.find((p) => p.id === selectedProgress) ||
@@ -66,12 +68,16 @@ export default function ProgressSelector({
     return (
       <div
         className={cn(
-          "flex items-center gap-2",
+          "flex items-center gap-1 min-w-0",
           selectedProgressItem.className
         )}
       >
-        <selectedProgressItem.icon className="w-4 h-4" />
-        <span className="font-medium">{selectedProgressItem.name}</span>
+        <selectedProgressItem.icon className="w-3 h-3 flex-shrink-0" />
+        <span
+          className={cn("font-medium truncate", size === "sm" && "text-xs")}
+        >
+          {selectedProgressItem.name}
+        </span>
       </div>
     );
   }
@@ -98,18 +104,24 @@ export default function ProgressSelector({
   }
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">Kemajuan</Label>
-      <div className="w-full">
+    <div className={cn("space-y-2", size === "sm" && "space-y-0")}>
+      {size === "default" && (
+        <Label className="text-sm font-medium">Kemajuan</Label>
+      )}
+      <div className={cn(size === "default" ? "w-full" : "w-fit")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant={"outline"}
-              className="w-full h-11 flex justify-between focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                "flex justify-between focus:ring-2 focus:ring-primary/20",
+                // Mengubah w-fit menjadi w-full untuk menghindari tumpang tindih di kolom sempit
+                size === "default" ? "h-11 w-full px-4" : "h-7 px-1 py-0 w-full"
+              )}
               type="button"
             >
               {renderSelectedProgress()}
-              <ChevronDown className="text-muted-foreground w-4 h-4" />
+              <ChevronDown className="text-muted-foreground w-3 h-3 ml-1 flex-shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

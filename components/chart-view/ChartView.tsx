@@ -76,7 +76,8 @@ export default function ChartView() {
   // Data untuk Bagan "Wadah" (Boards)
   const boardChartData: BarChartData[] = selectedProject.boards.map(
     (board) => ({
-      label: board.name.substring(0, 5) + "..", // Sesuai gambar
+      // Truncation ini masih bisa menghasilkan duplikat label, tapi sekarang ditangani di BarChart.tsx
+      label: board.name.substring(0, 5) + "..",
       stacks: getTaskStacks(board.tasks),
     })
   );
@@ -102,13 +103,14 @@ export default function ChartView() {
   ];
 
   // Data untuk Bagan "Anggota"
+  // Perbaikan: Memberikan label unik pada placeholder
   const memberChartData: BarChartData[] = [
-    { label: "Tidak Ditet...", stacks: getTaskStacks(allTasks) },
-    { label: "...", stacks: getTaskStacks([]) }, // Placeholder
-    { label: "...", stacks: getTaskStacks([]) }, // Placeholder
-    { label: "...", stacks: getTaskStacks([]) }, // Placeholder
-    { label: "...", stacks: getTaskStacks([]) }, // Placeholder
-    { label: "...", stacks: getTaskStacks([]) }, // Placeholder
+    { label: "Tidak Ditet.", stacks: getTaskStacks(allTasks) },
+    { label: "Anggota 1", stacks: getTaskStacks([]) },
+    { label: "Anggota 2", stacks: getTaskStacks([]) },
+    { label: "Anggota 3", stacks: getTaskStacks([]) },
+    { label: "Anggota 4", stacks: getTaskStacks([]) },
+    { label: "Anggota 5", stacks: getTaskStacks([]) },
   ];
 
   return (
@@ -124,7 +126,7 @@ export default function ChartView() {
         <BarChart title="Prioritas" data={priorityChartData} legend={legend} />
       </div>
 
-      {/* Baris 2 - Anggota (Telah Diperbarui) */}
+      {/* Baris 2 - Anggota */}
       <div className="lg:col-span-3">
         <BarChart title="Anggota" data={memberChartData} legend={legend} />
       </div>
