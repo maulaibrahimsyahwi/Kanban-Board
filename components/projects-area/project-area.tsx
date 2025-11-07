@@ -5,7 +5,7 @@ import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
 import { useProjects } from "@/contexts/projectContext";
 import { useState, useMemo } from "react";
-import { DueDateFilter, PriorityFilter, ProgressFilter, Task } from "@/types";
+import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
 import ChartView from "../chart-view/ChartView";
 import CalendarView from "../calendar-view/CalendarView";
 import ListView from "./list-view/ListView";

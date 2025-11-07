@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Check, Circle, Star } from "lucide-react";
 import { GoDotFill } from "react-icons/go";
 import { DatePicker } from "@/components/ui/date-picker";
-import { type ElementType } from "react";
 
 export const getPriorityConfig = (priority: Task["priority"]) => {
   switch (priority) {

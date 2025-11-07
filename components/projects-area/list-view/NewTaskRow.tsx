@@ -4,7 +4,7 @@ import * as React from "react";
 import { useProjects } from "@/contexts/projectContext";
 import { Task, Board } from "@/types";
 import { cn } from "@/lib/utils";
-import { Check, X, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -104,7 +104,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
       setIsExpanded(false);
       onTaskAdded();
     } catch (error) {
-      toast.error("Gagal menambahkan tugas.");
+      toast.error("Gagal menambahkan tugas." + (error as Error).message);
     } finally {
       setIsCreating(false);
     }

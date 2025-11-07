@@ -21,7 +21,7 @@ interface BarChartProps {
 export default function BarChart({ title, data, legend }: BarChartProps) {
   const maxValue = Math.max(
     ...data.map((d) => d.stacks.reduce((sum, stack) => sum + stack.value, 0)),
-    1 // Pastikan minimal 1 agar tidak 0
+    1
   );
 
   return (

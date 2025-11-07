@@ -68,6 +68,62 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   onOpenEditDialog,
 }) => {
   const { editTask, moveTask, selectedProject } = useProjects();
+
+  const [localAvailableLabels, setLocalAvailableLabels] = useState<
+    AppliedLabel[]
+  >(() => {
+    const labelMap = new Map<string, AppliedLabel>(
+      DEFAULT_LABELS.map((label) => [label.id, label as AppliedLabel])
+    );
+
+    if (selectedProject) {
+      selectedProject.boards.forEach((board) => {
+        board.tasks.forEach((task) => {
+          task.labels.forEach((label) => {
+            const defaultMatch = DEFAULT_LABELS.find(
+              (d) => d.name === label.name
+            );
+
+            let id = defaultMatch?.id;
+
+            if (!id) {
+              const editedMatch = Array.from(labelMap.values()).find(
+                (l) => l.name === label.name
+              );
+              id = editedMatch?.id || label.name;
+            }
+
+            const currentLabelInMap = labelMap.get(id);
+            if (currentLabelInMap && currentLabelInMap.name !== label.name) {
+              labelMap.set(id, {
+                id: id,
+                name: label.name,
+                color: label.color,
+              });
+            }
+          });
+        });
+      });
+    }
+
+    initialTask.labels.forEach((appliedLabel) => {
+      const defaultMatch = DEFAULT_LABELS.find(
+        (d) => d.name === appliedLabel.name
+      );
+      const id = defaultMatch?.id || appliedLabel.name;
+      const appliedWithId: AppliedLabel = {
+        id: id,
+        name: appliedLabel.name,
+        color: appliedLabel.color,
+      };
+      if (labelMap.has(appliedWithId.id)) {
+        labelMap.set(appliedWithId.id, appliedWithId);
+      }
+    });
+
+    return Array.from(labelMap.values());
+  });
+
   const [task, setTask] = useState(
     initialTask as Omit<typeof initialTask, "labels"> & {
       labels: AppliedLabel[];
@@ -91,8 +147,15 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
 
   useEffect(() => {
     const initialLabelsWithId = initialTask.labels.map((label) => {
-      const defaultMatch = DEFAULT_LABELS.find((d) => d.name === label.name);
-      return { ...label, id: defaultMatch?.id || label.name };
+      const stateLabel = localAvailableLabels.find(
+        (l) => l.name === label.name
+      );
+      const id = stateLabel?.id || label.name;
+      return {
+        id: id,
+        name: label.name,
+        color: label.color,
+      };
     }) as AppliedLabel[];
 
     setTask({ ...initialTask, labels: initialLabelsWithId });
@@ -100,13 +163,12 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
     setEditStartDate(initialTask.startDate);
     setEditDueDate(initialTask.dueDate);
     setEditBoardId(initialBoardId);
-  }, [initialTask, initialBoardId]);
+  }, [initialTask, initialBoardId, localAvailableLabels]);
 
   const handleSave = (key: keyof Task | "boardId", value: unknown) => {
     if (!selectedProject) return;
     const oldBoardId = initialBoardId;
 
-    // Perbaikan ESLint: Mengubah 'let' menjadi 'const' dan menghapus 'any'
     const updates: Partial<Task> = {};
     let newBoardId = editBoardId;
     if (key === "title") {
@@ -143,7 +205,6 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
     if (Object.keys(updates).length > 0) {
       editTask(initialTask.id, oldBoardId, updates);
 
-      // Memastikan objek label adalah array baru saat setTask
       setTask((prev) => {
         let newLabels = prev.labels;
         if (key === "labels") {
@@ -197,12 +258,9 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
     e.stopPropagation();
     e.preventDefault();
 
-    const appliedLabel = task.labels.find((l) => l.id === label.id);
-
     setCurrentLabelToEdit(label);
-
-    setEditLabelName(appliedLabel?.name || label.name);
-    setEditLabelColor(appliedLabel?.color || label.color);
+    setEditLabelName(label.name);
+    setEditLabelColor(label.color);
 
     setIsEditLabelDialogOpen(true);
   };
@@ -210,33 +268,43 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   const handleSaveLabelEdit = () => {
     if (!currentLabelToEdit) return;
 
-    // Filter label yang diterapkan, HILANGKAN label lama berdasarkan ID
-    const updatedLabelsInTask = task.labels.filter(
-      (label) => label.id !== currentLabelToEdit.id
-    );
-
     const newEditedLabel: AppliedLabel = {
       id: currentLabelToEdit.id,
       name: editLabelName,
       color: editLabelColor,
     };
 
-    // Tambahkan label versi yang sudah diedit.
-    updatedLabelsInTask.push(newEditedLabel);
+    setLocalAvailableLabels((prev) =>
+      prev.map((l) => (l.id === newEditedLabel.id ? newEditedLabel : l))
+    );
 
-    handleSave("labels", updatedLabelsInTask);
+    const isAppliedOnCurrentTask = task.labels.some(
+      (l) => l.id === newEditedLabel.id
+    );
+
+    if (isAppliedOnCurrentTask) {
+      const updatedLabelsInTask = task.labels.map((label) =>
+        label.id === newEditedLabel.id ? newEditedLabel : label
+      );
+      handleSave("labels", updatedLabelsInTask);
+    }
 
     setIsEditLabelDialogOpen(false);
     setCurrentLabelToEdit(null);
     toast.success("Label diperbarui", {
-      description: `Label ${editLabelName} telah diperbarui pada tugas ini.`,
+      description: `Label ${editLabelName} telah diperbarui.`,
     });
   };
 
-  // Gunakan ID untuk pemfilteran
   const appliedLabelIds = useMemo(
     () => new Set(task.labels.map((l) => l.id)),
     [task.labels]
+  );
+
+  const availableLabelsForDropdown = useMemo(
+    () =>
+      localAvailableLabels.filter((label) => !appliedLabelIds.has(label.id)),
+    [localAvailableLabels, appliedLabelIds]
   );
 
   const totalChecklist = initialTask.checklist?.length || 0;
@@ -398,7 +466,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
                       "flex justify-between items-center cursor-pointer bg-accent/50 group"
                     )}
                     onSelect={(e) => e.preventDefault()}
-                    onClick={() => handleToggleLabel(label)} // Klik item untuk menghapus
+                    onClick={() => handleToggleLabel(label)}
                   >
                     <div className="flex items-center gap-2">
                       <span
@@ -411,18 +479,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Ikon Checkmark */}
                       <IoCheckmark className="w-4 h-4 text-primary" />
-
-                      {/* Ikon Edit */}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="w-5 h-5 text-muted-foreground hover:text-primary opacity-50 group-hover:opacity-100"
-                        onClick={(e) => handleOpenEditLabelDialog(e, label)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
                     </div>
                   </DropdownMenuItem>
                 ))}
@@ -431,14 +488,8 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1">
                   Pilih Label
                 </div>
-                {DEFAULT_LABELS.filter(
-                  (defaultLabel) =>
-                    // FILTER: Pastikan ID label DEFAULT belum terpasang
-                    !appliedLabelIds.has(defaultLabel.id)
-                ).map((label) => {
-                  // Gunakan ID sebagai key
+                {availableLabelsForDropdown.map((label) => {
                   const key = label.id;
-
                   return (
                     <DropdownMenuItem
                       key={key}
@@ -446,7 +497,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
                         "flex justify-between items-center cursor-pointer group"
                       }
                       onSelect={(e) => e.preventDefault()}
-                      onClick={() => handleToggleLabel(label)} // Klik item untuk menambah
+                      onClick={() => handleToggleLabel(label)}
                     >
                       <div className="flex items-center gap-2">
                         <span
@@ -458,7 +509,6 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
                         <span className="text-sm">{label.name}</span>
                       </div>
 
-                      {/* Ikon Edit untuk label yang belum dipilih */}
                       <Button
                         variant="ghost"
                         size="icon-sm"

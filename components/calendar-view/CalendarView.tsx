@@ -66,7 +66,7 @@ export default function CalendarView() {
       });
       toast.success(`Tugas "${event.title}" dipindahkan.`);
     } catch (error) {
-      toast.error("Gagal memindahkan tugas.");
+      toast.error("Gagal memindahkan tugas." + (error as Error).message);
       dropInfo.revert();
     }
   };
@@ -88,7 +88,7 @@ export default function CalendarView() {
       });
       toast.success(`Durasi "${event.title}" diperbarui.`);
     } catch (error) {
-      toast.error("Gagal mengubah durasi tugas.");
+      toast.error("Gagal mengubah durasi tugas." + (error as Error).message);
       resizeInfo.revert();
     }
   };

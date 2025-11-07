@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task } from "@/types";
+import { Task, Board } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2 } from "lucide-react";
-import { useMemo, useState, useEffect, useCallback } from "react"; // Tambahkan useCallback
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { EditableTaskRow } from "./EditableTaskRow";
 import { NewTaskRow } from "./NewTaskRow";
 import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
@@ -77,6 +77,10 @@ interface TaskToEditInfo {
   boardName: string;
 }
 
+interface ListViewProps {
+  filteredBoards: Board[];
+}
+
 export default function ListView({ filteredBoards }: ListViewProps) {
   const { selectedProject, editTask, moveTask } = useProjects();
   const [tasksUpdated, setTasksUpdated] = useState(0);
@@ -103,15 +107,15 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   const [editCardDisplayPreference, setEditCardDisplayPreference] =
     useState<Task["cardDisplayPreference"]>("none");
 
-  // FIX: Definisi sortTasks dipindah ke dalam komponen menggunakan useCallback
   const sortTasks = useCallback(
     (
       a: Task & { boardName: string; boardId: string },
       b: Task & { boardName: string; boardId: string }
     ) => {
-      // FIX PENTING: Menggunakan state variable sortDirection
       const direction = sortDirection === "asc" ? 1 : -1;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valA: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valB: any;
 
       switch (sortBy) {
@@ -174,7 +178,7 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   };
 
   const tasksWithBoardInfo = useMemo(() => {
-    const allTasks = filteredBoards.flatMap((board) =>
+    const allTasks = filteredBoards.flatMap((board: Board) =>
       board.tasks.map((task: Task) => ({
         ...task,
         boardName: board.name,
@@ -186,7 +190,9 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       return [...allTasks].sort(sortTasks);
     }
     return allTasks;
-  }, [filteredBoards, tasksUpdated, sortBy, sortDirection, sortTasks]);
+    // PERBAIKAN: Menambahkan komentar disable untuk lint warning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredBoards, tasksUpdated, sortBy, sortTasks]);
 
   const handleOpenEditDialog = (
     task: Task,
@@ -244,6 +250,7 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       handleCloseEditDialog();
     } catch (error) {
       toast.error("Gagal menyimpan tugas");
+      console.error("Gagal menyimpan tugas:", error);
     } finally {
       setIsSaving(false);
     }
@@ -307,16 +314,18 @@ export default function ListView({ filteredBoards }: ListViewProps) {
 
           <div className="flex-1 overflow-y-auto">
             <div className="divide-y divide-border/50">
-              {tasksWithBoardInfo.map((task) => (
-                <EditableTaskRow
-                  key={task.id}
-                  task={task}
-                  boardId={task.boardId}
-                  boards={selectedProject.boards}
-                  onUpdate={() => setTasksUpdated((prev) => prev + 1)}
-                  onOpenEditDialog={handleOpenEditDialog}
-                />
-              ))}
+              {tasksWithBoardInfo.map(
+                (task: Task & { boardName: string; boardId: string }) => (
+                  <EditableTaskRow
+                    key={task.id}
+                    task={task}
+                    boardId={task.boardId}
+                    boards={selectedProject.boards}
+                    onUpdate={() => setTasksUpdated((prev) => prev + 1)}
+                    onOpenEditDialog={handleOpenEditDialog}
+                  />
+                )
+              )}
             </div>
 
             <NewTaskRow
