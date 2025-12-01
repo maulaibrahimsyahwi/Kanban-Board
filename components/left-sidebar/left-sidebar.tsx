@@ -8,6 +8,7 @@ import AllProjectsDialog from "../windows-dialogs/all-projects-dialog/all-projec
 import { Button } from "../ui/button";
 import { Grid3X3, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import UserButton from "./user-button"; // BARU: Import UserButton
 
 interface LeftSidebarProps {
   isSidebarOpen: boolean;
@@ -18,42 +19,44 @@ export default function LeftSidebar({
   isSidebarOpen,
   onToggle,
 }: LeftSidebarProps) {
+  const textTransitionClass = cn(
+    "whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out",
+    isSidebarOpen
+      ? "opacity-100 max-w-[150px] ml-2 translate-x-0"
+      : "opacity-0 max-w-0 ml-0 -translate-x-2"
+  );
+
   return (
     <aside
       className={cn(
-        "poppins flex h-screen flex-col justify-between border-r border-border p-4 transition-all duration-300",
+        "poppins flex h-screen flex-col justify-between border-r border-border p-4 transition-all duration-300 ease-in-out",
         isSidebarOpen ? "w-64" : "w-20"
       )}
     >
       <div className="flex flex-col gap-4">
-        {/* HAPUS justify-center/between toggle disini. Gunakan items-center dan biarkan child mengatur posisi */}
+        {/* Header Logo */}
         <div
           className={cn(
             "mb-2 flex items-center min-h-[40px] transition-all duration-300",
-            // Selalu justify-between agar layout stabil saat transisi
-            // Saat tertutup, elemen kanan (tombol toggle di sidebar) hilang, jadi logo tetap di kiri
-            "justify-between"
+            isSidebarOpen ? "justify-between" : "justify-center"
           )}
         >
           <AppNameAndLogo isSidebarOpen={isSidebarOpen} onToggle={onToggle} />
         </div>
 
+        {/* Menu Items */}
         <div className="flex flex-col gap-2">
           <AllProjectsDialog
             trigger={
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start gap-2 text-muted-foreground hover:text-foreground cursor-pointer overflow-hidden",
-                  !isSidebarOpen && "justify-center"
+                  "w-full text-muted-foreground hover:text-foreground cursor-pointer overflow-hidden transition-all duration-300",
+                  isSidebarOpen ? "justify-start px-4" : "justify-center px-0"
                 )}
               >
                 <Grid3X3 className="w-4 h-4 flex-shrink-0" />
-                {/* Gunakan conditional rendering yang aman untuk transisi atau max-width seperti logo jika perlu, 
-                    tapi untuk tombol ini justify-center saat closed sudah cukup oke karena lebar container buttonnya penuh */}
-                {isSidebarOpen && (
-                  <span className="whitespace-nowrap">All Projects</span>
-                )}
+                <span className={textTransitionClass}>All Projects</span>
               </Button>
             }
           />
@@ -61,24 +64,27 @@ export default function LeftSidebar({
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-2 text-muted-foreground hover:text-foreground cursor-pointer overflow-hidden",
-                !isSidebarOpen && "justify-center"
+                "w-full text-muted-foreground hover:text-foreground cursor-pointer overflow-hidden transition-all duration-300",
+                isSidebarOpen ? "justify-start px-4" : "justify-center px-0"
               )}
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
-              {isSidebarOpen && (
-                <span className="whitespace-nowrap">Create Project</span>
-              )}
+              <span className={textTransitionClass}>Create Project</span>
             </Button>
           </ProjectDialog>
         </div>
       </div>
 
+      {/* Footer Controls */}
       <div className="flex flex-col gap-2">
+        {/* BARU: Tombol User / Login diletakkan di sini */}
+        <UserButton isSidebarOpen={isSidebarOpen} />
+
         <Separator />
+
         <div
           className={cn(
-            "flex items-center justify-center",
+            "flex items-center justify-center transition-all duration-300",
             isSidebarOpen && "sm:justify-start"
           )}
         >

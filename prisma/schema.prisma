@@ -1,0 +1,134 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pastikan URL ini sesuai dengan setup Anda (gunakan connection pooling untuk app)
+  url       = env("DATABASE_URL")
+  // Gunakan direct connection untuk migrasi
+  directUrl = env("DIRECT_URL")
+}
+
+// ================= USER & AUTH =================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Update relasi ini:
+  projectsOwned   Project[] @relation("ProjectOwner")   // Project yang dibuat sendiri
+  projectsMember  Project[] @relation("ProjectMembers") // Project di mana user jadi member
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ================= KANBAN SYSTEM =================
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String   @default("FaDiagramProject")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId   String
+  // Relasi ke Pemilik (Owner)
+  owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relasi ke Anggota Tim (Members) - Many-to-Many
+  members   User[]   @relation("ProjectMembers")
+
+  boards    Board[]
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tasks     Task[]
+}
+
+model Task {
+  id                    String    @id @default(cuid())
+  title                 String
+  description           String?   @db.Text
+  priority              String    @default("low")
+  progress              String    @default("not-started")
+  startDate             DateTime?
+  dueDate               DateTime?
+  cardDisplayPreference String    @default("none")
+  order                 Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  boardId               String
+  board                 Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  checklist             ChecklistItem[]
+  labels                Label[]
+}
+
+model ChecklistItem {
+  id        String  @id @default(cuid())
+  text      String
+  isDone    Boolean @default(false)
+  
+  taskId    String
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Label {
+  id      String @id @default(cuid())
+  name    String
+  color   String 
+
+  taskId  String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}

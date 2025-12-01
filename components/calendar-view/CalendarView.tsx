@@ -7,11 +7,9 @@ import { toast } from "sonner";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import type { EventInput } from "@fullcalendar/core";
-import type {
-  EventDropArg,
-  EventResizeDoneArg,
-} from "@fullcalendar/interaction";
+// Import EventDropArg from @fullcalendar/core
+import type { EventInput, EventDropArg } from "@fullcalendar/core";
+import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { id as indonesianLocale } from "date-fns/locale";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -1,3 +1,5 @@
+"use client";
+
 import FilterDropdown from "@/components/drop-downs/filter-dropdown";
 import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,8 @@ import {
   ListChecks,
 } from "lucide-react";
 import { ProjectAreaView } from "../project-area";
+import InviteMemberDialog from "@/components/windows-dialogs/project-dialog/invite-member-dialog";
+import { useProjects } from "@/contexts/projectContext";
 
 interface ProjectAreaHeaderProps {
   projectName: string;
@@ -40,6 +44,8 @@ export default function ProjectAreaHeader({
   boards,
   setBoards,
 }: ProjectAreaHeaderProps) {
+  const { selectedProject } = useProjects();
+
   const isBoards = currentView === "boards";
   const isCalendar = currentView === "calendar";
   const isChart = currentView === "chart";
@@ -51,6 +57,12 @@ export default function ProjectAreaHeader({
         <span className="text-xl md:text-2xl font-bold text-foreground truncate">
           {projectName}
         </span>
+
+        {/* Tombol Invite hanya muncul jika ada project yang dipilih */}
+        {selectedProject && (
+          <InviteMemberDialog projectId={selectedProject.id} />
+        )}
+
         <FilterDropdown
           dueDates={dueDates}
           setDueDates={setDueDates}
@@ -66,7 +78,6 @@ export default function ProjectAreaHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* List (Diposisikan di awal grup) */}
         <Button
           variant={isList ? "default" : "outline"}
           size="sm"
@@ -76,7 +87,6 @@ export default function ProjectAreaHeader({
           <ListChecks className="w-4 h-4" />
           <span className="hidden sm:inline">List</span>
         </Button>
-        {/* Board */}
         <Button
           variant={isBoards ? "default" : "outline"}
           size="sm"
@@ -86,7 +96,6 @@ export default function ProjectAreaHeader({
           <LayoutGrid className="w-4 h-4" />
           <span className="hidden sm:inline">Board</span>
         </Button>
-        {/* Calendar (Calendar di sebelah kiri Bagan) */}
         <Button
           variant={isCalendar ? "default" : "outline"}
           size="sm"
@@ -96,7 +105,6 @@ export default function ProjectAreaHeader({
           <Calendar className="w-4 h-4" />
           <span className="hidden sm:inline">Calendar</span>
         </Button>
-        {/* Bagan (Chart) */}
         <Button
           variant={isChart ? "default" : "outline"}
           size="sm"

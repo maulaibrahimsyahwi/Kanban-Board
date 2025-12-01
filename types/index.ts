@@ -33,6 +33,8 @@ export type Board = {
 export type Project = {
   id: string;
   name: string;
+  // BARU: Properti ini wajib ada setelah integrasi Auth & Database
+  ownerId: string;
   icon: IconType;
   createdAt: Date;
   boards: Board[];

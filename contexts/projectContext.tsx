@@ -16,10 +16,29 @@ import {
   FaCartShopping,
 } from "react-icons/fa6";
 import { IconType } from "react-icons";
-import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
 
+// Types
 import { Task, Board, Project } from "@/types";
-import { STORAGE_KEYS } from "@/constants";
+
+// Server Actions
+import {
+  createProjectAction,
+  getProjectsAction,
+  deleteProjectAction,
+  updateProjectAction,
+} from "@/app/actions/project";
+import {
+  createBoardAction,
+  deleteBoardAction,
+  updateBoardAction,
+} from "@/app/actions/board";
+import {
+  createTaskAction,
+  updateTaskAction,
+  deleteTaskAction,
+  moveTaskAction,
+} from "@/app/actions/task";
 
 const iconMap: Record<string, IconType> = {
   FaMobileRetro,
@@ -30,146 +49,40 @@ const iconMap: Record<string, IconType> = {
   FaCartShopping,
 };
 
-type SerializedTask = Omit<Task, "createdAt"> & { createdAt: string };
-type SerializedBoard = Omit<Board, "createdAt" | "tasks"> & {
-  createdAt: string;
-  tasks: SerializedTask[];
-};
-type SerializedProject = Omit<Project, "createdAt" | "boards" | "icon"> & {
-  iconName: string;
-  createdAt: string;
-  boards: SerializedBoard[];
-};
+// DTO Interfaces
+interface PrismaTaskDTO {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  progress: string;
+  startDate: Date | null;
+  dueDate: Date | null;
+  cardDisplayPreference: string;
+  createdAt: Date;
+  labels: { name: string; color: string }[];
+  checklist: { id: string; text: string; isDone: boolean }[];
+}
 
-const isLocalStorageAvailable = (): boolean => {
-  try {
-    if (typeof window === "undefined") return false;
-    const test = "__localStorage_test__";
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch {
-    return false;
-  }
-};
+interface PrismaBoardDTO {
+  id: string;
+  name: string;
+  createdAt: Date;
+  tasks: PrismaTaskDTO[];
+}
 
-const serializeProjects = (projects: Project[]): string => {
-  try {
-    const serializedProjects = projects.map((project) => ({
-      ...project,
-      iconName:
-        Object.keys(iconMap).find((key) => iconMap[key] === project.icon) ||
-        "FaDiagramProject",
-      createdAt: project.createdAt.toISOString(),
-      boards: project.boards.map((board) => ({
-        ...board,
-        createdAt: board.createdAt.toISOString(),
-        tasks: board.tasks.map((task) => ({
-          ...task,
-          createdAt: task.createdAt.toISOString(),
-        })),
-      })),
-    }));
-    return JSON.stringify(serializedProjects);
-  } catch (error) {
-    console.error("Error serializing projects:", error);
-    return "[]";
-  }
-};
-
-const deserializeProjects = (data: string): Project[] => {
-  try {
-    const parsedData: SerializedProject[] = JSON.parse(data);
-    return parsedData.map((project) => ({
-      ...project,
-      icon: iconMap[project.iconName] || FaDiagramProject,
-      createdAt: new Date(project.createdAt),
-      boards: project.boards.map((board) => ({
-        ...board,
-        createdAt: new Date(board.createdAt),
-        tasks: board.tasks.map((task) => ({
-          ...task,
-          createdAt: new Date(task.createdAt),
-        })),
-      })),
-    }));
-  } catch (error) {
-    console.error("Error deserializing projects:", error);
-    return [];
-  }
-};
-
-const loadProjectsFromStorage = (): Project[] => {
-  if (!isLocalStorageAvailable()) return [];
-  try {
-    const storedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-    if (storedProjects && storedProjects !== "undefined") {
-      return deserializeProjects(storedProjects);
-    }
-  } catch (error) {
-    console.error("Error loading projects from localStorage:", error);
-  }
-  return [];
-};
-
-const saveProjectsToStorage = (projects: Project[]): void => {
-  if (!isLocalStorageAvailable()) return;
-  try {
-    const serialized = serializeProjects(projects);
-    localStorage.setItem(STORAGE_KEYS.PROJECTS, serialized);
-  } catch (error) {
-    console.error("Error saving projects to localStorage:", error);
-  }
-};
-
-const saveSelectedProjectToStorage = (projectId: string | null): void => {
-  if (!isLocalStorageAvailable()) return;
-  try {
-    if (projectId) {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_PROJECT, projectId);
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.SELECTED_PROJECT);
-    }
-  } catch (error) {
-    console.error("Error saving selected project to localStorage:", error);
-  }
-};
-
-const loadSelectedProjectFromStorage = (): string | null => {
-  if (!isLocalStorageAvailable()) return null;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.SELECTED_PROJECT);
-    return stored && stored !== "undefined" ? stored : null;
-  } catch (error) {
-    console.error("Error loading selected project from localStorage:", error);
-    return null;
-  }
-};
-
-const isFirstTimeUser = (): boolean => {
-  if (!isLocalStorageAvailable()) return true;
-  try {
-    const hasVisited = localStorage.getItem(STORAGE_KEYS.HAS_VISITED);
-    return hasVisited === null || hasVisited === "undefined";
-  } catch (error) {
-    console.error("Error checking first time user status:", error);
-    return true;
-  }
-};
-
-const markUserAsVisited = (): void => {
-  if (!isLocalStorageAvailable()) return;
-  try {
-    localStorage.setItem(STORAGE_KEYS.HAS_VISITED, "true");
-  } catch (error) {
-    console.warn("Cannot save visited status to localStorage:", error);
-  }
-};
+interface PrismaProjectDTO {
+  id: string;
+  name: string;
+  icon: string;
+  ownerId: string;
+  createdAt: Date;
+  boards: PrismaBoardDTO[];
+}
 
 interface ProjectContextType {
   projects: Project[];
   selectedProject: Project | null;
-  isFirstTime: boolean;
   isLoading: boolean;
   selectProject: (projectId: string) => void;
   addProject: (projectName: string, iconName?: string) => void;
@@ -207,59 +120,65 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null
   );
-  const [isFirstTime, setIsFirstTime] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // === 1. LOAD DATA ===
   useEffect(() => {
-    const initializeData = () => {
+    const loadProjects = async () => {
+      setIsLoading(true);
       try {
-        const firstTime = isFirstTimeUser();
-        setIsFirstTime(firstTime);
+        const result = await getProjectsAction();
 
-        if (!firstTime) {
-          const storedProjects = loadProjectsFromStorage();
-          const storedSelectedProject = loadSelectedProjectFromStorage();
+        if (result.success && result.data) {
+          const dbProjects = result.data as unknown as PrismaProjectDTO[];
 
-          setProjects(storedProjects);
+          const mappedProjects: Project[] = dbProjects.map((p) => ({
+            id: p.id,
+            name: p.name,
+            ownerId: p.ownerId,
+            icon: iconMap[p.icon] || FaDiagramProject,
+            createdAt: new Date(p.createdAt),
+            boards: p.boards.map((b) => ({
+              id: b.id,
+              name: b.name,
+              createdAt: new Date(b.createdAt),
+              tasks: b.tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                description: t.description || "",
+                priority: t.priority as Task["priority"],
+                progress: t.progress as Task["progress"],
+                startDate: t.startDate ? new Date(t.startDate) : null,
+                dueDate: t.dueDate ? new Date(t.dueDate) : null,
+                cardDisplayPreference:
+                  (t.cardDisplayPreference as Task["cardDisplayPreference"]) ||
+                  "none",
+                createdAt: new Date(t.createdAt),
+                labels: t.labels,
+                checklist: t.checklist,
+              })),
+            })),
+          }));
 
-          if (
-            storedSelectedProject &&
-            storedProjects.find((p) => p.id === storedSelectedProject)
-          ) {
-            setSelectedProjectId(storedSelectedProject);
-          } else if (storedProjects.length > 0) {
-            setSelectedProjectId(storedProjects[0].id);
-            saveSelectedProjectToStorage(storedProjects[0].id);
-          }
-        } else {
-          markUserAsVisited();
+          setProjects(mappedProjects);
+
+          setSelectedProjectId((prev) => {
+            if (!prev && mappedProjects.length > 0) {
+              return mappedProjects[0].id;
+            }
+            return prev;
+          });
         }
       } catch (error) {
-        console.error("Error initializing data:", error);
+        console.error("Failed to load projects", error);
+        toast.error("Gagal memuat data project");
       } finally {
         setIsLoading(false);
       }
     };
 
-    const timer = setTimeout(initializeData, 100);
-    return () => clearTimeout(timer);
+    loadProjects();
   }, []);
-
-  useEffect(() => {
-    if (!isLoading && !isFirstTime && projects.length > 0) {
-      const timeoutId = setTimeout(() => {
-        saveProjectsToStorage(projects);
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [projects, isLoading, isFirstTime]);
-
-  useEffect(() => {
-    if (!isLoading && selectedProjectId) {
-      saveSelectedProjectToStorage(selectedProjectId);
-    }
-  }, [selectedProjectId, isLoading]);
 
   const selectedProject =
     projects.find((p) => p.id === selectedProjectId) || null;
@@ -268,60 +187,58 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     setSelectedProjectId(projectId);
   };
 
-  const addProject = (
+  // === 2. PROJECT ACTIONS ===
+
+  const addProject = async (
     projectName: string,
     iconName: string = "FaDiagramProject"
   ) => {
-    const newProject: Project = {
-      id: uuidv4(),
-      name: projectName,
-      icon: iconMap[iconName] || FaDiagramProject,
-      createdAt: new Date(),
-      boards: [
-        {
-          id: uuidv4(),
-          name: "To Do",
-          createdAt: new Date(),
-          tasks: [],
-        },
-        {
-          id: uuidv4(),
-          name: "In Progress",
-          createdAt: new Date(),
-          tasks: [],
-        },
-        {
-          id: uuidv4(),
-          name: "Done",
-          createdAt: new Date(),
-          tasks: [],
-        },
-      ],
-    };
+    const result = await createProjectAction(projectName);
 
-    setProjects((prev) => [...prev, newProject]);
-    setSelectedProjectId(newProject.id);
+    if (result.success && result.data) {
+      const p = result.data as unknown as PrismaProjectDTO;
+      const newProjectData: Project = {
+        id: p.id,
+        name: p.name,
+        ownerId: p.ownerId,
+        icon: iconMap[iconName] || FaDiagramProject,
+        createdAt: new Date(p.createdAt),
+        boards: p.boards.map((b) => ({
+          id: b.id,
+          name: b.name,
+          createdAt: new Date(b.createdAt),
+          tasks: [],
+        })),
+      };
 
-    if (isFirstTime) {
-      setIsFirstTime(false);
+      setProjects((prev) => [newProjectData, ...prev]);
+      setSelectedProjectId(newProjectData.id);
+      toast.success("Project berhasil dibuat!");
+    } else {
+      toast.error(result.message || "Gagal membuat project");
     }
   };
 
-  const deleteProject = (projectId: string) => {
+  const deleteProject = async (projectId: string) => {
+    const prevProjects = [...projects];
     setProjects((prev) => {
       const filtered = prev.filter((p) => p.id !== projectId);
       if (selectedProjectId === projectId) {
-        if (filtered.length > 0) {
-          setSelectedProjectId(filtered[0].id);
-        } else {
-          setSelectedProjectId(null);
-        }
+        setSelectedProjectId(filtered.length > 0 ? filtered[0].id : null);
       }
       return filtered;
     });
+
+    const result = await deleteProjectAction(projectId);
+    if (!result.success) {
+      setProjects(prevProjects);
+      toast.error("Gagal menghapus project");
+    } else {
+      toast.success("Project dihapus");
+    }
   };
 
-  const editProject = (
+  const editProject = async (
     projectId: string,
     updates: Partial<Pick<Project, "name" | "icon">>
   ) => {
@@ -330,62 +247,227 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         project.id === projectId ? { ...project, ...updates } : project
       )
     );
+
+    if (updates.name) {
+      const result = await updateProjectAction(projectId, {
+        name: updates.name,
+      });
+      if (!result.success) toast.error("Gagal mengupdate project");
+    }
   };
 
-  const addTaskToProject = (
-    taskData: Omit<Task, "id" | "createdAt">,
-    boardId: string,
-    projectId: string
-  ) => {
-    const newTask: Task = {
-      ...taskData,
-      id: uuidv4(),
-      createdAt: new Date(),
-      description: taskData.description || "",
-      labels: taskData.labels || [],
-      checklist: taskData.checklist || [],
-      cardDisplayPreference: taskData.cardDisplayPreference || "none",
-    };
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === projectId) {
-          const updatedBoards = project.boards.map((board) => {
-            if (board.id === boardId) {
-              return { ...board, tasks: [...board.tasks, newTask] };
-            }
-            return board;
-          });
-          return { ...project, boards: updatedBoards };
+  // === 3. BOARD ACTIONS ===
+
+  const addBoard = async (boardName: string) => {
+    if (!selectedProjectId) return;
+
+    const result = await createBoardAction(selectedProjectId, boardName);
+
+    if (result.success && result.data) {
+      const b = result.data;
+      const newBoard: Board = {
+        id: b.id,
+        name: b.name,
+        createdAt: new Date(b.createdAt),
+        tasks: [],
+      };
+
+      setProjects((prev) =>
+        prev.map((project) => {
+          if (project.id === selectedProjectId) {
+            return { ...project, boards: [...project.boards, newBoard] };
+          }
+          return project;
+        })
+      );
+      toast.success("Board berhasil dibuat");
+    } else {
+      toast.error("Gagal membuat board");
+    }
+  };
+
+  const deleteBoard = async (boardId: string) => {
+    if (!selectedProjectId) return;
+
+    const prevProjects = [...projects];
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === selectedProjectId) {
+          if (project.boards.length <= 1) {
+            toast.warning("Tidak bisa menghapus board terakhir");
+            return project;
+          }
+          return {
+            ...project,
+            boards: project.boards.filter((b) => b.id !== boardId),
+          };
         }
         return project;
       })
     );
+
+    const result = await deleteBoardAction(boardId);
+    if (!result.success) {
+      setProjects(prevProjects);
+      toast.error("Gagal menghapus board");
+    }
   };
 
-  const moveTask = (taskId: string, fromBoardId: string, toBoardId: string) => {
+  const editBoard = async (
+    boardId: string,
+    updates: Partial<Pick<Board, "name">>
+  ) => {
+    if (!selectedProjectId) return;
+
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === selectedProjectId) {
+          return {
+            ...project,
+            boards: project.boards.map((b) =>
+              b.id === boardId ? { ...b, ...updates } : b
+            ),
+          };
+        }
+        return project;
+      })
+    );
+
+    if (updates.name) {
+      await updateBoardAction(boardId, updates.name);
+    }
+  };
+
+  // === 4. TASK ACTIONS ===
+
+  const addTaskToProject = async (
+    taskData: Omit<Task, "id" | "createdAt">,
+    boardId: string,
+    projectId: string
+  ) => {
+    const result = await createTaskAction(boardId, taskData);
+
+    if (result.success && result.data) {
+      const t = result.data as unknown as PrismaTaskDTO;
+
+      const newTask: Task = {
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        priority: t.priority as Task["priority"],
+        progress: t.progress as Task["progress"],
+        startDate: t.startDate ? new Date(t.startDate) : null,
+        dueDate: t.dueDate ? new Date(t.dueDate) : null,
+        cardDisplayPreference:
+          (t.cardDisplayPreference as Task["cardDisplayPreference"]) || "none",
+        createdAt: new Date(t.createdAt),
+        labels: t.labels,
+        checklist: t.checklist,
+      };
+
+      setProjects((prev) =>
+        prev.map((project) => {
+          if (project.id === projectId) {
+            return {
+              ...project,
+              boards: project.boards.map((board) => {
+                if (board.id === boardId) {
+                  return { ...board, tasks: [...board.tasks, newTask] };
+                }
+                return board;
+              }),
+            };
+          }
+          return project;
+        })
+      );
+    } else {
+      toast.error("Gagal membuat task");
+    }
+  };
+
+  const editTask = async (
+    taskId: string,
+    boardId: string,
+    updatedTask: Partial<Task>
+  ) => {
+    if (!selectedProjectId) return;
+
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === selectedProjectId) {
+          return {
+            ...project,
+            boards: project.boards.map((board) => {
+              if (board.id === boardId) {
+                return {
+                  ...board,
+                  tasks: board.tasks.map((t) =>
+                    t.id === taskId ? { ...t, ...updatedTask } : t
+                  ),
+                };
+              }
+              return board;
+            }),
+          };
+        }
+        return project;
+      })
+    );
+
+    const result = await updateTaskAction(taskId, updatedTask);
+    if (!result.success) {
+      toast.error("Gagal menyimpan perubahan task");
+    }
+  };
+
+  const deleteTask = async (taskId: string, boardId: string) => {
+    if (!selectedProjectId) return;
+
+    const prevProjects = [...projects];
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === selectedProjectId) {
+          return {
+            ...project,
+            boards: project.boards.map((board) => {
+              if (board.id === boardId) {
+                return {
+                  ...board,
+                  tasks: board.tasks.filter((t) => t.id !== taskId),
+                };
+              }
+              return board;
+            }),
+          };
+        }
+        return project;
+      })
+    );
+
+    const result = await deleteTaskAction(taskId);
+    if (!result.success) {
+      setProjects(prevProjects);
+      toast.error("Gagal menghapus task");
+    }
+  };
+
+  const moveTask = async (
+    taskId: string,
+    fromBoardId: string,
+    toBoardId: string
+  ) => {
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
         (p) => p.id === selectedProjectId
       );
-      if (projectIndex === -1) {
-        console.error("Selected project not found.");
-        return prevProjects;
-      }
+      if (projectIndex === -1) return prevProjects;
 
       const currentProject = prevProjects[projectIndex];
       const fromBoard = currentProject.boards.find((b) => b.id === fromBoardId);
-      const toBoard = currentProject.boards.find((b) => b.id === toBoardId);
 
-      if (!fromBoard || !toBoard) {
-        console.error("Source or target board not found.");
-        return prevProjects;
-      }
-
-      const taskToMove = fromBoard.tasks.find((task) => task.id === taskId);
-      if (!taskToMove) {
-        console.error("Task not found in source board.");
-        return prevProjects;
-      }
+      const taskToMove = fromBoard?.tasks.find((task) => task.id === taskId);
+      if (!taskToMove) return prevProjects;
 
       const newProjects = [...prevProjects];
       const newBoards = newProjects[projectIndex].boards.map((board) => {
@@ -404,9 +486,17 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       newProjects[projectIndex] = { ...currentProject, boards: newBoards };
       return newProjects;
     });
+
+    const targetBoard = selectedProject?.boards.find((b) => b.id === toBoardId);
+    const newOrder = targetBoard ? targetBoard.tasks.length + 1 : 0;
+
+    const result = await moveTaskAction(taskId, toBoardId, newOrder);
+    if (!result.success) {
+      toast.error("Gagal memindahkan task");
+    }
   };
 
-  const reorderTasksInBoard = (
+  const reorderTasksInBoard = async (
     boardId: string,
     sourceIndex: number,
     destinationIndex: number
@@ -419,11 +509,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           const updatedBoards = project.boards.map((board) => {
             if (board.id === boardId) {
               const tasks = [...board.tasks];
-
               const [movedTask] = tasks.splice(sourceIndex, 1);
-
               tasks.splice(destinationIndex, 0, movedTask);
-
               return { ...board, tasks };
             }
             return board;
@@ -433,117 +520,17 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         return project;
       });
     });
-  };
 
-  const deleteTask = (taskId: string, boardId: string) => {
-    if (!selectedProjectId) return;
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
-          const updatedBoards = project.boards.map((board) => {
-            if (board.id === boardId) {
-              return {
-                ...board,
-                tasks: board.tasks.filter((task) => task.id !== taskId),
-              };
-            }
-            return board;
-          });
-          return { ...project, boards: updatedBoards };
-        }
-        return project;
-      })
-    );
-  };
-
-  const editTask = (
-    taskId: string,
-    boardId: string,
-    updatedTask: Partial<Task>
-  ) => {
-    if (!selectedProjectId) return;
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
-          const updatedBoards = project.boards.map((board) => {
-            if (board.id === boardId) {
-              return {
-                ...board,
-                tasks: board.tasks.map((task) =>
-                  task.id === taskId ? { ...task, ...updatedTask } : task
-                ),
-              };
-            }
-            return board;
-          });
-          return { ...project, boards: updatedBoards };
-        }
-        return project;
-      })
-    );
-  };
-
-  const deleteBoard = (boardId: string) => {
-    if (!selectedProjectId) return;
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
-          if (project.boards.length <= 1) {
-            console.warn("Cannot delete the last board");
-            return project;
-          }
-          const updatedBoards = project.boards.filter(
-            (board) => board.id !== boardId
-          );
-          return { ...project, boards: updatedBoards };
-        }
-        return project;
-      })
-    );
-  };
-
-  const editBoard = (
-    boardId: string,
-    updates: Partial<Pick<Board, "name">>
-  ) => {
-    if (!selectedProjectId) return;
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
-          const updatedBoards = project.boards.map((board) =>
-            board.id === boardId ? { ...board, ...updates } : board
-          );
-          return { ...project, boards: updatedBoards };
-        }
-        return project;
-      })
-    );
-  };
-  const addBoard = (boardName: string) => {
-    if (!selectedProjectId) return;
-    const newBoard: Board = {
-      id: uuidv4(),
-      name: boardName,
-      createdAt: new Date(),
-      tasks: [],
-    };
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === selectedProjectId) {
-          return {
-            ...project,
-            boards: [...project.boards, newBoard],
-          };
-        }
-        return project;
-      })
-    );
+    const taskInBoard = selectedProject?.boards.find((b) => b.id === boardId)
+      ?.tasks[sourceIndex];
+    if (taskInBoard) {
+      await moveTaskAction(taskInBoard.id, boardId, destinationIndex);
+    }
   };
 
   const value = {
     projects,
     selectedProject,
-    isFirstTime,
     isLoading,
     selectProject,
     addProject,

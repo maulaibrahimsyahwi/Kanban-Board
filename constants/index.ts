@@ -10,12 +10,6 @@ export const DRAG_TYPES = {
   TASK_REORDER: "task-reorder",
 } as const;
 
-export const STORAGE_KEYS = {
-  PROJECTS: "kanban-projects",
-  SELECTED_PROJECT: "kanban-selected-project",
-  HAS_VISITED: "kanban-has-visited",
-} as const;
-
 export type TaskLabel = {
   id: string;
   name: string;
