@@ -21,8 +21,10 @@ export default function AppWrapper({
         {children}
         <Toaster
           richColors
-          position="top-right"
+          position="bottom-right"
           closeButton
+          visibleToasts={2}
+          duration={2500}
           toastOptions={{
             style: {
               fontFamily: "var(--font-poppins)",

@@ -1,22 +1,53 @@
 import Image from "next/image";
 import logo from "@/app/assets/logo.svg";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { TbLayoutSidebar } from "react-icons/tb";
 
-export default function AppNameAndLogo() {
+interface AppNameAndLogoProps {
+  isSidebarOpen: boolean;
+  onToggle: () => void;
+}
+
+export default function AppNameAndLogo({
+  isSidebarOpen,
+  onToggle,
+}: AppNameAndLogoProps) {
   return (
-    <div className="flex items-center gap-2.5">
-      {/* Logo */}
-      <Image
-        src={logo}
-        alt="Free Kanban Logo"
-        width={22}
-        height={22}
-        className="logo-dark-mode flex-shrink-0"
-      />
+    // HAPUS overflow-hidden dari sini agar logo tidak terpotong
+    <div className="flex items-center">
+      <button
+        onClick={onToggle}
+        className={cn(
+          "relative group flex-shrink-0 w-[22px] h-[22px] cursor-pointer hover:cursor-e-resize outline-none transition-transform duration-300 ease-in-out",
+          // Geser logo ke tengah manual saat sidebar tertutup
+          !isSidebarOpen && "translate-x-[12px]"
+        )}
+        type="button"
+      >
+        <Image
+          src={logo}
+          alt="Free Kanban Logo"
+          width={22}
+          height={22}
+          className="logo-dark-mode transition-opacity duration-200 group-hover:opacity-0"
+        />
 
-      {/* App Identity */}
-      <div className="flex flex-col">
-        {/* App Name */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-foreground">
+          <TbLayoutSidebar className="w-5 h-5" />
+        </div>
+      </button>
+
+      {/* Overflow hidden dipindah ke sini, khusus untuk teks */}
+      <div
+        className={cn(
+          "flex flex-col overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
+          // Mainkan margin-left dan max-width
+          isSidebarOpen
+            ? "opacity-100 max-w-[200px] ml-2.5"
+            : "opacity-0 max-w-0 ml-0"
+        )}
+      >
         <Link
           href="https://www.linkedin.com/in/maula-ibrahim-syahwi"
           target="_blank"
@@ -28,7 +59,6 @@ export default function AppNameAndLogo() {
           </span>
         </Link>
 
-        {/* Creator Attribution - Subtle */}
         <Link
           href="https://www.linkedin.com/in/maula-ibrahim-syahwi"
           target="_blank"
