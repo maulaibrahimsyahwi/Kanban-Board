@@ -30,14 +30,21 @@ export type Board = {
   tasks: Task[];
 };
 
+export type UserProfile = {
+  name: string | null;
+  email: string | null;
+  image: string | null;
+};
+
 export type Project = {
   id: string;
   name: string;
-  // BARU: Properti ini wajib ada setelah integrasi Auth & Database
   ownerId: string;
   icon: IconType;
   createdAt: Date;
   boards: Board[];
+  owner: UserProfile;
+  members: UserProfile[];
 };
 
 export type DueDateFilter =
@@ -52,3 +59,10 @@ export type DueDateFilter =
 export type PriorityFilter = Task["priority"];
 
 export type ProgressFilter = Task["progress"];
+
+export type ProjectAreaView =
+  | "boards"
+  | "calendar"
+  | "chart"
+  | "list"
+  | "people";

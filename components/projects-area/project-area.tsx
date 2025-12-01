@@ -5,12 +5,16 @@ import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
 import { useProjects } from "@/contexts/projectContext";
 import { useState, useMemo } from "react";
-import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
+import {
+  DueDateFilter,
+  PriorityFilter,
+  ProgressFilter,
+  ProjectAreaView,
+} from "@/types";
 import ChartView from "../chart-view/ChartView";
 import CalendarView from "../calendar-view/CalendarView";
 import ListView from "./list-view/ListView";
-
-export type ProjectAreaView = "boards" | "calendar" | "chart" | "list";
+import PeopleView from "./people-view/people-view";
 
 const getToday = () => {
   const today = new Date();
@@ -175,6 +179,8 @@ export default function ProjectArea() {
         return <CalendarView />;
       case "list":
         return <ListView filteredBoards={filteredBoards} />;
+      case "people":
+        return <PeopleView />;
       case "boards":
       default:
         return <ProjectAreaBoards boards={filteredBoards} />;

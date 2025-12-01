@@ -19,7 +19,7 @@ import { IconType } from "react-icons";
 import { toast } from "sonner";
 
 // Types
-import { Task, Board, Project } from "@/types";
+import { Task, Board, Project, UserProfile } from "@/types";
 
 // Server Actions
 import {
@@ -78,6 +78,8 @@ interface PrismaProjectDTO {
   ownerId: string;
   createdAt: Date;
   boards: PrismaBoardDTO[];
+  owner: UserProfile;
+  members: UserProfile[];
 }
 
 interface ProjectContextType {
@@ -138,6 +140,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
             ownerId: p.ownerId,
             icon: iconMap[p.icon] || FaDiagramProject,
             createdAt: new Date(p.createdAt),
+            // Mapping owner dan members
+            owner: p.owner,
+            members: p.members,
             boards: p.boards.map((b) => ({
               id: b.id,
               name: b.name,
@@ -196,13 +201,20 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createProjectAction(projectName);
 
     if (result.success && result.data) {
-      const p = result.data as unknown as PrismaProjectDTO;
+      // Type assertion dengan tambahan properti sementara
+      const p = result.data as unknown as PrismaProjectDTO & {
+        ownerId: string;
+      };
+
       const newProjectData: Project = {
         id: p.id,
         name: p.name,
         ownerId: p.ownerId,
         icon: iconMap[iconName] || FaDiagramProject,
         createdAt: new Date(p.createdAt),
+        // Placeholder untuk owner dan members saat create (akan di-refresh saat reload)
+        owner: { name: "Me", email: "", image: "" },
+        members: [],
         boards: p.boards.map((b) => ({
           id: b.id,
           name: b.name,
@@ -214,6 +226,11 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       setProjects((prev) => [newProjectData, ...prev]);
       setSelectedProjectId(newProjectData.id);
       toast.success("Project berhasil dibuat!");
+
+      // Reload halaman sebentar lagi agar data owner/member sinkron dari server
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } else {
       toast.error(result.message || "Gagal membuat project");
     }

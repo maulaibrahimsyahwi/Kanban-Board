@@ -6,14 +6,13 @@ import { cn } from "@/lib/utils";
 import {
   User,
   Bell,
-  CreditCard,
   Users,
   Settings,
   Shield,
   LogOut,
   LayoutGrid,
-  Briefcase,
   Lock,
+  ArrowLeft,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -23,7 +22,6 @@ const sidebarItems = [
     items: [
       { href: "/settings/profile", label: "Profile settings", icon: User },
       { href: "/settings/notifications", label: "Notifications", icon: Bell },
-      { href: "/settings/billing", label: "Billing", icon: CreditCard },
     ],
   },
   {
@@ -40,9 +38,6 @@ const sidebarItems = [
         label: "Project status",
         icon: LayoutGrid,
       },
-      { href: "/settings/roles", label: "Account roles", icon: User },
-      { href: "/settings/rights", label: "Project rights", icon: Briefcase },
-      { href: "/settings/fields", label: "Custom fields", icon: LayoutGrid },
     ],
   },
   {
@@ -63,7 +58,13 @@ export function SettingsSidebar() {
 
   return (
     <aside className="w-64 flex-shrink-0 border-r border-border bg-card/50 h-full flex flex-col">
-      <div className="p-4 border-b border-border flex-shrink-0">
+      <div className="p-4 border-b border-border flex-shrink-0 flex items-center gap-3">
+        <Link
+          href="/"
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded-md hover:bg-muted"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" /> Settings
         </h2>

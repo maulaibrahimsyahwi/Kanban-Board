@@ -6,18 +6,14 @@ import LeftSidebar from "@/components/left-sidebar/left-sidebar";
 import ProjectArea from "@/components/projects-area/project-area";
 import LandingPage from "@/components/landing-page";
 import OnboardingFlow from "@/components/onboarding-flow";
-import { Loader2 } from "lucide-react";
+import CustomLoader from "@/components/custom-loader";
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
+    return <CustomLoader variant="fullscreen" label="Memuat FreeKanban..." />;
   }
 
   if (!session) {

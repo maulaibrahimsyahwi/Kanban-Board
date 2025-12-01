@@ -1,16 +1,20 @@
 "use client";
 
 import FilterDropdown from "@/components/drop-downs/filter-dropdown";
-import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
+import {
+  DueDateFilter,
+  PriorityFilter,
+  ProgressFilter,
+  ProjectAreaView,
+} from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
   BarChartHorizontal,
   LayoutGrid,
   ListChecks,
+  Users,
 } from "lucide-react";
-import { ProjectAreaView } from "../project-area";
-import InviteMemberDialog from "@/components/windows-dialogs/project-dialog/invite-member-dialog";
 import { useProjects } from "@/contexts/projectContext";
 
 interface ProjectAreaHeaderProps {
@@ -50,6 +54,7 @@ export default function ProjectAreaHeader({
   const isCalendar = currentView === "calendar";
   const isChart = currentView === "chart";
   const isList = currentView === "list";
+  const isPeople = currentView === "people";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -57,11 +62,6 @@ export default function ProjectAreaHeader({
         <span className="text-xl md:text-2xl font-bold text-foreground truncate">
           {projectName}
         </span>
-
-        {/* Tombol Invite hanya muncul jika ada project yang dipilih */}
-        {selectedProject && (
-          <InviteMemberDialog projectId={selectedProject.id} />
-        )}
 
         <FilterDropdown
           dueDates={dueDates}
@@ -77,7 +77,7 @@ export default function ProjectAreaHeader({
         />
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         <Button
           variant={isList ? "default" : "outline"}
           size="sm"
@@ -113,6 +113,15 @@ export default function ProjectAreaHeader({
         >
           <BarChartHorizontal className="w-4 h-4" />
           <span className="hidden sm:inline">Bagan</span>
+        </Button>
+        <Button
+          variant={isPeople ? "default" : "outline"}
+          size="sm"
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => setCurrentView("people")}
+        >
+          <Users className="w-4 h-4" />
+          <span className="hidden sm:inline">People</span>
         </Button>
       </div>
     </div>

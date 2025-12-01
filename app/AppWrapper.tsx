@@ -3,7 +3,8 @@
 import { ProjectProvider } from "@/contexts/projectContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import { SessionProvider } from "next-auth/react"; // BARU
+import { SessionProvider } from "next-auth/react";
+import TwoFactorGuard from "@/components/auth/two-factor-guard";
 
 export default function AppWrapper({
   children,
@@ -11,8 +12,8 @@ export default function AppWrapper({
   children: React.ReactNode;
 }) {
   return (
-    // BARU: Bungkus dengan SessionProvider
     <SessionProvider>
+      <TwoFactorGuard />
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

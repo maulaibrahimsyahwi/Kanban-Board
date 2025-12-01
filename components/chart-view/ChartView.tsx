@@ -1,4 +1,3 @@
-// components/chart-view/ChartView.tsx
 "use client";
 
 import { useProjects } from "@/contexts/projectContext";
@@ -6,7 +5,6 @@ import { Task } from "@/types";
 import StatusChart from "./StatusChart";
 import BarChart, { BarChartData } from "./BarChart";
 
-// Definisikan warna di sini agar konsisten
 const stackColors = {
   notStarted: "bg-gray-400",
   inProgress: "bg-blue-500",
@@ -21,7 +19,6 @@ const legend = [
   { label: "Selesai", color: stackColors.completed },
 ];
 
-// Fungsi helper untuk menghitung tumpukan (stack)
 const getTaskStacks = (tasks: Task[]) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -75,9 +72,9 @@ export default function ChartView() {
 
   // Data untuk Bagan "Wadah" (Boards)
   const boardChartData: BarChartData[] = selectedProject.boards.map(
-    (board) => ({
-      // Truncation ini masih bisa menghasilkan duplikat label, tapi sekarang ditangani di BarChart.tsx
-      label: board.name.substring(0, 5) + "..",
+    (board, index) => ({
+      label:
+        board.name.length > 10 ? board.name.substring(0, 8) + ".." : board.name,
       stacks: getTaskStacks(board.tasks),
     })
   );
@@ -102,15 +99,15 @@ export default function ChartView() {
     },
   ];
 
-  // Data untuk Bagan "Anggota"
-  // Perbaikan: Memberikan label unik pada placeholder
+  // Data untuk Bagan "Anggota" (Members)
+  const allMembers = [selectedProject.owner, ...selectedProject.members];
+
   const memberChartData: BarChartData[] = [
     { label: "Tidak Ditet.", stacks: getTaskStacks(allTasks) },
-    { label: "Anggota 1", stacks: getTaskStacks([]) },
-    { label: "Anggota 2", stacks: getTaskStacks([]) },
-    { label: "Anggota 3", stacks: getTaskStacks([]) },
-    { label: "Anggota 4", stacks: getTaskStacks([]) },
-    { label: "Anggota 5", stacks: getTaskStacks([]) },
+    ...allMembers.map((m) => ({
+      label: (m.name || m.email || "Unknown").split(" ")[0],
+      stacks: getTaskStacks([]), // Placeholder: Belum ada assignment task
+    })),
   ];
 
   return (

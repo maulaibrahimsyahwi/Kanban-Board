@@ -32,8 +32,8 @@ export async function activateTwoFactorAction(token: string, secret: string) {
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      twoFactorEnabled: true as any,
-      twoFactorSecret: secret as any,
+      twoFactorEnabled: true,
+      twoFactorSecret: secret,
     },
   });
 
@@ -48,11 +48,39 @@ export async function disableTwoFactorAction() {
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      twoFactorEnabled: false as any,
-      twoFactorSecret: null as any,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
     },
   });
 
   revalidatePath("/settings/security");
   return { success: true };
+}
+
+export async function verifyTwoFactorLoginAction(code: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user || !user.twoFactorSecret) {
+      return { success: false, message: "2FA not setup correctly" };
+    }
+
+    const isValid = authenticator.verify({
+      token: code,
+      secret: user.twoFactorSecret,
+    });
+
+    if (!isValid) {
+      return { success: false, message: "Invalid verification code" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: "Verification failed" };
+  }
 }
