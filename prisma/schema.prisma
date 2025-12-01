@@ -1,18 +1,12 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  // Pastikan URL ini sesuai dengan setup Anda (gunakan connection pooling untuk app)
   url       = env("DATABASE_URL")
-  // Gunakan direct connection untuk migrasi
   directUrl = env("DIRECT_URL")
 }
-
-// ================= USER & AUTH =================
 
 model User {
   id            String    @id @default(cuid())
@@ -20,12 +14,21 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?
+  
+  onboardingCompleted Boolean @default(false)
+  teamSize            String?
+  usagePurpose        String?
+  industry            String?
+
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+
   accounts      Account[]
   sessions      Session[]
   
-  // Update relasi ini:
-  projectsOwned   Project[] @relation("ProjectOwner")   // Project yang dibuat sendiri
-  projectsMember  Project[] @relation("ProjectMembers") // Project di mana user jadi member
+  projectsOwned   Project[] @relation("ProjectOwner")
+  projectsMember  Project[] @relation("ProjectMembers")
 }
 
 model Account {
@@ -63,8 +66,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ================= KANBAN SYSTEM =================
-
 model Project {
   id        String   @id @default(cuid())
   name      String
@@ -73,12 +74,8 @@ model Project {
   updatedAt DateTime @updatedAt
 
   ownerId   String
-  // Relasi ke Pemilik (Owner)
   owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-
-  // Relasi ke Anggota Tim (Members) - Many-to-Many
   members   User[]   @relation("ProjectMembers")
-
   boards    Board[]
 }
 
@@ -91,7 +88,6 @@ model Board {
 
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
   tasks     Task[]
 }
 
@@ -108,27 +104,24 @@ model Task {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  boardId               String
-  board                 Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
-
-  checklist             ChecklistItem[]
-  labels                Label[]
+  boardId   String
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  checklist ChecklistItem[]
+  labels    Label[]
 }
 
 model ChecklistItem {
-  id        String  @id @default(cuid())
-  text      String
-  isDone    Boolean @default(false)
-  
-  taskId    String
-  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id     String  @id @default(cuid())
+  text   String
+  isDone Boolean @default(false)
+  taskId String
+  task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Label {
-  id      String @id @default(cuid())
-  name    String
-  color   String 
-
-  taskId  String
-  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  name   String
+  color  String
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
