@@ -18,10 +18,8 @@ import {
 import { IconType } from "react-icons";
 import { toast } from "sonner";
 
-// Types
-import { Task, Board, Project, UserProfile } from "@/types";
+import { Task, Board, Project, ProjectStatus } from "@/types";
 
-// Server Actions
 import {
   createProjectAction,
   getProjectsAction,
@@ -39,6 +37,10 @@ import {
   deleteTaskAction,
   moveTaskAction,
 } from "@/app/actions/task";
+import {
+  getProjectStatusesAction,
+  setProjectStatusAction,
+} from "@/app/actions/project-status";
 
 const iconMap: Record<string, IconType> = {
   FaMobileRetro,
@@ -49,8 +51,18 @@ const iconMap: Record<string, IconType> = {
   FaCartShopping,
 };
 
-// DTO Interfaces
-interface PrismaTaskDTO {
+interface LabelDTO {
+  name: string;
+  color: string;
+}
+
+interface ChecklistItemDTO {
+  id: string;
+  text: string;
+  isDone: boolean;
+}
+
+interface TaskDTO {
   id: string;
   title: string;
   description: string | null;
@@ -60,31 +72,38 @@ interface PrismaTaskDTO {
   dueDate: Date | null;
   cardDisplayPreference: string;
   createdAt: Date;
-  labels: { name: string; color: string }[];
-  checklist: { id: string; text: string; isDone: boolean }[];
+  labels: LabelDTO[];
+  checklist: ChecklistItemDTO[];
 }
 
-interface PrismaBoardDTO {
+interface BoardDTO {
   id: string;
   name: string;
   createdAt: Date;
-  tasks: PrismaTaskDTO[];
+  tasks: TaskDTO[];
 }
 
-interface PrismaProjectDTO {
+interface ProjectDTO {
   id: string;
   name: string;
-  icon: string;
   ownerId: string;
+  icon: string;
   createdAt: Date;
-  boards: PrismaBoardDTO[];
-  owner: UserProfile;
-  members: UserProfile[];
+  owner: { name: string | null; email: string | null; image: string | null };
+  members: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  }[];
+  statusId: string | null;
+  status: { id: string; name: string; color: string; isSystem: boolean } | null;
+  boards: BoardDTO[];
 }
 
 interface ProjectContextType {
   projects: Project[];
   selectedProject: Project | null;
+  projectStatuses: ProjectStatus[];
   isLoading: boolean;
   selectProject: (projectId: string) => void;
   addProject: (projectName: string, iconName?: string) => void;
@@ -113,26 +132,35 @@ interface ProjectContextType {
   deleteBoard: (boardId: string) => void;
   editBoard: (boardId: string, updates: Partial<Pick<Board, "name">>) => void;
   addBoard: (boardName: string) => void;
+  updateProjectStatus: (projectId: string, statusId: string) => void;
+  refreshStatuses: () => void;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // === 1. LOAD DATA ===
   useEffect(() => {
-    const loadProjects = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        const result = await getProjectsAction();
+        const [projectsRes, statusesRes] = await Promise.all([
+          getProjectsAction(),
+          getProjectStatusesAction(),
+        ]);
 
-        if (result.success && result.data) {
-          const dbProjects = result.data as unknown as PrismaProjectDTO[];
+        if (statusesRes.success && statusesRes.data) {
+          setProjectStatuses(statusesRes.data);
+        }
+
+        if (projectsRes.success && projectsRes.data) {
+          const dbProjects = projectsRes.data as unknown as ProjectDTO[];
 
           const mappedProjects: Project[] = dbProjects.map((p) => ({
             id: p.id,
@@ -140,9 +168,10 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
             ownerId: p.ownerId,
             icon: iconMap[p.icon] || FaDiagramProject,
             createdAt: new Date(p.createdAt),
-            // Mapping owner dan members
             owner: p.owner,
             members: p.members,
+            statusId: p.statusId,
+            status: p.status,
             boards: p.boards.map((b) => ({
               id: b.id,
               name: b.name,
@@ -166,7 +195,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           }));
 
           setProjects(mappedProjects);
-
           setSelectedProjectId((prev) => {
             if (!prev && mappedProjects.length > 0) {
               return mappedProjects[0].id;
@@ -175,15 +203,40 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       } catch (error) {
-        console.error("Failed to load projects", error);
-        toast.error("Gagal memuat data project");
+        console.error("Failed to load data", error);
+        toast.error("Gagal memuat data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadProjects();
+    loadData();
   }, []);
+
+  const refreshStatuses = async () => {
+    const res = await getProjectStatusesAction();
+    if (res.success && res.data) {
+      setProjectStatuses(res.data);
+    }
+  };
+
+  const updateProjectStatus = async (projectId: string, statusId: string) => {
+    const targetStatus = projectStatuses.find((s) => s.id === statusId);
+
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id === projectId) {
+          return { ...p, statusId, status: targetStatus || null };
+        }
+        return p;
+      })
+    );
+
+    const result = await setProjectStatusAction(projectId, statusId);
+    if (!result.success) {
+      toast.error("Gagal mengupdate status project");
+    }
+  };
 
   const selectedProject =
     projects.find((p) => p.id === selectedProjectId) || null;
@@ -192,8 +245,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     setSelectedProjectId(projectId);
   };
 
-  // === 2. PROJECT ACTIONS ===
-
   const addProject = async (
     projectName: string,
     iconName: string = "FaDiagramProject"
@@ -201,10 +252,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createProjectAction(projectName);
 
     if (result.success && result.data) {
-      // Type assertion dengan tambahan properti sementara
-      const p = result.data as unknown as PrismaProjectDTO & {
-        ownerId: string;
-      };
+      const p = result.data as unknown as ProjectDTO;
 
       const newProjectData: Project = {
         id: p.id,
@@ -212,9 +260,10 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         ownerId: p.ownerId,
         icon: iconMap[iconName] || FaDiagramProject,
         createdAt: new Date(p.createdAt),
-        // Placeholder untuk owner dan members saat create (akan di-refresh saat reload)
         owner: { name: "Me", email: "", image: "" },
         members: [],
+        statusId: null,
+        status: null,
         boards: p.boards.map((b) => ({
           id: b.id,
           name: b.name,
@@ -227,7 +276,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       setSelectedProjectId(newProjectData.id);
       toast.success("Project berhasil dibuat!");
 
-      // Reload halaman sebentar lagi agar data owner/member sinkron dari server
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -272,8 +320,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       if (!result.success) toast.error("Gagal mengupdate project");
     }
   };
-
-  // === 3. BOARD ACTIONS ===
 
   const addBoard = async (boardName: string) => {
     if (!selectedProjectId) return;
@@ -355,8 +401,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === 4. TASK ACTIONS ===
-
   const addTaskToProject = async (
     taskData: Omit<Task, "id" | "createdAt">,
     boardId: string,
@@ -365,7 +409,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createTaskAction(boardId, taskData);
 
     if (result.success && result.data) {
-      const t = result.data as unknown as PrismaTaskDTO;
+      const t = result.data as unknown as TaskDTO;
 
       const newTask: Task = {
         id: t.id,
@@ -548,6 +592,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     projects,
     selectedProject,
+    projectStatuses,
     isLoading,
     selectProject,
     addProject,
@@ -561,6 +606,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     deleteBoard,
     editBoard,
     addBoard,
+    updateProjectStatus,
+    refreshStatuses,
   };
 
   return (

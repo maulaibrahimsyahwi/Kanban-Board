@@ -75,21 +75,19 @@ export default function LeftSidebar({
         </div>
       </div>
 
-      {/* Footer Controls */}
       <div className="flex flex-col gap-2">
-        {/* BARU: Tombol User / Login diletakkan di sini */}
-        <UserButton isSidebarOpen={isSidebarOpen} />
-
-        <Separator />
-
         <div
           className={cn(
             "flex items-center justify-center transition-all duration-300",
-            isSidebarOpen && "sm:justify-start"
+            isSidebarOpen && "sm:justify-end"
           )}
         >
           <ModeToggle />
         </div>
+
+        <Separator />
+
+        <UserButton isSidebarOpen={isSidebarOpen} />
       </div>
     </aside>
   );

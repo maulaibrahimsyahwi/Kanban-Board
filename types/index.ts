@@ -36,6 +36,13 @@ export type UserProfile = {
   image: string | null;
 };
 
+export type ProjectStatus = {
+  id: string;
+  name: string;
+  color: string;
+  isSystem: boolean;
+};
+
 export type Project = {
   id: string;
   name: string;
@@ -45,6 +52,8 @@ export type Project = {
   boards: Board[];
   owner: UserProfile;
   members: UserProfile[];
+  statusId?: string | null;
+  status?: ProjectStatus | null;
 };
 
 export type DueDateFilter =

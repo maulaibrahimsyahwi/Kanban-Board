@@ -14,8 +14,18 @@ import {
   LayoutGrid,
   ListChecks,
   Users,
+  Settings,
 } from "lucide-react";
 import { useProjects } from "@/contexts/projectContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface ProjectAreaHeaderProps {
   projectName: string;
@@ -48,7 +58,20 @@ export default function ProjectAreaHeader({
   boards,
   setBoards,
 }: ProjectAreaHeaderProps) {
-  const { selectedProject } = useProjects();
+  const { selectedProject, projectStatuses, updateProjectStatus } =
+    useProjects();
+  const router = useRouter();
+
+  const currentStatus =
+    selectedProject?.status ||
+    projectStatuses.find((s) => s.isSystem && s.name === "No status") ||
+    projectStatuses[0];
+
+  const handleStatusChange = (statusId: string) => {
+    if (selectedProject) {
+      updateProjectStatus(selectedProject.id, statusId);
+    }
+  };
 
   const isBoards = currentView === "boards";
   const isCalendar = currentView === "calendar";
@@ -62,6 +85,66 @@ export default function ProjectAreaHeader({
         <span className="text-xl md:text-2xl font-bold text-foreground truncate">
           {projectName}
         </span>
+
+        <DropdownMenu>
+          <div className="relative group">
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-1 hover:bg-transparent"
+              >
+                {currentStatus ? (
+                  <span
+                    className={cn(
+                      "px-3 py-1 rounded-md text-xs font-medium text-white transition-all",
+                      currentStatus.color
+                    )}
+                  >
+                    {currentStatus.name}
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-md text-xs font-medium bg-slate-200 text-slate-600">
+                    Loading...
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+
+            <div className="absolute top-full left-0 mt-2 w-64 p-3 bg-popover text-popover-foreground text-xs rounded-md border shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              The current project status. You can change it or create a new one
+              in your profile settings.
+            </div>
+          </div>
+
+          <DropdownMenuContent align="start" className="w-[160px] p-1">
+            {projectStatuses.map((status) => (
+              <DropdownMenuItem
+                key={status.id}
+                onClick={() => handleStatusChange(status.id)}
+                className="cursor-pointer focus:bg-accent focus:text-accent-foreground p-1 mb-1"
+              >
+                <span
+                  className={cn(
+                    "w-full px-2 py-1 rounded-md text-xs font-medium text-center text-white",
+                    status.color
+                  )}
+                >
+                  {status.name}
+                </span>
+              </DropdownMenuItem>
+            ))}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-xs flex items-center gap-2 text-muted-foreground"
+              onClick={() => router.push("/settings/project-status")}
+            >
+              <Settings className="w-3 h-3" />
+              Manage statuses
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <FilterDropdown
           dueDates={dueDates}

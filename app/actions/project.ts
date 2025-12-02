@@ -44,13 +44,14 @@ export async function getProjectsAction() {
     const projects = await prisma.project.findMany({
       where: {
         OR: [
-          { ownerId: session.user.id }, // Project milik sendiri
-          { members: { some: { id: session.user.id } } }, // Project undangan
+          { ownerId: session.user.id },
+          { members: { some: { id: session.user.id } } },
         ],
       },
       include: {
         owner: { select: { name: true, email: true, image: true } },
         members: { select: { name: true, email: true, image: true } },
+        status: true,
         boards: {
           orderBy: { order: "asc" },
           include: {
@@ -76,7 +77,7 @@ export async function deleteProjectAction(projectId: string) {
 
   try {
     await prisma.project.delete({
-      where: { id: projectId, ownerId: session.user.id }, // Hanya owner yang bisa hapus
+      where: { id: projectId, ownerId: session.user.id },
     });
     revalidatePath("/");
     return { success: true };
@@ -136,7 +137,7 @@ export async function addMemberAction(projectId: string, email: string) {
     await prisma.project.update({
       where: {
         id: projectId,
-        ownerId: session.user.id, // Hanya owner yang bisa invite
+        ownerId: session.user.id,
       },
       data: {
         members: {
