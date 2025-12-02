@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -69,7 +67,7 @@ export default function LandingPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </Button>
 
-        <div className="fixed inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear_gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
+        <div className="fixed inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear_gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
           <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/20 opacity-20 blur-[100px]"></div>
         </div>
       </div>
@@ -371,9 +369,9 @@ function InteractiveDemoSection() {
               <span className="text-primary">adapts to you</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Don't let rigid tools slow you down. Our board adapts to your
-              team's unique workflow with custom columns, labels, and automated
-              actions.
+              Don&apos;t let rigid tools slow you down. Our board adapts to your
+              team&apos;s unique workflow with custom columns, labels, and
+              automated actions.
             </p>
 
             <ul className="space-y-4">
@@ -492,8 +490,8 @@ function TestimonialSection() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "This tool completely transformed how our team manages
-                  sprints. It's simple yet incredibly powerful."
+                  &quot;This tool completely transformed how our team manages
+                  sprints. It&apos;s simple yet incredibly powerful.&quot;
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
