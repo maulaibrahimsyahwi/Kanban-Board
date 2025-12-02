@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "@/lib/mail";
 
 export async function registerUserAction(formData: FormData) {
   const name = formData.get("name") as string;
@@ -13,40 +14,28 @@ export async function registerUserAction(formData: FormData) {
   }
 
   try {
-    // 1. Cek apakah user sudah ada
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      // --- LOGIKA BARU: SINKRONISASI AKUN ---
-
-      // Jika user ada TAPI tidak punya password (berarti dia daftar pakai Google/OAuth)
       if (!existingUser.password) {
-        // Kita "upgrade" akun ini agar punya password juga
         const hashedPassword = await bcrypt.hash(password, 10);
-
         await prisma.user.update({
           where: { email },
           data: {
             password: hashedPassword,
-            // Opsional: Update nama jika user Google belum punya nama (jarang terjadi)
             name: existingUser.name || name,
           },
         });
-
         return {
           success: true,
-          message:
-            "Akun Google Anda berhasil disinkronkan. Silakan login dengan password baru.",
+          message: "Akun Google berhasil disinkronkan. Silakan login.",
         };
       }
-
-      // Jika user sudah ada DAN sudah punya password
       return { success: false, message: "Email sudah terdaftar" };
     }
 
-    // 2. Jika user benar-benar baru, buat seperti biasa
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await prisma.user.create({
@@ -54,7 +43,6 @@ export async function registerUserAction(formData: FormData) {
         name,
         email,
         password: hashedPassword,
-        // Buat project default untuk user baru
         projectsOwned: {
           create: {
             name: "My First Project",
@@ -73,5 +61,96 @@ export async function registerUserAction(formData: FormData) {
     return { success: true, message: "Registrasi berhasil! Silakan login." };
   } catch {
     return { success: false, message: "Terjadi kesalahan saat registrasi." };
+  }
+}
+
+export async function requestPasswordResetAction(email: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return {
+        success: true,
+        message: "Jika email terdaftar, kode telah dikirim.",
+      };
+    }
+
+    if (!user.password) {
+      return { success: false, message: "Akun ini menggunakan Google Login." };
+    }
+
+    const token = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
+
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: email },
+    });
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token,
+        expires,
+      },
+    });
+
+    const sent = await sendPasswordResetEmail(email, token);
+
+    if (!sent) {
+      return {
+        success: false,
+        message: "Gagal mengirim email. Coba lagi nanti.",
+      };
+    }
+
+    return { success: true, message: "Kode verifikasi dikirim ke email." };
+  } catch (error) {
+    return { success: false, message: "Terjadi kesalahan server." };
+  }
+}
+
+export async function resetPasswordAction(
+  email: string,
+  code: string,
+  newPassword: string
+) {
+  try {
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        identifier: email,
+        token: code,
+      },
+    });
+
+    if (!verificationToken) {
+      return { success: false, message: "Kode salah atau tidak ditemukan." };
+    }
+
+    if (new Date() > verificationToken.expires) {
+      return { success: false, message: "Kode telah kadaluarsa." };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    await prisma.verificationToken.delete({
+      where: {
+        identifier_token: {
+          identifier: email,
+          token: code,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: "Password berhasil diubah. Silakan login.",
+    };
+  } catch (error) {
+    return { success: false, message: "Gagal mereset password." };
   }
 }
