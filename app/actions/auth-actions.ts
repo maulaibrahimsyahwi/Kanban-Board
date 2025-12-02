@@ -75,10 +75,6 @@ export async function requestPasswordResetAction(email: string) {
       };
     }
 
-    if (!user.password) {
-      return { success: false, message: "Akun ini menggunakan Google Login." };
-    }
-
     const token = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
 
