@@ -32,11 +32,16 @@ import {
   deleteAccountAction,
   updateProfileImageAction,
   updateDateFormatAction,
+  updateNameAction, // Import fungsi baru
 } from "@/app/actions/profile";
 
 export default function ProfileSettingsPage() {
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  // State untuk Nama
+  const [name, setName] = useState("");
 
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -51,13 +56,37 @@ export default function ProfileSettingsPage() {
   const [dateFormat, setDateFormat] = useState("dd/MM/yyyy");
 
   useEffect(() => {
-    if (session?.user?.dateFormat) {
-      setDateFormat(session.user.dateFormat);
+    if (session?.user) {
+      setDateFormat(session.user.dateFormat || "dd/MM/yyyy");
+      setName(session.user.name || "");
     }
   }, [session]);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
+  };
+
+  // Handler untuk menyimpan nama
+  const handleNameSave = async () => {
+    if (!name.trim()) {
+      toast.error("Nama tidak boleh kosong");
+      return;
+    }
+
+    if (name === session?.user?.name) {
+      return; // Tidak ada perubahan
+    }
+
+    setIsSavingName(true);
+    const result = await updateNameAction(name);
+
+    if (result.success) {
+      await update({ user: { name: name } }); // Update session client-side
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+    setIsSavingName(false);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,15 +182,23 @@ export default function ProfileSettingsPage() {
           <h2 className="text-lg font-semibold mb-4">Personal information</h2>
           <div className="flex flex-col md:flex-row gap-8">
             <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <Input
-                    value={session?.user?.name || ""}
-                    disabled
-                    className="bg-muted/50"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="bg-background"
                   />
                 </div>
+                <Button
+                  onClick={handleNameSave}
+                  disabled={isSavingName || name === session?.user?.name}
+                  className="w-full md:w-28"
+                >
+                  Save Name
+                </Button>
               </div>
 
               <div className="space-y-2">
@@ -175,32 +212,47 @@ export default function ProfileSettingsPage() {
                 />
               </div>
 
-              <div className="pt-2">
+              {/* Delete Account dengan kotak kecil (w-fit) */}
+              <div className="pt-2 mt-1">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button
-                      type="button"
-                      className="text-sm text-red-600 hover:text-red-700 hover:underline flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3 h-3" /> Delete my account
-                    </button>
+                    <div className="group w-fit border border-transparent rounded-lg p-1 -ml-1 transition-all duration-200 hover:bg-red-50 hover:border-red-100 dark:hover:bg-red-900/10 dark:hover:border-red-900/30 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground group-hover:text-red-700 dark:group-hover:text-red-400">
+                            Delete Account
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        Are you absolutely sure?
+                        Are you sure you want to delete your account?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your account and remove your data from our
-                        servers.
+                        If you delete your account, all of your data will be
+                        deleted from our backups forever. So, don’t forget to
+                        export your projects before you leave.
+                        <Separator />
+                        If there are any questions left, let us know at
+                        <a
+                          href="mailto:freekanbanboards@gmail.com"
+                          className="text-primary hover:underline ml-1"
+                        >
+                          freekanbanboards@gmail.com
+                        </a>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         {isLoading ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
