@@ -1,13 +1,15 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Date formatting utility to prevent hydration mismatch
 export function formatDateSafely(
-  date: Date | string | null | undefined
+  date: Date | string | null | undefined,
+  dateFormatStr: string = "dd/MM/yyyy"
 ): string {
   if (!date) return "";
 
@@ -18,20 +20,13 @@ export function formatDateSafely(
       return "";
     }
 
-    // Use a consistent format that works on both server and client
-    // Format: DD/MM/YYYY
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObj.getDate()).padStart(2, "0");
-
-    return `${day}/${month}/${year}`;
+    return format(dateObj, dateFormatStr, { locale: id });
   } catch (error) {
     console.error("Date formatting error:", error);
     return "";
   }
 }
 
-// Optional: Additional date formatting functions
 export function formatDateWithTime(
   date: Date | string | null | undefined
 ): string {
@@ -55,7 +50,6 @@ export function formatDateWithTime(
   }
 }
 
-// Optional: Relative time formatting (e.g., "2 days ago")
 export function formatRelativeTime(
   date: Date | string | null | undefined
 ): string {

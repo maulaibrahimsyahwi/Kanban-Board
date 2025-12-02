@@ -66,3 +66,25 @@ export type ProjectAreaView =
   | "chart"
   | "list"
   | "people";
+
+export type NotificationSettingsState = {
+  endDateTrigger: string;
+  endDateEmail: boolean;
+  endDatePush: boolean;
+  deadlineTrigger: string;
+  deadlineEmail: boolean;
+  deadlinePush: boolean;
+  startDateTrigger: string;
+  startDateEmail: boolean;
+  startDatePush: boolean;
+  mentionsEmail: boolean;
+  mentionsPush: boolean;
+  assignedEmail: boolean;
+  assignedPush: boolean;
+  commentsEmail: boolean;
+  commentsPush: boolean;
+  attachmentsEmail: boolean;
+  attachmentsPush: boolean;
+  playSound: boolean;
+  marketingEmails: boolean;
+};

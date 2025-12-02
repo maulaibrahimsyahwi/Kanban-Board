@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   BellRing,
@@ -24,10 +26,12 @@ import { Task } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { id as indonesianLocale } from "date-fns/locale";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
 import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
 import CopyTaskDialog from "@/components/windows-dialogs/task-dialog/copy-task-dialog";
+import { useSession } from "next-auth/react";
 
 interface SingleTaskProps {
   task: Task;
@@ -114,6 +118,8 @@ const SingleTask = ({
 
   const { reorderTasksInBoard, selectedProject } = useProjects();
   const taskActions = useTaskActions(task.id, boardId);
+  const { data: session } = useSession();
+  const userDateFormat = session?.user?.dateFormat || "dd/MM/yyyy";
 
   useEffect(() => {
     const element = taskRef.current;
@@ -249,8 +255,6 @@ const SingleTask = ({
     }
 
     const taskDueDate = new Date(dueDate);
-    const now = new Date();
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -258,11 +262,10 @@ const SingleTask = ({
     dueDateOnly.setHours(0, 0, 0, 0);
 
     const isOverdue = dueDateOnly < today && progress !== "completed";
-    const isCurrentYear = taskDueDate.getFullYear() === now.getFullYear();
 
-    const formattedDate = isCurrentYear
-      ? format(taskDueDate, "dd/MM")
-      : format(taskDueDate, "dd/MM/yyyy");
+    const formattedDate = format(taskDueDate, userDateFormat, {
+      locale: indonesianLocale,
+    });
 
     const boxColorClasses = isOverdue
       ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400"

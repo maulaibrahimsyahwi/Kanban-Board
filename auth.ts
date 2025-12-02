@@ -64,7 +64,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        return user;
+        return {
+          ...user,
+          dateFormat: user.dateFormat,
+        } as User;
       },
     }),
   ],
@@ -75,6 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.sub = user.id;
         token.onboardingCompleted = (user as User).onboardingCompleted;
         token.twoFactorEnabled = (user as User).twoFactorEnabled;
+        token.dateFormat = (user as User).dateFormat || "dd/MM/yyyy";
 
         if (account?.provider === "google") {
           const dbUser = await prisma.user.findUnique({
@@ -89,8 +93,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
-      if (trigger === "update" && session?.requires2FA !== undefined) {
-        token.requires2FA = session.requires2FA;
+      if (trigger === "update" && session) {
+        if (session.dateFormat) token.dateFormat = session.dateFormat;
+        if (session.user?.image) token.picture = session.user.image;
+        if (session.requires2FA !== undefined)
+          token.requires2FA = session.requires2FA;
       }
 
       if (token.sub) {
@@ -101,6 +108,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (dbUser) {
             token.onboardingCompleted = dbUser.onboardingCompleted;
             token.twoFactorEnabled = dbUser.twoFactorEnabled;
+            token.dateFormat = dbUser.dateFormat;
+            token.picture = dbUser.image;
           }
         } catch (e) {
           console.error(e);
@@ -115,6 +124,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.onboardingCompleted = token.onboardingCompleted as boolean;
         session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
         session.user.requires2FA = token.requires2FA as boolean;
+        session.user.dateFormat = (token.dateFormat as string) || "dd/MM/yyyy";
+        session.user.image = token.picture;
       }
       return session;
     },

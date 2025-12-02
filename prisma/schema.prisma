@@ -9,26 +9,61 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  
-  onboardingCompleted Boolean @default(false)
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String?   @unique
+  emailVerified       DateTime?
+  image               String?   @db.Text
+  password            String?
+  onboardingCompleted Boolean   @default(false)
   teamSize            String?
   usagePurpose        String?
   industry            String?
-
-  twoFactorEnabled Boolean @default(false)
-  twoFactorSecret  String?
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?
+  dateFormat          String    @default("dd/MM/yyyy")
 
   accounts      Account[]
   sessions      Session[]
   
+  // Relasi Implicit Many-to-Many ke Project (Prisma akan otomatis buat tabel _ProjectMembers)
   projectsOwned   Project[] @relation("ProjectOwner")
   projectsMember  Project[] @relation("ProjectMembers")
+
+  notificationSettings NotificationSettings?
+}
+
+model NotificationSettings {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  endDateTrigger   String  @default("1day")
+  endDateEmail     Boolean @default(true)
+  endDatePush      Boolean @default(true)
+  
+  deadlineTrigger  String  @default("1day")
+  deadlineEmail    Boolean @default(true)
+  deadlinePush     Boolean @default(true)
+  
+  startDateTrigger String  @default("1day")
+  startDateEmail   Boolean @default(true)
+  startDatePush    Boolean @default(true)
+  
+  mentionsEmail    Boolean @default(true)
+  mentionsPush     Boolean @default(true)
+  
+  assignedEmail    Boolean @default(true)
+  assignedPush     Boolean @default(true)
+  
+  commentsEmail    Boolean @default(true)
+  commentsPush     Boolean @default(true)
+  
+  attachmentsEmail Boolean @default(true)
+  attachmentsPush  Boolean @default(true)
+  
+  playSound        Boolean @default(true)
+  marketingEmails  Boolean @default(true)
 }
 
 model Account {
@@ -75,7 +110,10 @@ model Project {
 
   ownerId   String
   owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Relasi Implicit Many-to-Many ke User
   members   User[]   @relation("ProjectMembers")
+  
   boards    Board[]
 }
 
@@ -92,17 +130,17 @@ model Board {
 }
 
 model Task {
-  id                    String    @id @default(cuid())
+  id                    String          @id @default(cuid())
   title                 String
-  description           String?   @db.Text
-  priority              String    @default("low")
-  progress              String    @default("not-started")
+  description           String?         @db.Text
+  priority              String          @default("low")
+  progress              String          @default("not-started")
   startDate             DateTime?
   dueDate               DateTime?
-  cardDisplayPreference String    @default("none")
-  order                 Int       @default(0)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  cardDisplayPreference String          @default("none")
+  order                 Int             @default(0)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   boardId   String
   board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)

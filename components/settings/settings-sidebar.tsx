@@ -12,8 +12,8 @@ import {
   LogOut,
   LayoutGrid,
   Lock,
-  ArrowLeft,
 } from "lucide-react";
+import { IoChevronBackOutline } from "react-icons/io5";
 import { signOut } from "next-auth/react";
 
 const sidebarItems = [
@@ -63,7 +63,7 @@ export function SettingsSidebar() {
           href="/"
           className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded-md hover:bg-muted"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <IoChevronBackOutline className="w-5 h-5" />
         </Link>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" /> Settings
