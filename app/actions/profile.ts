@@ -5,24 +5,6 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
-// --- FUNGSI BARU UNTUK GANTI NAMA ---
-export async function updateNameAction(name: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, message: "Unauthorized" };
-
-  try {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { name },
-    });
-    revalidatePath("/"); // Update cache agar nama di sidebar berubah
-    return { success: true, message: "Nama berhasil diperbarui." };
-  } catch {
-    return { success: false, message: "Gagal memperbarui nama." };
-  }
-}
-// ------------------------------------
-
 export async function changePasswordAction(
   currentPassword: string,
   newPassword: string
