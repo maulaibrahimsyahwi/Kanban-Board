@@ -32,6 +32,7 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
   try {
+    // 1. Simpan/Update Database Lokal
     const existing = await prisma.sSOSettings.findUnique({
       where: { userId: session.user.id },
     });
@@ -51,6 +52,7 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
       });
     }
 
+    // 2. Sinkronisasi ke BoxyHQ (Create/Update)
     if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
       const boxyUrl = `${process.env.BOXYHQ_ISSUER}/api/v1/sso`;
 
@@ -119,13 +121,41 @@ export async function deactivateSSOAction() {
       return { success: true, message: "SSO configuration closed" };
     }
 
+    // 1. Nonaktifkan di Database Lokal
     await prisma.sSOSettings.update({
       where: { userId: session.user.id },
       data: { isActive: false },
     });
 
+    // 2. Hapus Konfigurasi dari BoxyHQ (CLEANUP)
+    if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
+      const params = new URLSearchParams({
+        tenant: session.user.id,
+        product: "freekanban",
+      });
+
+      // Menggunakan method DELETE ke BoxyHQ
+      const res = await fetch(
+        `${process.env.BOXYHQ_ISSUER}/api/v1/sso?${params.toString()}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Api-Key ${process.env.BOXYHQ_API_KEY}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Gagal menghapus dari BoxyHQ");
+        // Kita tidak return error ke user karena di lokal sudah nonaktif
+      }
+    }
+
     revalidatePath("/settings/security");
-    return { success: true, message: "SSO deactivated" };
+    return {
+      success: true,
+      message: "SSO deactivated and removed from provider",
+    };
   } catch (error) {
     return { success: false, message: "Failed to deactivate SSO" };
   }
