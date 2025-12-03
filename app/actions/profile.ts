@@ -17,16 +17,18 @@ export async function changePasswordAction(
       where: { id: session.user.id },
     });
 
-    if (!user || !user.password) {
+    if (!user) {
       return {
         success: false,
-        message: "User not found or using OAuth provider.",
+        message: "User not found.",
       };
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return { success: false, message: "Password saat ini salah." };
+    if (user.password) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return { success: false, message: "Password saat ini salah." };
+      }
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
