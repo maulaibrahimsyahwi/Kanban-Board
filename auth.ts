@@ -20,6 +20,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   providers: [
+    {
+      id: "boxyhq",
+      name: "BoxyHQ",
+      type: "oidc",
+      issuer: process.env.BOXYHQ_ISSUER,
+      clientId: "tenant=kanban&product=freekanban",
+      clientSecret: "dummy",
+      authorization: {
+        params: {
+          scope: "openid email profile",
+        },
+      },
+      checks: ["pkce", "state"],
+    },
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,

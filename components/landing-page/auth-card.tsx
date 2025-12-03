@@ -32,6 +32,7 @@ import {
   ShieldCheck,
   ArrowLeft,
   KeyRound,
+  Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -133,6 +134,16 @@ export function AuthCard() {
     } catch {
       toast.error("System error occurred.");
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSSOLogin = async () => {
+    setIsLoading(true);
+    try {
+      await signIn("boxyhq");
+    } catch (error) {
+      toast.error("SSO Login failed");
       setIsLoading(false);
     }
   };
@@ -674,22 +685,40 @@ export function AuthCard() {
                 </span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isLoading}
-              onClick={() => signIn("google")}
-              className="w-full h-11 gap-3 border-input/60 bg-background/50 hover:bg-accent/50 font-medium transition-all"
-            >
-              {isLoading ? (
-                <CustomLoader size={18} />
-              ) : (
-                <>
-                  <FaGoogle className="h-5 w-5 text-red-500" />
-                  <span>Google</span>
-                </>
-              )}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                disabled={isLoading}
+                onClick={handleSSOLogin}
+                className="w-full h-11 gap-3 border-input/60 bg-background/50 hover:bg-accent/50 font-medium transition-all"
+              >
+                {isLoading ? (
+                  <CustomLoader size={18} />
+                ) : (
+                  <>
+                    <Building2 className="h-5 w-5 text-blue-500" />
+                    <span>Single Sign-On (SSO)</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                disabled={isLoading}
+                onClick={() => signIn("google")}
+                className="w-full h-11 gap-3 border-input/60 bg-background/50 hover:bg-accent/50 font-medium transition-all"
+              >
+                {isLoading ? (
+                  <CustomLoader size={18} />
+                ) : (
+                  <>
+                    <FaGoogle className="h-5 w-5 text-red-500" />
+                    <span>Google</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </>
         )}
       </CardContent>

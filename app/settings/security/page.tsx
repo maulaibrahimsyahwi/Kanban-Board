@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import Image from "next/image"; // Import Image dari next/image
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,9 @@ export default function SecurityPage() {
   const [ssoLoading, setSsoLoading] = useState(true);
   const [ssoSaving, setSsoSaving] = useState(false);
 
+  // UX FIX: State untuk melacak apakah data sudah tersimpan di server
+  const [isSavedOnServer, setIsSavedOnServer] = useState(false);
+
   const [ssoForm, setSsoForm] = useState({
     domain: "",
     ssoUrl: "",
@@ -68,6 +71,7 @@ export default function SecurityPage() {
       if (res.success && res.data) {
         if (res.data.isActive) {
           setIsSSOActive(true);
+          setIsSavedOnServer(true); // Tandai bahwa data ini berasal dari server
         }
         setSsoForm({
           domain: res.data.domain || "",
@@ -82,7 +86,6 @@ export default function SecurityPage() {
     loadSSO();
   }, []);
 
-  // FIX: Mengganti any dengan string | boolean
   const handleSSOChange = (field: string, value: string | boolean) => {
     setSsoForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -92,6 +95,7 @@ export default function SecurityPage() {
     const res = await updateSSOSettingsAction({ ...ssoForm, isActive: true });
     if (res.success) {
       toast.success(res.message);
+      setIsSavedOnServer(true); // Update status tersimpan setelah berhasil save
     } else {
       toast.error(res.message);
     }
@@ -100,13 +104,22 @@ export default function SecurityPage() {
 
   const handleActivateSSO = () => {
     setIsSSOActive(true);
+    // Kita tidak set isSavedOnServer di sini karena user baru saja membuka form
   };
 
   const handleDeactivateSSO = async () => {
+    // UX FIX: Jika belum pernah disimpan ke server (baru buka form),
+    // cukup tutup tampilan lokal saja tanpa panggil API.
+    if (!isSavedOnServer) {
+      setIsSSOActive(false);
+      return;
+    }
+
     setSsoSaving(true);
     const res = await deactivateSSOAction();
     if (res.success) {
       setIsSSOActive(false);
+      setIsSavedOnServer(false); // Reset status tersimpan
       toast.info(res.message);
     } else {
       toast.error(res.message);
@@ -130,7 +143,6 @@ export default function SecurityPage() {
           toast.error("Failed to generate security keys");
         }
       } catch {
-        // FIX: Menghapus variabel error yang tidak digunakan
         toast.error("Network error occurred");
       }
     } else if (!open) {
@@ -158,7 +170,6 @@ export default function SecurityPage() {
         toast.error(result.message || "Failed to verify code.");
       }
     } catch {
-      // FIX: Menghapus variabel error yang tidak digunakan
       toast.error("Something went wrong.");
     } finally {
       setIsLoading(false);
@@ -178,7 +189,6 @@ export default function SecurityPage() {
         toast.error("Failed to disable 2FA.");
       }
     } catch {
-      // FIX: Menghapus variabel error yang tidak digunakan
       toast.error("Something went wrong.");
     } finally {
       setIsLoading(false);
@@ -330,7 +340,8 @@ export default function SecurityPage() {
                 disabled={ssoSaving}
                 className="bg-muted hover:bg-muted/80 text-red-600 hover:text-red-700"
               >
-                Deactivate
+                {/* UX FIX: Ubah teks tombol sesuai kondisi */}
+                {!isSavedOnServer ? "Cancel" : "Deactivate"}
               </Button>
             </div>
           </div>
@@ -408,7 +419,6 @@ export default function SecurityPage() {
                   <div className="flex gap-6">
                     <div className="w-48 h-48 bg-white border rounded-sm flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                       {qrCodeUrl ? (
-                        // FIX: Mengganti img dengan Next Image dan unoptimized
                         <Image
                           src={qrCodeUrl}
                           alt="QR Code"

@@ -51,8 +51,56 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
       });
     }
 
+    if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
+      const boxyUrl = `${process.env.BOXYHQ_ISSUER}/api/v1/sso`;
+
+      const body = {
+        tenant: session.user.id,
+        product: "freekanban",
+        name: `SSO for ${session.user.email}`,
+        description: "SSO Configuration from FreeKanban Settings",
+        clientID: session.user.id,
+        clientSecret: "freekanban-secret",
+        redirectUrl: `${process.env.NEXTAUTH_URL}/api/auth/callback/boxyhq`,
+        defaultRedirectUrl: `${process.env.NEXTAUTH_URL}`,
+        rawMetadata: `
+          <EntityDescriptor entityID="${data.issuer}">
+            <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+              <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="${data.ssoUrl}" />
+              <KeyDescriptor use="signing">
+                <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+                  <X509Data>
+                    <X509Certificate>${data.certificate}</X509Certificate>
+                  </X509Data>
+                </KeyInfo>
+              </KeyDescriptor>
+            </IDPSSODescriptor>
+          </EntityDescriptor>
+        `,
+      };
+
+      const res = await fetch(boxyUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Api-Key ${process.env.BOXYHQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        return {
+          success: true,
+          message: "Disimpan lokal, namun gagal sinkron ke SSO Provider.",
+        };
+      }
+    }
+
     revalidatePath("/settings/security");
-    return { success: true, message: "SSO settings saved successfully" };
+    return {
+      success: true,
+      message: "SSO settings saved & synced successfully",
+    };
   } catch (error) {
     return { success: false, message: "Failed to save settings" };
   }
