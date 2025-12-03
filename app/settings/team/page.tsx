@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
+import InviteUserDialog from "@/components/settings/invite-user-dialog";
 
 export default function TeamAndResourcesPage() {
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
@@ -39,7 +42,12 @@ export default function TeamAndResourcesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search by name or email" className="pl-9" />
             </div>
-            <Button className="w-full sm:w-auto gap-2">
+
+            {/* Tombol Invite User Trigger */}
+            <Button
+              className="w-full sm:w-auto gap-2"
+              onClick={() => setIsInviteDialogOpen(true)}
+            >
               <UserPlus className="w-4 h-4" />
               Invite by email
             </Button>
@@ -104,6 +112,12 @@ export default function TeamAndResourcesPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Render Dialog Component */}
+      <InviteUserDialog
+        isOpen={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
+      />
     </div>
   );
 }
