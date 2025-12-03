@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image"; // Import Image dari next/image
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,13 +32,27 @@ import {
   activateTwoFactorAction,
   disableTwoFactorAction,
 } from "@/app/actions/security";
+import {
+  getSSOSettingsAction,
+  updateSSOSettingsAction,
+  deactivateSSOAction,
+} from "@/app/actions/sso";
 
 export default function SecurityPage() {
   const { data: session, update } = useSession();
 
   const [isSSOActive, setIsSSOActive] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(true);
+  const [ssoSaving, setSsoSaving] = useState(false);
 
-  // 2FA States
+  const [ssoForm, setSsoForm] = useState({
+    domain: "",
+    ssoUrl: "",
+    issuer: "",
+    certificate: "",
+    forceSSO: false,
+  });
+
   const [is2FAOpen, setIs2FAOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -45,44 +60,86 @@ export default function SecurityPage() {
   const [secretKey, setSecretKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Cek status aktif dari session
   const isTwoFactorEnabled = session?.user?.twoFactorEnabled || false;
 
-  const handleDeactivateSSO = () => {
-    setIsSSOActive(false);
-    toast.info("SSO configuration has been hidden");
+  useEffect(() => {
+    const loadSSO = async () => {
+      const res = await getSSOSettingsAction();
+      if (res.success && res.data) {
+        if (res.data.isActive) {
+          setIsSSOActive(true);
+        }
+        setSsoForm({
+          domain: res.data.domain || "",
+          ssoUrl: res.data.ssoUrl || "",
+          issuer: res.data.issuer || "",
+          certificate: res.data.certificate || "",
+          forceSSO: res.data.forceSSO || false,
+        });
+      }
+      setSsoLoading(false);
+    };
+    loadSSO();
+  }, []);
+
+  // FIX: Mengganti any dengan string | boolean
+  const handleSSOChange = (field: string, value: string | boolean) => {
+    setSsoForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handler saat dialog aktivasi dibuka/tutup
+  const handleSaveSSO = async () => {
+    setSsoSaving(true);
+    const res = await updateSSOSettingsAction({ ...ssoForm, isActive: true });
+    if (res.success) {
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
+    setSsoSaving(false);
+  };
+
+  const handleActivateSSO = () => {
+    setIsSSOActive(true);
+  };
+
+  const handleDeactivateSSO = async () => {
+    setSsoSaving(true);
+    const res = await deactivateSSOAction();
+    if (res.success) {
+      setIsSSOActive(false);
+      toast.info(res.message);
+    } else {
+      toast.error(res.message);
+    }
+    setSsoSaving(false);
+  };
+
   const handle2FAOpenChange = async (open: boolean) => {
     setIs2FAOpen(open);
 
     if (open && !secretKey) {
-      // Generate secret key baru dari server saat dialog dibuka
       try {
         const res = await generateTwoFactorSecretAction();
         if (res.success && res.secret && res.otpauth) {
           setSecretKey(res.secret);
           const encodedUrl = encodeURIComponent(res.otpauth);
-          // Generate QR Code via API
           setQrCodeUrl(
             `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}`
           );
         } else {
           toast.error("Failed to generate security keys");
         }
-      } catch (error) {
+      } catch {
+        // FIX: Menghapus variabel error yang tidak digunakan
         toast.error("Network error occurred");
       }
     } else if (!open) {
-      // Reset form saat ditutup
       setSecretKey("");
       setQrCodeUrl("");
       setVerificationCode("");
     }
   };
 
-  // Handler Aktivasi (Verifikasi Kode)
   const handleActivate2FA = async () => {
     if (verificationCode.length !== 6 || isNaN(Number(verificationCode))) {
       toast.error("Invalid code. Please enter 6 digits.");
@@ -91,39 +148,37 @@ export default function SecurityPage() {
 
     setIsLoading(true);
     try {
-      // Verifikasi ke server
       const result = await activateTwoFactorAction(verificationCode, secretKey);
 
       if (result.success) {
-        // Update session di client agar UI langsung berubah tanpa reload
         await update({ twoFactorEnabled: true });
         toast.success("Two-factor authentication enabled successfully!");
         setIs2FAOpen(false);
       } else {
         toast.error(result.message || "Failed to verify code.");
       }
-    } catch (error) {
+    } catch {
+      // FIX: Menghapus variabel error yang tidak digunakan
       toast.error("Something went wrong.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handler Deaktivasi
   const handleDeactivate2FA = async () => {
     setIsLoading(true);
     try {
       const result = await disableTwoFactorAction();
 
       if (result.success) {
-        // Update session di client
         await update({ twoFactorEnabled: false });
         toast.success("Two-factor authentication disabled.");
         setIsDeactivateDialogOpen(false);
       } else {
         toast.error("Failed to disable 2FA.");
       }
-    } catch (error) {
+    } catch {
+      // FIX: Menghapus variabel error yang tidak digunakan
       toast.error("Something went wrong.");
     } finally {
       setIsLoading(false);
@@ -141,7 +196,6 @@ export default function SecurityPage() {
 
       <Separator />
 
-      {/* --- SSO SECTION --- */}
       <section className="space-y-4">
         <div className="flex items-start gap-3">
           <ShieldCheck className="w-5 h-5 text-muted-foreground mt-1" />
@@ -184,10 +238,14 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        {!isSSOActive ? (
+        {ssoLoading ? (
+          <div className="pl-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : !isSSOActive ? (
           <div className="pl-8">
             <Button
-              onClick={() => setIsSSOActive(true)}
+              onClick={handleActivateSSO}
               className="bg-[#0070f3] hover:bg-[#0060df] text-white"
             >
               Activate
@@ -196,24 +254,39 @@ export default function SecurityPage() {
         ) : (
           <div className="pl-8 pt-4 space-y-6 animate-in slide-in-from-top-2 duration-300">
             <div className="flex gap-4">
-              <Input placeholder="example.com" className="max-w-md" />
-              <Button className="bg-[#0070f3] hover:bg-[#0060df] text-white">
-                Add domain
+              <Input
+                placeholder="example.com"
+                className="max-w-md"
+                value={ssoForm.domain}
+                onChange={(e) => handleSSOChange("domain", e.target.value)}
+              />
+              <Button disabled className="bg-[#0070f3] text-white">
+                Domain
               </Button>
             </div>
-            {/* ... Form SSO lainnya ... */}
+
             <div className="space-y-2">
               <Label className="text-muted-foreground font-medium">
                 Identity provider single sign-on url
               </Label>
-              <Input placeholder="https://..." />
+              <Input
+                placeholder="https://idp.example.com/saml/sso"
+                value={ssoForm.ssoUrl}
+                onChange={(e) => handleSSOChange("ssoUrl", e.target.value)}
+              />
             </div>
+
             <div className="space-y-2">
               <Label className="text-muted-foreground font-medium">
-                Identity provider issuer (Entity id, Client id)
+                Identity provider issuer (Entity id)
               </Label>
-              <Input placeholder="https://..." />
+              <Input
+                placeholder="https://idp.example.com"
+                value={ssoForm.issuer}
+                onChange={(e) => handleSSOChange("issuer", e.target.value)}
+              />
             </div>
+
             <div className="space-y-2">
               <Label className="text-muted-foreground font-medium">
                 Identity provider signing certificate (X.509)
@@ -221,28 +294,51 @@ export default function SecurityPage() {
               <Textarea
                 placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----"
                 className="font-mono text-xs min-h-[100px]"
+                value={ssoForm.certificate}
+                onChange={(e) => handleSSOChange("certificate", e.target.value)}
               />
             </div>
+
             <div className="flex items-center space-x-2">
-              <Checkbox id="sso-force" />
+              <Checkbox
+                id="sso-force"
+                checked={ssoForm.forceSSO}
+                onCheckedChange={(checked) =>
+                  handleSSOChange("forceSSO", checked)
+                }
+              />
               <Label htmlFor="sso-force" className="text-muted-foreground">
-                All team members can login only with SSO
+                Enforce SSO for all team members
               </Label>
             </div>
-            <Button
-              variant="secondary"
-              onClick={handleDeactivateSSO}
-              className="bg-muted hover:bg-muted/80"
-            >
-              Deactivate
-            </Button>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSaveSSO}
+                disabled={ssoSaving}
+                className="bg-primary text-primary-foreground min-w-[100px]"
+              >
+                {ssoSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleDeactivateSSO}
+                disabled={ssoSaving}
+                className="bg-muted hover:bg-muted/80 text-red-600 hover:text-red-700"
+              >
+                Deactivate
+              </Button>
+            </div>
           </div>
         )}
       </section>
 
       <Separator />
 
-      {/* --- 2FA SECTION --- */}
       <section className="space-y-4">
         <div className="flex items-start gap-3">
           <CheckCheck className="w-5 h-5 text-muted-foreground mt-1" />
@@ -267,7 +363,6 @@ export default function SecurityPage() {
         </div>
 
         <div className="pl-8">
-          {/* JIKA BELUM AKTIF -> TAMPILKAN TOMBOL ACTIVATE */}
           {!isTwoFactorEnabled ? (
             <Dialog open={is2FAOpen} onOpenChange={handle2FAOpenChange}>
               <DialogTrigger asChild>
@@ -287,7 +382,6 @@ export default function SecurityPage() {
                 </DialogHeader>
 
                 <div className="space-y-8 py-4">
-                  {/* Step 1 */}
                   <div className="flex gap-6">
                     <div className="w-24 h-24 bg-muted/30 border rounded-sm flex items-center justify-center flex-shrink-0">
                       <ShieldCheck
@@ -311,14 +405,16 @@ export default function SecurityPage() {
                     </div>
                   </div>
 
-                  {/* Step 2 */}
                   <div className="flex gap-6">
                     <div className="w-48 h-48 bg-white border rounded-sm flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                       {qrCodeUrl ? (
-                        <img
+                        // FIX: Mengganti img dengan Next Image dan unoptimized
+                        <Image
                           src={qrCodeUrl}
                           alt="QR Code"
-                          className="w-full h-full object-contain p-2"
+                          fill
+                          className="object-contain p-2"
+                          unoptimized
                         />
                       ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full bg-muted animate-pulse">
@@ -339,7 +435,6 @@ export default function SecurityPage() {
                     </div>
                   </div>
 
-                  {/* Step 3 */}
                   <div className="flex gap-6">
                     <div className="w-24 h-24 bg-muted/30 border rounded-sm flex items-center justify-center flex-shrink-0">
                       <Smartphone
@@ -374,7 +469,6 @@ export default function SecurityPage() {
               </DialogContent>
             </Dialog>
           ) : (
-            // JIKA SUDAH AKTIF -> TAMPILKAN TOMBOL DEACTIVATE
             <Dialog
               open={isDeactivateDialogOpen}
               onOpenChange={setIsDeactivateDialogOpen}

@@ -31,6 +31,23 @@ model User {
   projectStatuses ProjectStatus[]
 
   notificationSettings NotificationSettings?
+  ssoSettings          SSOSettings?
+}
+
+model SSOSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  domain      String?
+  ssoUrl      String?
+  issuer      String?
+  certificate String?  @db.Text
+  forceSSO    Boolean  @default(false)
+  isActive    Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model NotificationSettings {
