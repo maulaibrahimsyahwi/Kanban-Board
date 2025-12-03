@@ -8,9 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import InviteUserDialog from "@/components/settings/invite-user-dialog";
+import CreateResourceDialog from "@/components/settings/create-resource-dialog";
 
 export default function TeamAndResourcesPage() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isCreateResourceOpen, setIsCreateResourceOpen] = useState(false);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -27,7 +29,6 @@ export default function TeamAndResourcesPage() {
           <TabsTrigger value="virtual">Virtual resources</TabsTrigger>
         </TabsList>
 
-        {/* --- PEOPLE TAB --- */}
         <TabsContent value="people" className="mt-6 space-y-6">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -42,8 +43,6 @@ export default function TeamAndResourcesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search by name or email" className="pl-9" />
             </div>
-
-            {/* Tombol Invite User Trigger */}
             <Button
               className="w-full sm:w-auto gap-2"
               onClick={() => setIsInviteDialogOpen(true)}
@@ -57,7 +56,6 @@ export default function TeamAndResourcesPage() {
             Number of users: 1
           </div>
 
-          {/* Users Table */}
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-muted/50 px-4 py-3 grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
               <div className="col-span-6 md:col-span-5">User</div>
@@ -70,7 +68,6 @@ export default function TeamAndResourcesPage() {
           </div>
         </TabsContent>
 
-        {/* --- VIRTUAL RESOURCES TAB --- */}
         <TabsContent value="virtual" className="mt-6 space-y-6">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -87,7 +84,10 @@ export default function TeamAndResourcesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search by resource name" className="pl-9" />
             </div>
-            <Button className="w-full sm:w-auto gap-2">
+            <Button
+              className="w-full sm:w-auto gap-2"
+              onClick={() => setIsCreateResourceOpen(true)}
+            >
               <Plus className="w-4 h-4" />
               Create new
             </Button>
@@ -97,7 +97,6 @@ export default function TeamAndResourcesPage() {
             Number of resources: 0
           </div>
 
-          {/* Empty State */}
           <div className="border rounded-lg p-12 flex flex-col items-center justify-center text-center bg-muted/10 min-h-[300px]">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
               <Box className="w-8 h-8 text-muted-foreground/50" />
@@ -113,10 +112,14 @@ export default function TeamAndResourcesPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Render Dialog Component */}
       <InviteUserDialog
         isOpen={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}
+      />
+
+      <CreateResourceDialog
+        isOpen={isCreateResourceOpen}
+        onOpenChange={setIsCreateResourceOpen}
       />
     </div>
   );
