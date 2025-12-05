@@ -32,7 +32,6 @@ import {
   ShieldCheck,
   ArrowLeft,
   KeyRound,
-  Building2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -51,7 +50,6 @@ export function AuthCard() {
   const [tempEmail, setTempEmail] = useState("");
   const [tempPassword, setTempPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [currentView, setCurrentView] = useState<AuthView>("login");
 
@@ -117,7 +115,10 @@ export function AuthCard() {
       });
 
       if (result?.error) {
-        if (result.error === "2FA_REQUIRED") {
+        if (
+          result.error === "2FA_REQUIRED" ||
+          result.error.includes("2FA_REQUIRED")
+        ) {
           setIs2FARequired(true);
           setTempEmail(email);
           setTempPassword(password);
@@ -134,16 +135,6 @@ export function AuthCard() {
     } catch {
       toast.error("System error occurred.");
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSSOLogin = async () => {
-    setIsLoading(true);
-    try {
-      await signIn("boxyhq");
-    } catch (error) {
-      toast.error("SSO Login failed");
       setIsLoading(false);
     }
   };
@@ -502,7 +493,7 @@ export function AuthCard() {
                       <Input
                         id="confirm-password"
                         name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
+                        type={showPassword ? "text" : "password"}
                         className="pl-10 pr-10 h-11"
                         required
                         disabled={isLoading}
@@ -686,22 +677,6 @@ export function AuthCard() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                disabled={isLoading}
-                onClick={handleSSOLogin}
-                className="w-full h-11 gap-3 border-input/60 bg-background/50 hover:bg-accent/50 font-medium transition-all"
-              >
-                {isLoading ? (
-                  <CustomLoader size={18} />
-                ) : (
-                  <>
-                    <Building2 className="h-5 w-5 text-blue-500" />
-                    <span>Single Sign-On (SSO)</span>
-                  </>
-                )}
-              </Button>
               <Button
                 variant="outline"
                 type="button"

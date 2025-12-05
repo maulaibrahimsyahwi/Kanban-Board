@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -20,10 +17,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import {
-  ShieldCheck,
   CheckCheck,
   Smartphone,
   Shield,
+  ShieldCheck,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,29 +29,9 @@ import {
   activateTwoFactorAction,
   disableTwoFactorAction,
 } from "@/app/actions/security";
-import {
-  getSSOSettingsAction,
-  updateSSOSettingsAction,
-  deactivateSSOAction,
-} from "@/app/actions/sso";
 
 export default function SecurityPage() {
   const { data: session, update } = useSession();
-
-  const [isSSOActive, setIsSSOActive] = useState(false);
-  const [ssoLoading, setSsoLoading] = useState(true);
-  const [ssoSaving, setSsoSaving] = useState(false);
-
-  // UX FIX: State untuk melacak apakah data sudah tersimpan di server
-  const [isSavedOnServer, setIsSavedOnServer] = useState(false);
-
-  const [ssoForm, setSsoForm] = useState({
-    domain: "",
-    ssoUrl: "",
-    issuer: "",
-    certificate: "",
-    forceSSO: false,
-  });
 
   const [is2FAOpen, setIs2FAOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
@@ -64,68 +41,6 @@ export default function SecurityPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const isTwoFactorEnabled = session?.user?.twoFactorEnabled || false;
-
-  useEffect(() => {
-    const loadSSO = async () => {
-      const res = await getSSOSettingsAction();
-      if (res.success && res.data) {
-        if (res.data.isActive) {
-          setIsSSOActive(true);
-          setIsSavedOnServer(true); // Tandai bahwa data ini berasal dari server
-        }
-        setSsoForm({
-          domain: res.data.domain || "",
-          ssoUrl: res.data.ssoUrl || "",
-          issuer: res.data.issuer || "",
-          certificate: res.data.certificate || "",
-          forceSSO: res.data.forceSSO || false,
-        });
-      }
-      setSsoLoading(false);
-    };
-    loadSSO();
-  }, []);
-
-  const handleSSOChange = (field: string, value: string | boolean) => {
-    setSsoForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveSSO = async () => {
-    setSsoSaving(true);
-    const res = await updateSSOSettingsAction({ ...ssoForm, isActive: true });
-    if (res.success) {
-      toast.success(res.message);
-      setIsSavedOnServer(true); // Update status tersimpan setelah berhasil save
-    } else {
-      toast.error(res.message);
-    }
-    setSsoSaving(false);
-  };
-
-  const handleActivateSSO = () => {
-    setIsSSOActive(true);
-    // Kita tidak set isSavedOnServer di sini karena user baru saja membuka form
-  };
-
-  const handleDeactivateSSO = async () => {
-    // UX FIX: Jika belum pernah disimpan ke server (baru buka form),
-    // cukup tutup tampilan lokal saja tanpa panggil API.
-    if (!isSavedOnServer) {
-      setIsSSOActive(false);
-      return;
-    }
-
-    setSsoSaving(true);
-    const res = await deactivateSSOAction();
-    if (res.success) {
-      setIsSSOActive(false);
-      setIsSavedOnServer(false); // Reset status tersimpan
-      toast.info(res.message);
-    } else {
-      toast.error(res.message);
-    }
-    setSsoSaving(false);
-  };
 
   const handle2FAOpenChange = async (open: boolean) => {
     setIs2FAOpen(open);
@@ -203,150 +118,6 @@ export default function SecurityPage() {
           Security
         </h1>
       </div>
-
-      <Separator />
-
-      <section className="space-y-4">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-muted-foreground mt-1" />
-          <div className="space-y-2 flex-1">
-            <h2 className="text-lg font-semibold">
-              Single sign-on (SSO, SAML)
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              SSO is a solution for organization access management to
-              third-party corporate resources and services.
-              <br />
-              <br />
-              FreeKanban can be configured as one of the service providers (SP)
-              connected to your SSO identity provider (IdP) using SAML.
-              <br />
-              <br />
-              You can setup SAML connection yourself with the most popular SSO
-              systems (e.g.{" "}
-              <span className="text-primary hover:underline cursor-pointer">
-                Okta
-              </span>
-              ,{" "}
-              <span className="text-primary hover:underline cursor-pointer">
-                OneLogin
-              </span>
-              ,{" "}
-              <span className="text-primary hover:underline cursor-pointer">
-                Azure AD
-              </span>
-              ,{" "}
-              <span className="text-primary hover:underline cursor-pointer">
-                Google Workspace
-              </span>
-              ) or contact us at{" "}
-              <span className="text-primary hover:underline cursor-pointer">
-                support@freekanban.com
-              </span>{" "}
-              to get help.
-            </p>
-          </div>
-        </div>
-
-        {ssoLoading ? (
-          <div className="pl-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : !isSSOActive ? (
-          <div className="pl-8">
-            <Button
-              onClick={handleActivateSSO}
-              className="bg-[#0070f3] hover:bg-[#0060df] text-white"
-            >
-              Activate
-            </Button>
-          </div>
-        ) : (
-          <div className="pl-8 pt-4 space-y-6 animate-in slide-in-from-top-2 duration-300">
-            <div className="flex gap-4">
-              <Input
-                placeholder="example.com"
-                className="max-w-md"
-                value={ssoForm.domain}
-                onChange={(e) => handleSSOChange("domain", e.target.value)}
-              />
-              <Button disabled className="bg-[#0070f3] text-white">
-                Domain
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground font-medium">
-                Identity provider single sign-on url
-              </Label>
-              <Input
-                placeholder="https://idp.example.com/saml/sso"
-                value={ssoForm.ssoUrl}
-                onChange={(e) => handleSSOChange("ssoUrl", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground font-medium">
-                Identity provider issuer (Entity id)
-              </Label>
-              <Input
-                placeholder="https://idp.example.com"
-                value={ssoForm.issuer}
-                onChange={(e) => handleSSOChange("issuer", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground font-medium">
-                Identity provider signing certificate (X.509)
-              </Label>
-              <Textarea
-                placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----"
-                className="font-mono text-xs min-h-[100px]"
-                value={ssoForm.certificate}
-                onChange={(e) => handleSSOChange("certificate", e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="sso-force"
-                checked={ssoForm.forceSSO}
-                onCheckedChange={(checked) =>
-                  handleSSOChange("forceSSO", checked)
-                }
-              />
-              <Label htmlFor="sso-force" className="text-muted-foreground">
-                Enforce SSO for all team members
-              </Label>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                onClick={handleSaveSSO}
-                disabled={ssoSaving}
-                className="bg-primary text-primary-foreground min-w-[100px]"
-              >
-                {ssoSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleDeactivateSSO}
-                disabled={ssoSaving}
-                className="bg-muted hover:bg-muted/80 text-red-600 hover:text-red-700"
-              >
-                {/* UX FIX: Ubah teks tombol sesuai kondisi */}
-                {!isSavedOnServer ? "Cancel" : "Deactivate"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
 
       <Separator />
 

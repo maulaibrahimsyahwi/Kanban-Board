@@ -1,4 +1,4 @@
-import NextAuth, { CredentialsSignin } from "next-auth";
+import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -8,35 +8,13 @@ import { authenticator } from "otplib";
 import type { Adapter } from "next-auth/adapters";
 import type { User } from "next-auth";
 
-class TwoFactorRequired extends CredentialsSignin {
-  code = "2FA_REQUIRED";
-}
-
-class InvalidTwoFactorCode extends CredentialsSignin {
-  code = "2FA_INVALID";
-}
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   providers: [
-    {
-      id: "boxyhq",
-      name: "BoxyHQ",
-      type: "oidc",
-      issuer: process.env.BOXYHQ_ISSUER,
-      clientId: "tenant=kanban&product=freekanban",
-      clientSecret: "dummy",
-      authorization: {
-        params: {
-          scope: "openid email profile",
-        },
-      },
-      checks: ["pkce", "state"],
-    },
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
@@ -65,7 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const inputCode = credentials.code as string;
 
           if (!inputCode) {
-            throw new TwoFactorRequired();
+            throw new Error("2FA_REQUIRED");
           }
 
           const isValidToken = authenticator.verify({
@@ -74,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (!isValidToken) {
-            throw new InvalidTwoFactorCode();
+            throw new Error("2FA_INVALID");
           }
         }
 
@@ -90,9 +68,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session, account }) {
       if (user) {
         token.sub = user.id;
-        token.onboardingCompleted = (user as User).onboardingCompleted;
-        token.twoFactorEnabled = (user as User).twoFactorEnabled;
-        token.dateFormat = (user as User).dateFormat || "dd/MM/yyyy";
+        // Perbaikan: Menghapus casting 'as any' dan menggunakan properti langsung dari tipe User yang sudah diperluas
+        token.onboardingCompleted = user.onboardingCompleted;
+        token.twoFactorEnabled = user.twoFactorEnabled;
+        token.dateFormat = user.dateFormat || "dd/MM/yyyy";
 
         if (account?.provider === "google") {
           const dbUser = await prisma.user.findUnique({

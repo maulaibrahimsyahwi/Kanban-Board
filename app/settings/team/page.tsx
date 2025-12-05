@@ -1,158 +1,287 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Search, Plus, UserPlus, Box } from "lucide-react";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSession } from "next-auth/react";
-import InviteUserDialog from "@/components/settings/invite-user-dialog";
-import CreateResourceDialog from "@/components/settings/create-resource-dialog";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  CheckCheck,
+  Smartphone,
+  Shield,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  generateTwoFactorSecretAction,
+  activateTwoFactorAction,
+  disableTwoFactorAction,
+} from "@/app/actions/security";
 
-export default function TeamAndResourcesPage() {
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [isCreateResourceOpen, setIsCreateResourceOpen] = useState(false);
+export default function SecurityPage() {
+  const { data: session, update } = useSession();
+
+  const [is2FAOpen, setIs2FAOpen] = useState(false);
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isTwoFactorEnabled = session?.user?.twoFactorEnabled || false;
+
+  const handle2FAOpenChange = async (open: boolean) => {
+    setIs2FAOpen(open);
+
+    if (open && !secretKey) {
+      try {
+        const res = await generateTwoFactorSecretAction();
+        if (res.success && res.secret && res.otpauth) {
+          setSecretKey(res.secret);
+          const encodedUrl = encodeURIComponent(res.otpauth);
+          setQrCodeUrl(
+            `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}`
+          );
+        } else {
+          toast.error("Failed to generate security keys");
+        }
+      } catch {
+        toast.error("Network error occurred");
+      }
+    } else if (!open) {
+      setSecretKey("");
+      setQrCodeUrl("");
+      setVerificationCode("");
+    }
+  };
+
+  const handleActivate2FA = async () => {
+    if (verificationCode.length !== 6 || isNaN(Number(verificationCode))) {
+      toast.error("Invalid code. Please enter 6 digits.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await activateTwoFactorAction(verificationCode, secretKey);
+
+      if (result.success) {
+        await update({ twoFactorEnabled: true });
+        toast.success("Two-factor authentication enabled successfully!");
+        setIs2FAOpen(false);
+      } else {
+        toast.error(result.message || "Failed to verify code.");
+      }
+    } catch {
+      toast.error("Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeactivate2FA = async () => {
+    setIsLoading(true);
+    try {
+      const result = await disableTwoFactorAction();
+
+      if (result.success) {
+        await update({ twoFactorEnabled: false });
+        toast.success("Two-factor authentication disabled.");
+        setIsDeactivateDialogOpen(false);
+      } else {
+        toast.error("Failed to disable 2FA.");
+      }
+    } catch {
+      toast.error("Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="w-6 h-6 text-muted-foreground" />
-          Team and resources
+          <Shield className="w-6 h-6 text-muted-foreground" />
+          Security
         </h1>
       </div>
 
-      <Tabs defaultValue="people" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-          <TabsTrigger value="people">People</TabsTrigger>
-          <TabsTrigger value="virtual">Virtual resources</TabsTrigger>
-        </TabsList>
+      <Separator />
 
-        <TabsContent value="people" className="mt-6 space-y-6">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">
-              Here you manage people from all your projects. You can also invite
-              new members by email. Depending on the rights granted, members can
-              get different roles.
+      <section className="space-y-4">
+        <div className="flex items-start gap-3">
+          <CheckCheck className="w-5 h-5 text-muted-foreground mt-1" />
+          <div className="space-y-2 flex-1">
+            <h2 className="text-lg font-semibold">Two-factor authentication</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Two-factor authentication (also known as 2-step verification, 2FA
+              or MFA) adds an extra layer of security to your FreeKanban
+              Account.
+              <br />
+              <br />
+              It will require you to have access to your mobile phone when you
+              sign in. You&apos;ll receive a verification code from an
+              authentication app on your phone.
+              <br />
+              <br />
+              Once you have set up two-factor authentication, every time you
+              sign in, you&apos;ll be asked to enter a secondary verification
+              code along with your password.
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-            <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by name or email" className="pl-9" />
-            </div>
-            <Button
-              className="w-full sm:w-auto gap-2"
-              onClick={() => setIsInviteDialogOpen(true)}
-            >
-              <UserPlus className="w-4 h-4" />
-              Invite by email
-            </Button>
-          </div>
-
-          <div className="text-sm font-medium text-muted-foreground">
-            Number of users: 1
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/50 px-4 py-3 grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
-              <div className="col-span-6 md:col-span-5">User</div>
-              <div className="col-span-3 md:col-span-4">Account role</div>
-              <div className="col-span-3">Status</div>
-            </div>
-            <div className="divide-y">
-              <UserRow />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="virtual" className="mt-6 space-y-6">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">
-              Here you manage all virtual resources from your projects. A
-              virtual resource is any virtual unit that you would like to
-              include in your project. It can be both human and material
-              resources, e.g. a developer, a designer, an agency, as well as
-              cars, equipment, software, etc.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-            <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by resource name" className="pl-9" />
-            </div>
-            <Button
-              className="w-full sm:w-auto gap-2"
-              onClick={() => setIsCreateResourceOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Create new
-            </Button>
-          </div>
-
-          <div className="text-sm font-medium text-muted-foreground">
-            Number of resources: 0
-          </div>
-
-          <div className="border rounded-lg p-12 flex flex-col items-center justify-center text-center bg-muted/10 min-h-[300px]">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <Box className="w-8 h-8 text-muted-foreground/50" />
-            </div>
-            <h3 className="text-lg font-medium text-muted-foreground">
-              No resources created yet
-            </h3>
-            <p className="text-sm text-muted-foreground/70 max-w-sm mt-2">
-              Add resources like equipment, meeting rooms, or external agencies
-              to track them in your projects.
-            </p>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <InviteUserDialog
-        isOpen={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
-      />
-
-      <CreateResourceDialog
-        isOpen={isCreateResourceOpen}
-        onOpenChange={setIsCreateResourceOpen}
-      />
-    </div>
-  );
-}
-
-function UserRow() {
-  const { data: session } = useSession();
-  const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "ME";
-
-  return (
-    <div className="px-4 py-4 grid grid-cols-12 gap-4 items-center hover:bg-muted/20 transition-colors">
-      <div className="col-span-6 md:col-span-5 flex items-center gap-3 overflow-hidden">
-        <Avatar className="h-10 w-10 border">
-          <AvatarImage src={session?.user?.image || ""} />
-          <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col min-w-0">
-          <span className="font-medium truncate text-sm text-foreground">
-            {session?.user?.name || "User Name"}
-          </span>
-          <span className="text-xs text-muted-foreground truncate">
-            {session?.user?.email || "user@example.com"}
-          </span>
         </div>
-      </div>
 
-      <div className="col-span-3 md:col-span-4 text-sm font-medium text-foreground">
-        Account Owner
-      </div>
+        <div className="pl-8">
+          {!isTwoFactorEnabled ? (
+            <Dialog open={is2FAOpen} onOpenChange={handle2FAOpenChange}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#0070f3] hover:bg-[#0060df] text-white">
+                  Activate
+                </Button>
+              </DialogTrigger>
 
-      <div className="col-span-3 text-sm text-muted-foreground">Active</div>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold uppercase text-muted-foreground text-sm tracking-wider mb-2">
+                    Enable Authentication App
+                  </DialogTitle>
+                  <p className="text-muted-foreground">
+                    Make your accounts safer in 3 easy steps:
+                  </p>
+                </DialogHeader>
+
+                <div className="space-y-8 py-4">
+                  <div className="flex gap-6">
+                    <div className="w-24 h-24 bg-muted/30 border rounded-sm flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck
+                        className="w-10 h-10 text-muted-foreground/50"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">
+                        Download an authenticator app
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Download and install Google Authenticator (
+                        <span className="text-primary cursor-pointer">IOS</span>
+                        ,{" "}
+                        <span className="text-primary cursor-pointer">
+                          Android
+                        </span>
+                        ) for your phone or tablet.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6">
+                    <div className="w-48 h-48 bg-white border rounded-sm flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                      {qrCodeUrl ? (
+                        <Image
+                          src={qrCodeUrl}
+                          alt="QR Code"
+                          fill
+                          className="object-contain p-2"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full h-full bg-muted animate-pulse">
+                          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Scan the QR code</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Open the authentication app and scan the image to the
+                        left, using your phone&apos;s camera.{" "}
+                        <strong className="text-foreground">
+                          This QR code will not be shown again after 2FA is
+                          enabled.
+                        </strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6">
+                    <div className="w-24 h-24 bg-muted/30 border rounded-sm flex items-center justify-center flex-shrink-0">
+                      <Smartphone
+                        className="w-10 h-10 text-muted-foreground/50"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <div className="space-y-4 flex-1">
+                      <h3 className="font-semibold">
+                        Enable two-factor authentication
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Enter the 6-digit verification code from the app.
+                      </p>
+                      <Input
+                        placeholder="000 000"
+                        className="max-w-md text-lg tracking-widest"
+                        maxLength={6}
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                      />
+                      <Button
+                        className="bg-[#0070f3] hover:bg-[#0060df] text-white w-32"
+                        onClick={handleActivate2FA}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Activating..." : "Activate"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Dialog
+              open={isDeactivateDialogOpen}
+              onOpenChange={setIsDeactivateDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="destructive">Deactivate</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Deactivate 2FA</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to disable two-factor authentication
+                    for your FreeKanban account?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeactivate2FA}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Deactivating..." : "Disable 2FA"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
