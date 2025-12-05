@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task } from "@/types";
+import { Task, UserProfile, Attachment } from "@/types";
 import { toast } from "sonner";
 import { TaskLabel } from "@/constants";
 
@@ -47,6 +47,8 @@ export function useTaskActions(taskId: string, boardId: string) {
   const [editChecklist, setEditChecklist] = useState<Task["checklist"]>([]);
   const [editCardDisplayPreference, setEditCardDisplayPreference] =
     useState<Task["cardDisplayPreference"]>("none");
+  const [editAssignees, setEditAssignees] = useState<UserProfile[]>([]);
+  const [editAttachments, setEditAttachments] = useState<Attachment[]>([]);
 
   useEffect(() => {
     if (derivedData?.task) {
@@ -62,6 +64,8 @@ export function useTaskActions(taskId: string, boardId: string) {
       setEditCardDisplayPreference(
         derivedData.task.cardDisplayPreference || "none"
       );
+      setEditAssignees(derivedData.task.assignees || []);
+      setEditAttachments(derivedData.task.attachments || []);
     }
   }, [derivedData?.task, boardId]);
 
@@ -88,6 +92,8 @@ export function useTaskActions(taskId: string, boardId: string) {
         labels: editLabels,
         checklist: editChecklist,
         cardDisplayPreference: editCardDisplayPreference,
+        assignees: editAssignees,
+        attachments: editAttachments,
       };
 
       editTask(taskId, boardId, taskUpdates);
@@ -171,6 +177,8 @@ export function useTaskActions(taskId: string, boardId: string) {
     editBoardId,
     editChecklist,
     editCardDisplayPreference,
+    editAssignees,
+    editAttachments,
     setIsEditDialogOpen,
     setIsCopyDialogOpen,
     setIsDropdownOpen,
@@ -184,6 +192,8 @@ export function useTaskActions(taskId: string, boardId: string) {
     setEditBoardId,
     setEditChecklist,
     setEditCardDisplayPreference,
+    setEditAssignees,
+    setEditAttachments,
     handleEditTask,
     handleSaveEdit,
     handleDeleteTask,

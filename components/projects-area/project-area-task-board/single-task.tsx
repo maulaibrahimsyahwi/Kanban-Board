@@ -7,6 +7,7 @@ import {
   ArrowDown,
   CalendarDays,
   AlignLeft,
+  Paperclip,
 } from "lucide-react";
 import { FaRegCircle } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
@@ -32,6 +33,7 @@ import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-d
 import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
 import CopyTaskDialog from "@/components/windows-dialogs/task-dialog/copy-task-dialog";
 import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SingleTaskProps {
   task: Task;
@@ -398,6 +400,38 @@ const SingleTask = ({
               </div>
             )}
 
+          {/* Assignees & Attachments Indicator (Mini) */}
+          {(task.assignees?.length > 0 || task.attachments?.length > 0) && (
+            <div className="flex items-center gap-3 mt-1">
+              {task.assignees?.length > 0 && (
+                <div className="flex -space-x-2">
+                  {task.assignees.slice(0, 3).map((u, i) => (
+                    <Avatar
+                      key={i}
+                      className="w-5 h-5 border border-background"
+                    >
+                      <AvatarImage src={u.image || ""} />
+                      <AvatarFallback className="text-[8px]">
+                        {u.name?.slice(0, 1)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {task.assignees.length > 3 && (
+                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[8px] border border-background">
+                      +{task.assignees.length - 3}
+                    </div>
+                  )}
+                </div>
+              )}
+              {task.attachments?.length > 0 && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Paperclip className="w-3 h-3 mr-1" />
+                  {task.attachments.length}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 pt-2 mt-2 border-t border-border/50">
             {task.labels && task.labels.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -483,6 +517,11 @@ const SingleTask = ({
         editCardDisplayPreference={taskActions.editCardDisplayPreference}
         setEditChecklist={taskActions.setEditChecklist}
         setEditCardDisplayPreference={taskActions.setEditCardDisplayPreference}
+        // ADDED THESE PROPS
+        editAssignees={taskActions.editAssignees}
+        setEditAssignees={taskActions.setEditAssignees}
+        editAttachments={taskActions.editAttachments}
+        setEditAttachments={taskActions.setEditAttachments}
       />
 
       <DeleteTaskDialog

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useProjects } from "@/contexts/projectContext";
-import { Task, Board } from "@/types";
+import { Task, Board, UserProfile, Attachment } from "@/types";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState, useEffect, useCallback } from "react";
@@ -107,6 +107,10 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   const [editCardDisplayPreference, setEditCardDisplayPreference] =
     useState<Task["cardDisplayPreference"]>("none");
 
+  // ADDED THESE STATES
+  const [editAssignees, setEditAssignees] = useState<UserProfile[]>([]);
+  const [editAttachments, setEditAttachments] = useState<Attachment[]>([]);
+
   const sortTasks = useCallback(
     (
       a: Task & { boardName: string; boardId: string },
@@ -164,6 +168,11 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       setEditBoardId(taskToEditInfo.boardId);
       setEditChecklist(task.checklist);
       setEditCardDisplayPreference(task.cardDisplayPreference);
+
+      // UPDATED THESE
+      setEditAssignees(task.assignees || []);
+      setEditAttachments(task.attachments || []);
+
       setIsSaving(false);
     }
   }, [taskToEditInfo]);
@@ -190,8 +199,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       return [...allTasks].sort(sortTasks);
     }
     return allTasks;
-    // PERBAIKAN: Menambahkan komentar disable untuk lint warning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredBoards, tasksUpdated, sortBy, sortTasks]);
 
   const handleOpenEditDialog = (
@@ -227,6 +234,9 @@ export default function ListView({ filteredBoards }: ListViewProps) {
         labels: editLabels,
         checklist: editChecklist,
         cardDisplayPreference: editCardDisplayPreference,
+        // ADDED
+        assignees: editAssignees,
+        attachments: editAttachments,
       };
 
       editTask(taskId, originalBoardId, updatedData);
@@ -365,6 +375,11 @@ export default function ListView({ filteredBoards }: ListViewProps) {
           setEditCardDisplayPreference={setEditCardDisplayPreference}
           boards={selectedProject.boards}
           boardName={taskToEditInfo.boardName}
+          // ADDED PROPS HERE
+          editAssignees={editAssignees}
+          setEditAssignees={setEditAssignees}
+          editAttachments={editAttachments}
+          setEditAttachments={setEditAttachments}
         />
       )}
     </>

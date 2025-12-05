@@ -6,6 +6,13 @@ export type ChecklistItem = {
   isDone: boolean;
 };
 
+export type Attachment = {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -21,6 +28,8 @@ export type Task = {
   }[];
   checklist: ChecklistItem[];
   cardDisplayPreference: "none" | "description" | "checklist";
+  assignees: UserProfile[];
+  attachments: Attachment[];
 };
 
 export type Board = {
