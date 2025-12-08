@@ -25,10 +25,11 @@ import {
   Paperclip,
   FileIcon,
   Download,
-  X,
   Link as LinkIcon,
   Monitor,
   Globe,
+  Loader2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React, { Dispatch, SetStateAction, useState } from "react";
@@ -52,6 +53,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProjects } from "@/contexts/projectContext";
+import { supabase } from "@/lib/supabase";
+import { v4 as uuidv4 } from "uuid";
 
 interface EditTaskDialogProps {
   isOpen: boolean;
@@ -125,6 +128,7 @@ export default function EditTaskDialog({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const truncateBoardName = (name: string, maxLength: number = 30) => {
     return name.length <= maxLength ? name : name.slice(0, maxLength) + "...";
@@ -158,9 +162,11 @@ export default function EditTaskDialog({
     if (!files || files.length === 0) return;
 
     const file = files[0];
+    const MAX_SIZE = 2 * 1024 * 1024;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > MAX_SIZE) {
       toast.error("File terlalu besar (Max 2MB)");
+      e.target.value = "";
       return;
     }
 
@@ -174,21 +180,46 @@ export default function EditTaskDialog({
 
     if (!allowedTypes.includes(file.type)) {
       toast.error("Tipe file tidak didukung");
+      e.target.value = "";
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    setIsUploading(true);
+    const toastId = toast.loading("Mengunggah file...");
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("attachments")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from("attachments")
+        .getPublicUrl(filePath);
+
       const newAttachment: Attachment = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: uuidv4(),
         name: file.name,
-        url: e.target?.result as string,
+        url: data.publicUrl,
         type: file.type,
       };
+
       setEditAttachments([...editAttachments, newAttachment]);
-      toast.success("File dilampirkan");
-    };
-    reader.readAsDataURL(file);
+      toast.success("File berhasil diunggah", { id: toastId });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Gagal mengunggah file", { id: toastId });
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleAddLink = () => {
@@ -205,7 +236,7 @@ export default function EditTaskDialog({
     }
 
     const newAttachment: Attachment = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: uuidv4(),
       name: linkText.trim() || linkUrl,
       url: linkUrl,
       type: "link",
@@ -314,9 +345,14 @@ export default function EditTaskDialog({
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={isUploading}
                         className="text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 h-8 gap-2 px-2 font-medium transition-colors"
                       >
-                        <Paperclip className="w-4 h-4" />
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Paperclip className="w-4 h-4" />
+                        )}
                         <span>Attach files</span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -345,6 +381,7 @@ export default function EditTaskDialog({
                     type="file"
                     className="hidden"
                     onChange={handleFileUpload}
+                    accept="image/*,application/pdf,text/plain"
                   />
                 </div>
 
@@ -563,14 +600,16 @@ export default function EditTaskDialog({
               <Button
                 variant="secondary"
                 onClick={onClose}
-                disabled={isSaving}
+                disabled={isSaving || isUploading}
                 className="cursor-pointer"
               >
                 Cancel
               </Button>
               <Button
                 onClick={onSave}
-                disabled={!title.trim() || title.length < 3 || isSaving}
+                disabled={
+                  !title.trim() || title.length < 3 || isSaving || isUploading
+                }
                 className="cursor-pointer min-w-[130px]"
               >
                 {isSaving ? (
