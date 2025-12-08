@@ -55,14 +55,14 @@ export async function deleteAccountAction() {
   }
 }
 
-export async function updateProfileImageAction(base64Image: string) {
+export async function updateProfileImageAction(imageUrl: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
   try {
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { image: base64Image },
+      data: { image: imageUrl },
     });
     revalidatePath("/");
     return { success: true, message: "Foto profil diperbarui." };

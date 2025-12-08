@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "@/lib/mail";
 import { z } from "zod";
+import { headers } from "next/headers";
 
 const RegisterSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter"),
@@ -11,7 +12,38 @@ const RegisterSchema = z.object({
   password: z.string().min(8, "Password minimal 8 karakter"),
 });
 
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+
+function checkRateLimit(ip: string) {
+  const WINDOW_MS = 60 * 1000;
+  const MAX_REQUESTS = 5;
+
+  const now = Date.now();
+  const record = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+
+  if (now - record.lastReset > WINDOW_MS) {
+    record.count = 0;
+    record.lastReset = now;
+  }
+
+  if (record.count >= MAX_REQUESTS) {
+    return false;
+  }
+
+  record.count++;
+  rateLimitMap.set(ip, record);
+  return true;
+}
+
 export async function registerUserAction(formData: FormData) {
+  const ip = (await headers()).get("x-forwarded-for") || "unknown";
+  if (!checkRateLimit(ip)) {
+    return {
+      success: false,
+      message: "Terlalu banyak percobaan. Silakan coba lagi dalam 1 menit.",
+    };
+  }
+
   const rawData = {
     name: formData.get("name"),
     email: formData.get("email"),

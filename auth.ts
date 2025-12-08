@@ -15,7 +15,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     Credentials({
       name: "Credentials",
@@ -68,7 +68,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session, account }) {
       if (user) {
         token.sub = user.id;
-        // Perbaikan: Menghapus casting 'as any' dan menggunakan properti langsung dari tipe User yang sudah diperluas
         token.onboardingCompleted = user.onboardingCompleted;
         token.twoFactorEnabled = user.twoFactorEnabled;
         token.dateFormat = user.dateFormat || "dd/MM/yyyy";

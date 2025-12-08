@@ -33,6 +33,8 @@ import {
   updateProfileImageAction,
   updateDateFormatAction,
 } from "@/app/actions/profile";
+import { supabase } from "@/lib/supabase";
+import { v4 as uuidv4 } from "uuid";
 
 export default function ProfileSettingsPage() {
   const { data: session, update } = useSession();
@@ -69,21 +71,43 @@ export default function ProfileSettingsPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result as string;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Hanya file gambar (JPEG, PNG, WEBP) yang diperbolehkan.");
+      return;
+    }
 
-      const toastId = toast.loading("Updating profile picture...");
-      const result = await updateProfileImageAction(base64String);
+    const toastId = toast.loading("Mengunggah foto profil...");
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${session?.user?.id}-${uuidv4()}.${fileExt}`;
+      const filePath = `user-avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData.publicUrl;
+
+      const result = await updateProfileImageAction(publicUrl);
 
       if (result.success) {
-        await update({ user: { image: base64String } });
+        await update({ user: { image: publicUrl } });
         toast.success(result.message, { id: toastId });
       } else {
         toast.error(result.message, { id: toastId });
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Gagal mengunggah gambar.", { id: toastId });
+    }
   };
 
   const handlePasswordSave = async () => {
@@ -233,7 +257,7 @@ export default function ProfileSettingsPage() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/webp"
               />
               <p
                 className="text-xs text-muted-foreground text-center max-w-[150px] hover:text-primary cursor-pointer"
