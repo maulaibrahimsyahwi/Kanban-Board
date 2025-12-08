@@ -74,6 +74,12 @@ interface TaskDTO {
   createdAt: Date;
   labels: LabelDTO[];
   checklist: ChecklistItemDTO[];
+  assignees: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  }[];
+  attachments: { id: string; name: string; url: string; type: string }[];
 }
 
 interface BoardDTO {
@@ -190,6 +196,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
                 createdAt: new Date(t.createdAt),
                 labels: t.labels,
                 checklist: t.checklist,
+                assignees: t.assignees || [],
+                attachments: t.attachments || [],
               })),
             })),
           }));
@@ -424,6 +432,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         createdAt: new Date(t.createdAt),
         labels: t.labels,
         checklist: t.checklist,
+        assignees: t.assignees || [],
+        attachments: t.attachments || [],
       };
 
       setProjects((prev) =>

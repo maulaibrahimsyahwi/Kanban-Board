@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
@@ -31,7 +29,9 @@ model User {
   projectStatuses ProjectStatus[]
 
   notificationSettings NotificationSettings?
-  assignedTasks Task[] @relation("TaskAssignees")
+  assignedTasks        Task[] @relation("TaskAssignees")
+  
+  sSOSettings          SSOSettings?
 }
 
 model NotificationSettings {
@@ -195,4 +195,20 @@ model Attachment {
   
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model SSOSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  domain      String?
+  ssoUrl      String?
+  issuer      String?
+  certificate String?  @db.Text
+  forceSSO    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

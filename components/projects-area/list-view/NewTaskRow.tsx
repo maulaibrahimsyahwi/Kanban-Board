@@ -45,7 +45,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Cek apakah klik berasal dari luar elemen ini dan bukan dari dropdown menu yang mungkin terbuka
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(event.target as Node) &&
@@ -54,7 +53,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
           event.target.closest('[data-slot="dropdown-menu-content"]')
         )
       ) {
-        // Hanya ciutkan jika baris sedang diperluas DAN judul belum diisi
         if (isExpanded && !title.trim()) {
           setIsExpanded(false);
         }
@@ -87,6 +85,8 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         labels: [],
         checklist: [],
         cardDisplayPreference: "none",
+        assignees: [],
+        attachments: [],
       };
       addTaskToProject(newTaskData, boardId, selectedProject.id);
 
@@ -117,7 +117,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
     }
   };
 
-  // Tampilan Ringkas (Hanya Judul dan Tombol Plus)
   if (!isExpanded) {
     return (
       <div
@@ -144,13 +143,11 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
     );
   }
 
-  // Tampilan Penuh (Saat isExpanded = true)
   return (
     <div
       ref={wrapperRef}
       className="grid grid-cols-[1.5fr_150px_150px_150px_120px_180px_160px_150px_80px] items-center text-sm text-foreground py-2.5 px-4 bg-muted/30 border-t border-border/50"
     >
-      {/* Kolom Nama Tugas */}
       <div className="font-medium truncate pr-2 flex items-center">
         <Loader2
           className={cn(
@@ -168,7 +165,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Tugas (Disabled) */}
       <div className="text-muted-foreground truncate pr-2">
         <Input
           placeholder="Tugas"
@@ -177,7 +173,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Tanggal Mulai */}
       <div className="text-muted-foreground truncate pr-2">
         <CompactDatePicker
           date={startDate}
@@ -187,7 +182,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Tenggat Waktu */}
       <div className="truncate pr-2">
         <CompactDatePicker
           date={dueDate}
@@ -197,7 +191,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Wadah */}
       <div className="truncate pr-2">
         <Select value={boardId} onValueChange={setBoardId}>
           <SelectTrigger
@@ -216,7 +209,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         </Select>
       </div>
 
-      {/* Kolom Kemajuan */}
       <div className="pr-2 w-fit">
         <ProgressSelector
           selectedProgress={progress}
@@ -225,7 +217,6 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Prioritas */}
       <div className="pr-2 w-fit">
         <PrioritySelector
           selectedPriority={priority}
@@ -234,14 +225,12 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
         />
       </div>
 
-      {/* Kolom Label */}
       <div className="flex flex-wrap gap-1">
         <span className="text-primary text-xs cursor-pointer hover:underline">
           Tambahkan label
         </span>
       </div>
 
-      {/* Kolom Aksi (Tombol Create) */}
       <div className="flex items-center justify-end">
         <Button
           variant="ghost"

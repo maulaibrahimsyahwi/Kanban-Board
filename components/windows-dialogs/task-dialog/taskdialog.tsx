@@ -99,6 +99,8 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
           labels: labels,
           checklist: checklist,
           cardDisplayPreference: cardDisplayPreference,
+          assignees: [],
+          attachments: [],
         },
         targetBoardId,
         selectedProject.id

@@ -115,6 +115,8 @@ export default function CopyTaskDialog({
       cardDisplayPreference: copyOptions.checklist
         ? task.cardDisplayPreference
         : "none",
+      assignees: [],
+      attachments: [],
     };
 
     try {
