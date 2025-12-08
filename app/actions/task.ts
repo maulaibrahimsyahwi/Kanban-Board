@@ -35,12 +35,74 @@ const TaskUpdateSchema = z.object({
   attachments: z.array(AttachmentSchema).optional(),
 });
 
+// --- Helper: Cek Otorisasi ---
+// Fungsi ini memastikan User adalah pemilik project ATAU member project
+async function verifyProjectAccess(userId: string, boardId: string) {
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    include: {
+      project: {
+        include: {
+          members: { select: { id: true } },
+        },
+      },
+    },
+  });
+
+  if (!board) return false;
+
+  const isOwner = board.project.ownerId === userId;
+  const isMember = board.project.members.some((member) => member.id === userId);
+
+  return isOwner || isMember;
+}
+
+// Helper khusus untuk cek akses via Task ID
+async function verifyTaskAccess(userId: string, taskId: string) {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      board: {
+        include: {
+          project: {
+            include: {
+              members: { select: { id: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!task) return null;
+
+  const isOwner = task.board.project.ownerId === userId;
+  const isMember = task.board.project.members.some(
+    (member) => member.id === userId
+  );
+
+  if (!isOwner && !isMember) return null;
+
+  return task;
+}
+
+// --- Server Actions ---
+
 export async function createTaskAction(
   boardId: string,
   taskData: Partial<Task>
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  // SECURITY CHECK: Pastikan user punya akses ke board ini
+  const hasAccess = await verifyProjectAccess(session.user.id, boardId);
+  if (!hasAccess) {
+    return {
+      success: false,
+      message: "Forbidden: You do not have access to this project.",
+    };
+  }
 
   if (!taskData.title || taskData.title.trim().length === 0) {
     return { success: false, message: "Title is required" };
@@ -96,6 +158,12 @@ export async function createTaskAction(
 export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  // SECURITY CHECK: Pastikan user punya akses ke task ini
+  const existingTask = await verifyTaskAccess(session.user.id, taskId);
+  if (!existingTask) {
+    return { success: false, message: "Forbidden or Task not found." };
+  }
 
   const validation = TaskUpdateSchema.safeParse(updates);
   if (!validation.success) {
@@ -165,6 +233,22 @@ export async function moveTaskAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  // SECURITY CHECK: Cek akses ke Task asal
+  const task = await verifyTaskAccess(session.user.id, taskId);
+  if (!task) return { success: false, message: "Forbidden or Task not found." };
+
+  // SECURITY CHECK: Cek akses ke Board tujuan (mencegah memindah task ke project orang lain)
+  const targetBoardAccess = await verifyProjectAccess(
+    session.user.id,
+    newBoardId
+  );
+  if (!targetBoardAccess) {
+    return {
+      success: false,
+      message: "Forbidden: Cannot move task to this board.",
+    };
+  }
+
   try {
     await prisma.task.update({
       where: { id: taskId },
@@ -184,6 +268,12 @@ export async function moveTaskAction(
 export async function deleteTaskAction(taskId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  // SECURITY CHECK: Pastikan user punya akses ke task ini
+  const existingTask = await verifyTaskAccess(session.user.id, taskId);
+  if (!existingTask) {
+    return { success: false, message: "Forbidden or Task not found." };
+  }
 
   try {
     await prisma.task.delete({ where: { id: taskId } });
