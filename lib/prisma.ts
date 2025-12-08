@@ -4,17 +4,23 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-// Konfigurasi koneksi menggunakan Adapter (Standar Prisma 7)
-const connectionString = `${process.env.DATABASE_URL}`;
+const connectionString = process.env.DATABASE_URL;
 
-const pool = new Pool({ connectionString });
+const pool = new Pool({
+  connectionString,
+  max: 1,
+  allowExitOnIdle: true,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
 const adapter = new PrismaPg(pool);
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter,
-    log: ["query"],
+    log: ["error"],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
