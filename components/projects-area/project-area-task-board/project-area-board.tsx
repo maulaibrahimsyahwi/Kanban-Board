@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import SingleBoard from "./single-board";
 import { Board, Task } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import EmptyBoardsState from "@/components/projects-area/empty-board-state";
 import SingleTask from "../project-area-task-board/single-task";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import AddBoardDialog from "@/components/add-board-dialog";
 import { MdDashboardCustomize } from "react-icons/md";
 
@@ -19,115 +20,6 @@ export default function ProjectAreaBoards({
 
   const { moveTask } = useProjects();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const autoScrollRef = useRef<number | null>(null);
-
-  const startAutoScroll = useCallback(
-    (direction: "left" | "right", speed: number) => {
-      if (autoScrollRef.current) {
-        cancelAnimationFrame(autoScrollRef.current);
-      }
-
-      const scroll = () => {
-        if (!scrollContainerRef.current || !isDragging) {
-          autoScrollRef.current = null;
-          return;
-        }
-
-        const container = scrollContainerRef.current;
-
-        if (direction === "left") {
-          container.scrollLeft -= speed;
-          if (container.scrollLeft <= 0) {
-            autoScrollRef.current = null;
-            return;
-          }
-        } else {
-          container.scrollLeft += speed;
-          const maxScroll = container.scrollWidth - container.clientWidth;
-          if (container.scrollLeft >= maxScroll) {
-            autoScrollRef.current = null;
-            return;
-          }
-        }
-
-        autoScrollRef.current = requestAnimationFrame(scroll);
-      };
-
-      autoScrollRef.current = requestAnimationFrame(scroll);
-    },
-    [isDragging]
-  );
-
-  const stopAutoScroll = useCallback(() => {
-    if (autoScrollRef.current) {
-      cancelAnimationFrame(autoScrollRef.current);
-      autoScrollRef.current = null;
-    }
-  }, []);
-
-  const handleAutoScroll = useCallback(
-    (clientX: number) => {
-      if (!scrollContainerRef.current) return;
-
-      const container = scrollContainerRef.current;
-      const rect = container.getBoundingClientRect();
-
-      const isMobileTablet = window.innerWidth < 1024;
-
-      let ultraFastZone, fastZone, normalZone;
-
-      if (isMobileTablet) {
-        ultraFastZone = 20;
-        fastZone = 50;
-        normalZone = 130;
-      } else {
-        ultraFastZone = 40;
-        fastZone = 100;
-        normalZone = 160;
-      }
-
-      const containerLeft = rect.left;
-      const containerRight = rect.right;
-      const leftDistance = clientX - containerLeft;
-      const rightDistance = containerRight - clientX;
-
-      if (leftDistance <= normalZone && container.scrollLeft > 0) {
-        let scrollSpeed = 8;
-
-        if (leftDistance <= ultraFastZone) {
-          scrollSpeed = isMobileTablet ? 25 : 50;
-        } else if (leftDistance <= fastZone) {
-          scrollSpeed = isMobileTablet ? 15 : 30;
-        } else {
-          scrollSpeed = isMobileTablet ? 8 : 12;
-        }
-
-        startAutoScroll("left", scrollSpeed);
-        return;
-      }
-
-      if (
-        rightDistance <= normalZone &&
-        container.scrollLeft < container.scrollWidth - container.clientWidth
-      ) {
-        let scrollSpeed = 8;
-
-        if (rightDistance <= ultraFastZone) {
-          scrollSpeed = isMobileTablet ? 35 : 50;
-        } else if (rightDistance <= fastZone) {
-          scrollSpeed = isMobileTablet ? 20 : 30;
-        } else {
-          scrollSpeed = isMobileTablet ? 12 : 15;
-        }
-
-        startAutoScroll("right", scrollSpeed);
-        return;
-      }
-
-      stopAutoScroll();
-    },
-    [startAutoScroll, stopAutoScroll]
-  );
 
   useEffect(() => {
     const calculateBoardWidth = () => {
@@ -152,6 +44,16 @@ export default function ProjectAreaBoards({
   }, []);
 
   useEffect(() => {
+    const element = scrollContainerRef.current;
+    if (!element) return;
+
+    return autoScrollForElements({
+      element,
+      canScroll: ({ source }) => source.data.type === "task",
+    });
+  }, []);
+
+  useEffect(() => {
     return monitorForElements({
       onDragStart: ({ source }) => {
         if (source.data.type === "task") {
@@ -164,16 +66,9 @@ export default function ProjectAreaBoards({
           }
         }
       },
-      onDrag: ({ location }) => {
-        if (isDragging && location.current.input) {
-          const clientX = location.current.input.clientX;
-          handleAutoScroll(clientX);
-        }
-      },
       onDrop: ({ source, location }) => {
         setActiveTask(null);
         setIsDragging(false);
-        stopAutoScroll();
 
         if (scrollContainerRef.current) {
           scrollContainerRef.current.classList.remove("drag-active");
@@ -197,7 +92,7 @@ export default function ProjectAreaBoards({
         }
       },
     });
-  }, [moveTask, stopAutoScroll, isDragging, handleAutoScroll]);
+  }, [moveTask]);
 
   if (!boards || boards.length === 0) {
     return <EmptyBoardsState />;
@@ -228,7 +123,7 @@ export default function ProjectAreaBoards({
           ))}
 
           <div
-            className="single-board h-full flex-shrink-0"
+            className="single-board h-full shrink-0"
             style={{ width: `${boardWidth}px` }}
           >
             <AddBoardDialog

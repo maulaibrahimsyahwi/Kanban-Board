@@ -16,12 +16,17 @@ export type Attachment = {
 export type Task = {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   priority: "low" | "medium" | "important" | "urgent";
   createdAt: Date;
+  updatedAt: Date;
   progress: "not-started" | "in-progress" | "completed";
+  statusId?: string | null;
+  status?: ProjectStatus | null;
   startDate: Date | null;
   dueDate: Date | null;
+  order: number;
+  boardId: string;
   labels: {
     name: string;
     color: string;

@@ -22,6 +22,7 @@ const TaskUpdateSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   priority: z.enum(["low", "medium", "important", "urgent"]).optional(),
   progress: z.enum(["not-started", "in-progress", "completed"]).optional(),
+  statusId: z.string().optional().nullable(),
   startDate: z.date().nullable().optional(),
   dueDate: z.date().nullable().optional(),
   cardDisplayPreference: z
@@ -35,8 +36,6 @@ const TaskUpdateSchema = z.object({
   attachments: z.array(AttachmentSchema).optional(),
 });
 
-// --- Helper: Cek Otorisasi ---
-// Fungsi ini memastikan User adalah pemilik project ATAU member project
 async function verifyProjectAccess(userId: string, boardId: string) {
   const board = await prisma.board.findUnique({
     where: { id: boardId },
@@ -57,7 +56,6 @@ async function verifyProjectAccess(userId: string, boardId: string) {
   return isOwner || isMember;
 }
 
-// Helper khusus untuk cek akses via Task ID
 async function verifyTaskAccess(userId: string, taskId: string) {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
@@ -86,8 +84,6 @@ async function verifyTaskAccess(userId: string, taskId: string) {
   return task;
 }
 
-// --- Server Actions ---
-
 export async function createTaskAction(
   boardId: string,
   taskData: Partial<Task>
@@ -95,7 +91,6 @@ export async function createTaskAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  // SECURITY CHECK: Pastikan user punya akses ke board ini
   const hasAccess = await verifyProjectAccess(session.user.id, boardId);
   if (!hasAccess) {
     return {
@@ -121,6 +116,7 @@ export async function createTaskAction(
         description: taskData.description,
         priority: taskData.priority || "low",
         progress: taskData.progress || "not-started",
+        statusId: taskData.statusId,
         startDate: taskData.startDate,
         dueDate: taskData.dueDate,
         cardDisplayPreference: taskData.cardDisplayPreference || "none",
@@ -159,7 +155,6 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  // SECURITY CHECK: Pastikan user punya akses ke task ini
   const existingTask = await verifyTaskAccess(session.user.id, taskId);
   if (!existingTask) {
     return { success: false, message: "Forbidden or Task not found." };
@@ -233,11 +228,9 @@ export async function moveTaskAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  // SECURITY CHECK: Cek akses ke Task asal
   const task = await verifyTaskAccess(session.user.id, taskId);
   if (!task) return { success: false, message: "Forbidden or Task not found." };
 
-  // SECURITY CHECK: Cek akses ke Board tujuan (mencegah memindah task ke project orang lain)
   const targetBoardAccess = await verifyProjectAccess(
     session.user.id,
     newBoardId
@@ -249,18 +242,60 @@ export async function moveTaskAction(
     };
   }
 
+  const oldBoardId = task.boardId;
+  const oldOrder = task.order;
+
   try {
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        boardId: newBoardId,
-        order: newOrder,
-      },
+    await prisma.$transaction(async (tx) => {
+      if (oldBoardId === newBoardId) {
+        if (newOrder > oldOrder) {
+          await tx.task.updateMany({
+            where: {
+              boardId: oldBoardId,
+              order: { gt: oldOrder, lte: newOrder },
+            },
+            data: { order: { decrement: 1 } },
+          });
+        } else if (newOrder < oldOrder) {
+          await tx.task.updateMany({
+            where: {
+              boardId: oldBoardId,
+              order: { gte: newOrder, lt: oldOrder },
+            },
+            data: { order: { increment: 1 } },
+          });
+        }
+      } else {
+        await tx.task.updateMany({
+          where: {
+            boardId: oldBoardId,
+            order: { gt: oldOrder },
+          },
+          data: { order: { decrement: 1 } },
+        });
+
+        await tx.task.updateMany({
+          where: {
+            boardId: newBoardId,
+            order: { gte: newOrder },
+          },
+          data: { order: { increment: 1 } },
+        });
+      }
+
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          boardId: newBoardId,
+          order: newOrder,
+        },
+      });
     });
 
     revalidatePath("/");
     return { success: true };
   } catch (error) {
+    console.error("Move task error:", error);
     return { success: false, message: "Gagal memindahkan task" };
   }
 }
@@ -269,7 +304,6 @@ export async function deleteTaskAction(taskId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-  // SECURITY CHECK: Pastikan user punya akses ke task ini
   const existingTask = await verifyTaskAccess(session.user.id, taskId);
   if (!existingTask) {
     return { success: false, message: "Forbidden or Task not found." };

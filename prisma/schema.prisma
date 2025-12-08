@@ -131,6 +131,7 @@ model ProjectStatus {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   projects  Project[]
+  tasks     Task[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -163,6 +164,10 @@ model Task {
 
   boardId   String
   board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  
+  statusId  String?
+  status    ProjectStatus? @relation(fields: [statusId], references: [id])
+
   checklist ChecklistItem[]
   labels    Label[]
   
