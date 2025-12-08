@@ -4,12 +4,43 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+async function verifyProjectAccess(userId: string, projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { members: { select: { id: true } } },
+  });
+
+  if (!project) return false;
+  return (
+    project.ownerId === userId || project.members.some((m) => m.id === userId)
+  );
+}
+
+async function verifyBoardAccess(userId: string, boardId: string) {
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    include: {
+      project: {
+        include: { members: { select: { id: true } } },
+      },
+    },
+  });
+
+  if (!board) return false;
+  const project = board.project;
+  return (
+    project.ownerId === userId || project.members.some((m) => m.id === userId)
+  );
+}
+
 export async function createBoardAction(projectId: string, name: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const hasAccess = await verifyProjectAccess(session.user.id, projectId);
+  if (!hasAccess) return { success: false, message: "Forbidden" };
+
   try {
-    // Cari order terakhir untuk menaruh board di paling kanan
     const lastBoard = await prisma.board.findFirst({
       where: { projectId },
       orderBy: { order: "desc" },
@@ -36,6 +67,9 @@ export async function deleteBoardAction(boardId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const hasAccess = await verifyBoardAccess(session.user.id, boardId);
+  if (!hasAccess) return { success: false, message: "Forbidden" };
+
   try {
     await prisma.board.delete({
       where: { id: boardId },
@@ -50,6 +84,9 @@ export async function deleteBoardAction(boardId: string) {
 export async function updateBoardAction(boardId: string, name: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const hasAccess = await verifyBoardAccess(session.user.id, boardId);
+  if (!hasAccess) return { success: false, message: "Forbidden" };
 
   try {
     const updatedBoard = await prisma.board.update({

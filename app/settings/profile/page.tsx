@@ -66,8 +66,8 @@ export default function ProfileSettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("File terlalu besar. Maksimal 2MB.");
+    if (file.size > 1 * 1024 * 1024) {
+      toast.error("File terlalu besar. Maksimal 1MB.");
       return;
     }
 
