@@ -10,19 +10,20 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is missing in environment variables");
 }
 
-try {
-  const url = new URL(connectionString);
-  console.log(`[DB Config] Connecting to Host: ${url.hostname}`);
-  console.log(`[DB Config] Connecting to Port: ${url.port}`);
-  console.log(`[DB Config] Database Name: ${url.pathname.split("/")[1]}`);
-  console.log(`[DB Config] SSL Mode: ${process.env.NODE_ENV === "production"}`);
-} catch (e) {
-  console.error("[DB Config] Failed to parse DATABASE_URL string");
-}
+// Optional: Log database connection details for debugging
+// try {
+//   const url = new URL(connectionString);
+//   console.log(`[DB Config] Connecting to Host: ${url.hostname}`);
+//   console.log(`[DB Config] Connecting to Port: ${url.port}`);
+//   console.log(`[DB Config] Database Name: ${url.pathname.split("/")[1]}`);
+//   console.log(`[DB Config] SSL Mode: ${process.env.NODE_ENV === "production"}`);
+// } catch (e) {
+//   console.error("[DB Config] Failed to parse DATABASE_URL string");
+// }
 
 const pool = new Pool({
   connectionString,
-  max: 1, // Serverless harus 1
+  max: 1,
   allowExitOnIdle: true,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 15000,

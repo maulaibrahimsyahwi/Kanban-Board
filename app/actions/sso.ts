@@ -32,7 +32,6 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
   try {
-    // 1. Simpan/Update Database Lokal
     const existing = await prisma.sSOSettings.findUnique({
       where: { userId: session.user.id },
     });
@@ -52,7 +51,6 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
       });
     }
 
-    // 2. Sinkronisasi ke BoxyHQ (Create/Update)
     if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
       const boxyUrl = `${process.env.BOXYHQ_ISSUER}/api/v1/sso`;
 
@@ -62,7 +60,7 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
         name: `SSO for ${session.user.email}`,
         description: "SSO Configuration from FreeKanban Settings",
         clientID: session.user.id,
-        clientSecret: "freekanban-secret",
+        clientSecret: process.env.SSO_CLIENT_SECRET,
         redirectUrl: `${process.env.NEXTAUTH_URL}/api/auth/callback/boxyhq`,
         defaultRedirectUrl: `${process.env.NEXTAUTH_URL}`,
         rawMetadata: `
@@ -121,20 +119,17 @@ export async function deactivateSSOAction() {
       return { success: true, message: "SSO configuration closed" };
     }
 
-    // 1. Nonaktifkan di Database Lokal
     await prisma.sSOSettings.update({
       where: { userId: session.user.id },
       data: { isActive: false },
     });
 
-    // 2. Hapus Konfigurasi dari BoxyHQ (CLEANUP)
     if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
       const params = new URLSearchParams({
         tenant: session.user.id,
         product: "freekanban",
       });
 
-      // Menggunakan method DELETE ke BoxyHQ
       const res = await fetch(
         `${process.env.BOXYHQ_ISSUER}/api/v1/sso?${params.toString()}`,
         {
@@ -147,7 +142,6 @@ export async function deactivateSSOAction() {
 
       if (!res.ok) {
         console.error("Gagal menghapus dari BoxyHQ");
-        // Kita tidak return error ke user karena di lokal sudah nonaktif
       }
     }
 

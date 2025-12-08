@@ -122,7 +122,6 @@ export default function EditTaskDialog({
 }: EditTaskDialogProps) {
   const { selectedProject } = useProjects();
 
-  // State untuk Dialog Link
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
@@ -159,8 +158,22 @@ export default function EditTaskDialog({
     if (!files || files.length === 0) return;
 
     const file = files[0];
+
     if (file.size > 2 * 1024 * 1024) {
       toast.error("File terlalu besar (Max 2MB)");
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "text/plain",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Tipe file tidak didukung");
       return;
     }
 
@@ -184,11 +197,18 @@ export default function EditTaskDialog({
       return;
     }
 
+    try {
+      new URL(linkUrl);
+    } catch {
+      toast.error("URL tidak valid. Gunakan http:// atau https://");
+      return;
+    }
+
     const newAttachment: Attachment = {
       id: Math.random().toString(36).substr(2, 9),
       name: linkText.trim() || linkUrl,
       url: linkUrl,
-      type: "link", // Tipe khusus untuk link
+      type: "link",
     };
 
     setEditAttachments([...editAttachments, newAttachment]);
@@ -224,10 +244,8 @@ export default function EditTaskDialog({
             <div className="space-y-4 py-4 overflow-hidden">
               <TaskName value={title} onChange={setTitle} onEnter={onSave} />
 
-              {/* --- ACTION BUTTONS (ASSIGNEE & ATTACH) --- */}
               <div className="flex flex-col gap-4 mt-3 mb-2">
                 <div className="flex items-center gap-3">
-                  {/* ASSIGNEE BUTTON */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -235,9 +253,9 @@ export default function EditTaskDialog({
                         size="sm"
                         className={cn(
                           "h-8 px-3 rounded-md gap-2 transition-all duration-200",
-                          "bg-transparent text-muted-foreground", // Default state: transparent & muted text
-                          "hover:bg-blue-100 hover:text-blue-700", // Hover state: blue bg & blue text
-                          "dark:hover:bg-blue-900/40 dark:hover:text-blue-300" // Dark mode hover
+                          "bg-transparent text-muted-foreground",
+                          "hover:bg-blue-100 hover:text-blue-700",
+                          "dark:hover:bg-blue-900/40 dark:hover:text-blue-300"
                         )}
                       >
                         <div className="w-5 h-5 rounded-full border border-current flex items-center justify-center opacity-70">
@@ -291,7 +309,6 @@ export default function EditTaskDialog({
                     </PopoverContent>
                   </Popover>
 
-                  {/* ATTACH FILES DROPDOWN */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -323,7 +340,6 @@ export default function EditTaskDialog({
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Hidden File Input */}
                   <input
                     id="task-file-upload"
                     type="file"
@@ -332,7 +348,6 @@ export default function EditTaskDialog({
                   />
                 </div>
 
-                {/* SELECTED ASSIGNEES DISPLAY */}
                 {editAssignees.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editAssignees.map((user, idx) => (
@@ -360,7 +375,6 @@ export default function EditTaskDialog({
                   </div>
                 )}
 
-                {/* ATTACHMENTS LIST */}
                 {editAttachments.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-muted-foreground">
@@ -424,7 +438,6 @@ export default function EditTaskDialog({
                   </div>
                 )}
               </div>
-              {/* --- END ACTION BUTTONS --- */}
 
               <TaskDescription
                 value={description}
@@ -574,7 +587,6 @@ export default function EditTaskDialog({
         </DialogPortal>
       </Dialog>
 
-      {/* Dialog Khusus untuk Input Link */}
       <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
         <DialogPortal>
           <DialogContent className="sm:max-w-[425px]">

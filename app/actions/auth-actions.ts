@@ -3,15 +3,31 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "@/lib/mail";
+import { z } from "zod";
+
+const RegisterSchema = z.object({
+  name: z.string().min(2, "Nama minimal 2 karakter"),
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+});
 
 export async function registerUserAction(formData: FormData) {
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  const rawData = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  };
 
-  if (!name || !email || !password) {
-    return { success: false, message: "Semua kolom harus diisi" };
+  const validation = RegisterSchema.safeParse(rawData);
+
+  if (!validation.success) {
+    return {
+      success: false,
+      message: validation.error.issues[0].message,
+    };
   }
+
+  const { name, email, password } = validation.data;
 
   try {
     const existingUser = await prisma.user.findUnique({
@@ -65,6 +81,13 @@ export async function registerUserAction(formData: FormData) {
 }
 
 export async function requestPasswordResetAction(email: string) {
+  const emailSchema = z.string().email();
+  const validation = emailSchema.safeParse(email);
+
+  if (!validation.success) {
+    return { success: false, message: "Email tidak valid." };
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
 
@@ -110,6 +133,17 @@ export async function resetPasswordAction(
   code: string,
   newPassword: string
 ) {
+  const schema = z.object({
+    email: z.string().email(),
+    code: z.string().length(6),
+    newPassword: z.string().min(8),
+  });
+
+  const validation = schema.safeParse({ email, code, newPassword });
+  if (!validation.success) {
+    return { success: false, message: "Data tidak valid." };
+  }
+
   try {
     const verificationToken = await prisma.verificationToken.findFirst({
       where: {
