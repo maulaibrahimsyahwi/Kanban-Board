@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import {
   FaMobileRetro,
@@ -17,6 +18,7 @@ import {
 } from "react-icons/fa6";
 import { IconType } from "react-icons";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 import { Task, Board, Project, ProjectStatus } from "@/types";
 
@@ -152,74 +154,103 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [projectsRes, statusesRes] = await Promise.all([
-          getProjectsAction(),
-          getProjectStatusesAction(),
-        ]);
+  const loadData = useCallback(async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) setIsLoading(true);
 
-        if (statusesRes.success && statusesRes.data) {
-          setProjectStatuses(statusesRes.data);
-        }
+    try {
+      const [projectsRes, statusesRes] = await Promise.all([
+        getProjectsAction(),
+        getProjectStatusesAction(),
+      ]);
 
-        if (projectsRes.success && projectsRes.data) {
-          const dbProjects = projectsRes.data as unknown as ProjectDTO[];
-
-          const mappedProjects: Project[] = dbProjects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            ownerId: p.ownerId,
-            icon: iconMap[p.icon] || FaDiagramProject,
-            createdAt: new Date(p.createdAt),
-            owner: p.owner,
-            members: p.members,
-            statusId: p.statusId,
-            status: p.status,
-            boards: p.boards.map((b) => ({
-              id: b.id,
-              name: b.name,
-              createdAt: new Date(b.createdAt),
-              tasks: b.tasks.map((t) => ({
-                id: t.id,
-                title: t.title,
-                description: t.description || "",
-                priority: t.priority as Task["priority"],
-                progress: t.progress as Task["progress"],
-                startDate: t.startDate ? new Date(t.startDate) : null,
-                dueDate: t.dueDate ? new Date(t.dueDate) : null,
-                cardDisplayPreference:
-                  (t.cardDisplayPreference as Task["cardDisplayPreference"]) ||
-                  "none",
-                createdAt: new Date(t.createdAt),
-                labels: t.labels,
-                checklist: t.checklist,
-                assignees: t.assignees || [],
-                attachments: t.attachments || [],
-              })),
-            })),
-          }));
-
-          setProjects(mappedProjects);
-          setSelectedProjectId((prev) => {
-            if (!prev && mappedProjects.length > 0) {
-              return mappedProjects[0].id;
-            }
-            return prev;
-          });
-        }
-      } catch (error) {
-        console.error("Failed to load data", error);
-        toast.error("Gagal memuat data");
-      } finally {
-        setIsLoading(false);
+      if (statusesRes.success && statusesRes.data) {
+        setProjectStatuses(statusesRes.data);
       }
-    };
 
-    loadData();
+      if (projectsRes.success && projectsRes.data) {
+        const dbProjects = projectsRes.data as unknown as ProjectDTO[];
+
+        const mappedProjects: Project[] = dbProjects.map((p) => ({
+          id: p.id,
+          name: p.name,
+          ownerId: p.ownerId,
+          icon: iconMap[p.icon] || FaDiagramProject,
+          createdAt: new Date(p.createdAt),
+          owner: p.owner,
+          members: p.members,
+          statusId: p.statusId,
+          status: p.status,
+          boards: p.boards.map((b) => ({
+            id: b.id,
+            name: b.name,
+            createdAt: new Date(b.createdAt),
+            tasks: b.tasks.map((t) => ({
+              id: t.id,
+              title: t.title,
+              description: t.description || "",
+              priority: t.priority as Task["priority"],
+              progress: t.progress as Task["progress"],
+              startDate: t.startDate ? new Date(t.startDate) : null,
+              dueDate: t.dueDate ? new Date(t.dueDate) : null,
+              cardDisplayPreference:
+                (t.cardDisplayPreference as Task["cardDisplayPreference"]) ||
+                "none",
+              createdAt: new Date(t.createdAt),
+              labels: t.labels,
+              checklist: t.checklist,
+              assignees: t.assignees || [],
+              attachments: t.attachments || [],
+            })),
+          })),
+        }));
+
+        setProjects(mappedProjects);
+
+        setSelectedProjectId((prev) => {
+          if (!prev && mappedProjects.length > 0) {
+            return mappedProjects[0].id;
+          }
+          if (prev && !mappedProjects.find((p) => p.id === prev)) {
+            return mappedProjects.length > 0 ? mappedProjects[0].id : null;
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load data", error);
+      if (!isBackgroundRefresh) toast.error("Gagal memuat data");
+    } finally {
+      if (!isBackgroundRefresh) setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("project_updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "Task" },
+        (payload) => {
+          loadData(true);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "Board" },
+        (payload) => {
+          loadData(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadData]);
 
   const refreshStatuses = async () => {
     const res = await getProjectStatusesAction();
@@ -243,6 +274,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await setProjectStatusAction(projectId, statusId);
     if (!result.success) {
       toast.error("Gagal mengupdate status project");
+      loadData(true);
     }
   };
 
@@ -260,33 +292,11 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createProjectAction(projectName);
 
     if (result.success && result.data) {
-      const p = result.data as unknown as ProjectDTO;
-
-      const newProjectData: Project = {
-        id: p.id,
-        name: p.name,
-        ownerId: p.ownerId,
-        icon: iconMap[iconName] || FaDiagramProject,
-        createdAt: new Date(p.createdAt),
-        owner: { name: "Me", email: "", image: "" },
-        members: [],
-        statusId: null,
-        status: null,
-        boards: p.boards.map((b) => ({
-          id: b.id,
-          name: b.name,
-          createdAt: new Date(b.createdAt),
-          tasks: [],
-        })),
-      };
-
-      setProjects((prev) => [newProjectData, ...prev]);
-      setSelectedProjectId(newProjectData.id);
+      loadData(true);
       toast.success("Project berhasil dibuat!");
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      const newProj = result.data as any;
+      if (newProj?.id) setSelectedProjectId(newProj.id);
     } else {
       toast.error(result.message || "Gagal membuat project");
     }
@@ -325,7 +335,10 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       const result = await updateProjectAction(projectId, {
         name: updates.name,
       });
-      if (!result.success) toast.error("Gagal mengupdate project");
+      if (!result.success) {
+        toast.error("Gagal mengupdate project");
+        loadData(true);
+      }
     }
   };
 
@@ -335,23 +348,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createBoardAction(selectedProjectId, boardName);
 
     if (result.success && result.data) {
-      const b = result.data;
-      const newBoard: Board = {
-        id: b.id,
-        name: b.name,
-        createdAt: new Date(b.createdAt),
-        tasks: [],
-      };
-
-      setProjects((prev) =>
-        prev.map((project) => {
-          if (project.id === selectedProjectId) {
-            return { ...project, boards: [...project.boards, newBoard] };
-          }
-          return project;
-        })
-      );
       toast.success("Board berhasil dibuat");
+      loadData(true);
     } else {
       toast.error("Gagal membuat board");
     }
@@ -417,41 +415,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await createTaskAction(boardId, taskData);
 
     if (result.success && result.data) {
-      const t = result.data as unknown as TaskDTO;
-
-      const newTask: Task = {
-        id: t.id,
-        title: t.title,
-        description: t.description || "",
-        priority: t.priority as Task["priority"],
-        progress: t.progress as Task["progress"],
-        startDate: t.startDate ? new Date(t.startDate) : null,
-        dueDate: t.dueDate ? new Date(t.dueDate) : null,
-        cardDisplayPreference:
-          (t.cardDisplayPreference as Task["cardDisplayPreference"]) || "none",
-        createdAt: new Date(t.createdAt),
-        labels: t.labels,
-        checklist: t.checklist,
-        assignees: t.assignees || [],
-        attachments: t.attachments || [],
-      };
-
-      setProjects((prev) =>
-        prev.map((project) => {
-          if (project.id === projectId) {
-            return {
-              ...project,
-              boards: project.boards.map((board) => {
-                if (board.id === boardId) {
-                  return { ...board, tasks: [...board.tasks, newTask] };
-                }
-                return board;
-              }),
-            };
-          }
-          return project;
-        })
-      );
+      loadData(true);
     } else {
       toast.error("Gagal membuat task");
     }
@@ -489,6 +453,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await updateTaskAction(taskId, updatedTask);
     if (!result.success) {
       toast.error("Gagal menyimpan perubahan task");
+      loadData(true);
     }
   };
 
@@ -564,6 +529,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     const result = await moveTaskAction(taskId, toBoardId, newOrder);
     if (!result.success) {
       toast.error("Gagal memindahkan task");
+      loadData(true);
     }
   };
 
@@ -594,6 +560,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
     const taskInBoard = selectedProject?.boards.find((b) => b.id === boardId)
       ?.tasks[sourceIndex];
+
     if (taskInBoard) {
       await moveTaskAction(taskInBoard.id, boardId, destinationIndex);
     }
