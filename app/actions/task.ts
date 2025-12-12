@@ -160,19 +160,34 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
     return { success: false, message: "Forbidden or Task not found." };
   }
 
+  // 1. Parse dan validasi data. Ini akan membuang field yang tidak ada di schema (seperti boardId).
   const validation = TaskUpdateSchema.safeParse(updates);
   if (!validation.success) {
     return { success: false, message: "Invalid data format" };
   }
 
   try {
-    const { labels, checklist, assignees, attachments, ...primitiveData } =
-      updates;
+    // 2. Gunakan validation.data, BUKAN updates
+    const {
+      labels,
+      checklist,
+      assignees,
+      attachments,
+      statusId,
+      ...primitiveData
+    } = validation.data;
 
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
         ...primitiveData,
+        // Tangani status secara eksplisit dengan connect/disconnect
+        ...(statusId !== undefined && {
+          status: statusId
+            ? { connect: { id: statusId } }
+            : { disconnect: true },
+        }),
+        // Operasi relasi lainnya
         ...(labels && {
           labels: {
             deleteMany: {},
@@ -189,8 +204,8 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
           assignees: {
             set: [],
             connect: assignees
-              .filter((u) => u.email)
-              .map((u) => ({ email: u.email! })),
+              .filter((u: any) => u.email)
+              .map((u: any) => ({ email: u.email! })),
           },
         }),
         ...(attachments && {

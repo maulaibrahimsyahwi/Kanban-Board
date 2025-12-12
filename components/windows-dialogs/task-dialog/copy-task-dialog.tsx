@@ -103,7 +103,8 @@ export default function CopyTaskDialog({
 
     setIsCopying(true);
 
-    const newTaskData: Omit<Task, "id" | "createdAt"> = {
+    // Perbaikan: Menggunakan Partial<Task> agar tidak perlu field wajib seperti updatedAt/boardId
+    const newTaskData: Partial<Task> = {
       title: copyTaskName.trim(),
       description: copyOptions.description ? task.description : "",
       priority: task.priority,

@@ -11,7 +11,6 @@ import { NewTaskRow } from "./NewTaskRow";
 import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
 import { toast } from "sonner";
 
-// --- Type Definitions ---
 type SortKey =
   | "title"
   | "startDate"
@@ -93,7 +92,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  // STATE UNTUK EDITING DIALOG
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<Task["priority"]>("medium");
@@ -107,7 +105,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   const [editCardDisplayPreference, setEditCardDisplayPreference] =
     useState<Task["cardDisplayPreference"]>("none");
 
-  // ADDED THESE STATES
   const [editAssignees, setEditAssignees] = useState<UserProfile[]>([]);
   const [editAttachments, setEditAttachments] = useState<Attachment[]>([]);
 
@@ -159,7 +156,7 @@ export default function ListView({ filteredBoards }: ListViewProps) {
     if (taskToEditInfo) {
       const task = taskToEditInfo.originalTask;
       setEditTitle(task.title);
-      setEditDescription(task.description);
+      setEditDescription(task.description || "");
       setEditPriority(task.priority);
       setEditProgress(task.progress);
       setEditStartDate(task.startDate);
@@ -169,7 +166,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       setEditChecklist(task.checklist);
       setEditCardDisplayPreference(task.cardDisplayPreference);
 
-      // UPDATED THESE
       setEditAssignees(task.assignees || []);
       setEditAttachments(task.attachments || []);
 
@@ -234,7 +230,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
         labels: editLabels,
         checklist: editChecklist,
         cardDisplayPreference: editCardDisplayPreference,
-        // ADDED
         assignees: editAssignees,
         attachments: editAttachments,
       };
@@ -346,7 +341,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
         </div>
       </div>
 
-      {/* Komponen Edit Task Dialog */}
       {taskToEditInfo && taskToEditInfo.originalTask && selectedProject && (
         <EditTaskDialog
           isOpen={true}
@@ -375,7 +369,6 @@ export default function ListView({ filteredBoards }: ListViewProps) {
           setEditCardDisplayPreference={setEditCardDisplayPreference}
           boards={selectedProject.boards}
           boardName={taskToEditInfo.boardName}
-          // ADDED PROPS HERE
           editAssignees={editAssignees}
           setEditAssignees={setEditAssignees}
           editAttachments={editAttachments}

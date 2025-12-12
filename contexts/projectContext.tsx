@@ -74,6 +74,9 @@ interface TaskDTO {
   dueDate: Date | null;
   cardDisplayPreference: string;
   createdAt: Date;
+  updatedAt: Date; // Added
+  order: number; // Added
+  boardId: string; // Added
   labels: LabelDTO[];
   checklist: ChecklistItemDTO[];
   assignees: {
@@ -116,7 +119,7 @@ interface ProjectContextType {
   selectProject: (projectId: string) => void;
   addProject: (projectName: string, iconName?: string) => void;
   addTaskToProject: (
-    taskData: Omit<Task, "id" | "createdAt">,
+    taskData: Partial<Task>,
     boardId: string,
     projectId: string
   ) => void;
@@ -196,6 +199,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
                 (t.cardDisplayPreference as Task["cardDisplayPreference"]) ||
                 "none",
               createdAt: new Date(t.createdAt),
+              updatedAt: new Date(t.updatedAt), // Mapped
+              order: t.order, // Mapped
+              boardId: t.boardId, // Mapped
               labels: t.labels,
               checklist: t.checklist,
               assignees: t.assignees || [],
@@ -408,7 +414,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addTaskToProject = async (
-    taskData: Omit<Task, "id" | "createdAt">,
+    taskData: Partial<Task>,
     boardId: string,
     projectId: string
   ) => {

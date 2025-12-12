@@ -28,7 +28,8 @@ export function EditTaskDialog({
   onClose,
 }: EditTaskDialogProps) {
   const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description);
+  // Perbaikan: Tambahkan fallback || "" agar description tidak null
+  const [description, setDescription] = useState(task.description || "");
   const [priority, setPriority] = useState<Task["priority"]>(task.priority);
 
   const handleSave = () => {
@@ -44,7 +45,8 @@ export function EditTaskDialog({
   const priorityOptions = [
     { value: "low", label: "Low Priority" },
     { value: "medium", label: "Medium Priority" },
-    { value: "high", label: "High Priority" },
+    { value: "important", label: "Important" },
+    { value: "urgent", label: "Urgent" },
   ] as const;
 
   return (
@@ -98,7 +100,7 @@ export function EditTaskDialog({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium capitalize">
-                        {option.value} Priority
+                        {option.label}
                       </span>
                       {isSelected && (
                         <div className="ml-auto w-2 h-2 bg-primary rounded-full"></div>

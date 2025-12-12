@@ -53,7 +53,8 @@ export function useTaskActions(taskId: string, boardId: string) {
   useEffect(() => {
     if (derivedData?.task) {
       setEditTitle(derivedData.task.title);
-      setEditDescription(derivedData.task.description);
+      // Perbaikan: Tambahkan fallback || "" agar tidak null
+      setEditDescription(derivedData.task.description || "");
       setEditPriority(derivedData.task.priority);
       setEditProgress(derivedData.task.progress);
       setEditStartDate(derivedData.task.startDate);

@@ -19,7 +19,7 @@ export function useSearchFilter({
             board.tasks.some(
               (task) =>
                 task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                task.description
+                (task.description || "")
                   .toLowerCase()
                   .includes(searchQuery.toLowerCase())
             )

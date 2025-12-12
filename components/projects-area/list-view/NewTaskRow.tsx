@@ -75,7 +75,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const newTaskData: Omit<Task, "id" | "createdAt"> = {
+      const newTaskData: Partial<Task> = {
         title: title.trim(),
         description: "",
         priority: priority,
