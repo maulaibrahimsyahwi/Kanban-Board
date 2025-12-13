@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import SingleBoard from "./single-board";
 import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
@@ -10,6 +10,7 @@ import {
   DropResult,
   Droppable,
   Draggable,
+  DragStart,
 } from "@hello-pangea/dnd";
 import AddBoardDialog from "@/components/add-board-dialog";
 import { MdDashboardCustomize } from "react-icons/md";
@@ -24,6 +25,13 @@ export default function ProjectAreaBoards({
   const [orderedBoards, setOrderedBoards] = useState(boards);
   const { moveTask, reorderTasksInBoard } = useProjects();
 
+  // 1. Ref untuk container scroll horizontal
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // 2. State untuk melacak apakah sedang drag
+  const [isDragging, setIsDragging] = useState(false);
+  // 3. Ref untuk menyimpan posisi mouse terakhir
+  const mousePosRef = useRef<{ x: number } | null>(null);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -31,6 +39,46 @@ export default function ProjectAreaBoards({
   useEffect(() => {
     setOrderedBoards(boards);
   }, [boards]);
+
+  // Logika Auto-Scroll Manual
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosRef.current = { x: e.clientX };
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+
+    // Interval untuk mengecek posisi mouse dan melakukan scroll
+    const intervalId = setInterval(() => {
+      if (!mousePosRef.current) return;
+
+      const { x } = mousePosRef.current;
+      const { innerWidth } = window;
+      const edgeThreshold = 200; // Jarak pixel dari tepi layar untuk memicu scroll
+      const maxScrollSpeed = 20; // Kecepatan scroll maksimal
+
+      // Scroll ke Kanan
+      if (x > innerWidth - edgeThreshold) {
+        const intensity = (x - (innerWidth - edgeThreshold)) / edgeThreshold;
+        scrollContainer.scrollLeft += maxScrollSpeed * intensity;
+      }
+      // Scroll ke Kiri
+      else if (x < edgeThreshold) {
+        const intensity = (edgeThreshold - x) / edgeThreshold;
+        scrollContainer.scrollLeft -= maxScrollSpeed * intensity;
+      }
+    }, 10); // Jalankan setiap 10ms agar smooth
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      clearInterval(intervalId);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     const calculateBoardWidth = () => {
@@ -51,7 +99,14 @@ export default function ProjectAreaBoards({
     };
   }, []);
 
+  const onDragStart = (start: DragStart) => {
+    setIsDragging(true);
+  };
+
   const onDragEnd = (result: DropResult) => {
+    setIsDragging(false); // Stop auto-scroll
+    mousePosRef.current = null;
+
     const { source, destination, draggableId, type } = result;
 
     if (!destination) return;
@@ -90,15 +145,18 @@ export default function ProjectAreaBoards({
   }
 
   return (
-    <div className="h-full w-full flex flex-col relative overflow-hidden">
-      <DragDropContext onDragEnd={onDragEnd}>
-        {/* PERBAIKAN: 
-          1. Menghapus scrollBehavior: 'smooth' agar auto-scroll library bekerja.
-          2. Menambahkan id atau class spesifik jika perlu debugging CSS.
-        */}
+    <div className="h-full w-full relative overflow-hidden bg-secondary/5">
+      {/* Tambahkan onDragStart */}
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div
-          className="flex-1 overflow-x-auto overflow-y-hidden"
+          // Pasang ref di sini
+          ref={scrollContainerRef}
+          className="absolute inset-0 overflow-x-auto overflow-y-hidden"
           id="board-scroll-container"
+          style={{
+            // Pastikan scroll behavior auto agar tidak konflik dengan JS scroll manual
+            scrollBehavior: "auto",
+          }}
         >
           <Droppable
             droppableId="all-boards"

@@ -60,21 +60,27 @@ const SingleBoard = ({
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 relative">
-        <Droppable droppableId={boardId} type="task">
+        <Droppable
+          droppableId={boardId}
+          type="task"
+          ignoreContainerClipping={true}
+        >
           {(provided, snapshot) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
               className={cn(
-                "flex-1 overflow-y-auto overflow-x-hidden pr-1 task-scroll-container transition-colors rounded-lg",
+                // PERBAIKAN: Tambahkan 'h-full' agar area drop mengisi seluruh sisa ruang board
+                "flex-1 h-full overflow-y-auto pr-1 task-scroll-container transition-colors rounded-lg flex flex-col",
                 snapshot.isDraggingOver ? "bg-muted/50" : ""
               )}
               style={{
-                minHeight: "100px",
+                // Pastikan minHeight 100% dari parent container agar tidak ada area mati (dead zone)
+                minHeight: "100%",
               }}
             >
               {tasks.length === 0 && !snapshot.isDraggingOver ? (
-                <div className="flex items-center justify-center h-8 text-center mb-2">
+                <div className="flex items-center justify-center h-20 text-center mb-2">
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     No tasks yet
                   </p>
@@ -97,6 +103,7 @@ const SingleBoard = ({
               )}
               {provided.placeholder}
 
+              {/* Tombol Add Task diletakkan di bagian bawah flow, tapi tetap di dalam container droppable */}
               <div className="mt-2 sm:mt-3 flex-shrink-0">
                 <TaskDialog
                   boardId={boardId}
@@ -112,6 +119,9 @@ const SingleBoard = ({
                   }
                 />
               </div>
+
+              {/* Spacer agar area drop tetap aktif sampai paling bawah */}
+              <div className="flex-grow min-h-[20px]" />
             </div>
           )}
         </Droppable>
