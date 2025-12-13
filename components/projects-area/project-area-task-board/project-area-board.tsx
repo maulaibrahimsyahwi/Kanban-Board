@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import SingleBoard from "./single-board";
 import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
@@ -25,9 +25,11 @@ export default function ProjectAreaBoards({
   const [orderedBoards, setOrderedBoards] = useState(boards);
   const { moveTask, reorderTasksInBoard } = useProjects();
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // State & Refs untuk Scroll Manual
   const [isDragging, setIsDragging] = useState(false);
-  const mousePosRef = useRef<{ x: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const mousePosRef = useRef<{ x: number; y: number } | null>(null);
+  const animationFrameId = useRef<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -37,41 +39,86 @@ export default function ProjectAreaBoards({
     setOrderedBoards(boards);
   }, [boards]);
 
-  useEffect(() => {
-    if (!isDragging) return;
+  // --- LOGIKA AUTO-SCROLL BERBASIS CONTAINER (LEBIH PRESISI) ---
+  const autoScroll = useCallback(() => {
+    if (!isDragging || !mousePosRef.current || !scrollContainerRef.current) {
+      return;
+    }
 
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    const { x } = mousePosRef.current;
+    const container = scrollContainerRef.current;
+    const rect = container.getBoundingClientRect();
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePosRef.current = { x: e.clientX };
-    };
+    // KONFIGURASI ZONE
+    // Kita gunakan batas container, bukan window.
+    // Ini memperbaiki masalah jika ada Sidebar di kiri.
+    const threshold = 120; // Mulai scroll 120px sebelum tepi container
+    const maxSpeed = 20; // Kecepatan maksimal
 
-    window.addEventListener("mousemove", handleMouseMove);
+    let scrollChange = 0;
 
-    const intervalId = setInterval(() => {
-      if (!mousePosRef.current) return;
+    // Hitung jarak mouse ke tepi KANAN container
+    // rect.right adalah batas kanan container di layar
+    if (x > rect.right - threshold) {
+      // Semakin dekat ke tepi (atau lewat), semakin cepat
+      const intensity = Math.min(1, (x - (rect.right - threshold)) / threshold);
+      scrollChange = maxSpeed * intensity;
+    }
+    // Hitung jarak mouse ke tepi KIRI container
+    // rect.left adalah batas kiri container (setelah sidebar)
+    else if (x < rect.left + threshold) {
+      const intensity = Math.min(1, (rect.left + threshold - x) / threshold);
+      scrollChange = -maxSpeed * intensity;
+    }
 
-      const { x } = mousePosRef.current;
-      const { innerWidth } = window;
+    if (scrollChange !== 0) {
+      container.scrollLeft += scrollChange;
+    }
 
-      const edgeThreshold = 150;
-      const maxScrollSpeed = 25;
-
-      if (x > innerWidth - edgeThreshold) {
-        const intensity = (x - (innerWidth - edgeThreshold)) / edgeThreshold;
-        scrollContainer.scrollLeft += maxScrollSpeed * intensity;
-      } else if (x < edgeThreshold) {
-        const intensity = (edgeThreshold - x) / edgeThreshold;
-        scrollContainer.scrollLeft -= maxScrollSpeed * intensity;
-      }
-    }, 10);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      clearInterval(intervalId);
-    };
+    animationFrameId.current = requestAnimationFrame(autoScroll);
   }, [isDragging]);
+
+  useEffect(() => {
+    if (isDragging) {
+      // Mulai loop animasi scroll
+      animationFrameId.current = requestAnimationFrame(autoScroll);
+
+      // Listener Mouse Global
+      const handleMouseMove = (e: MouseEvent) => {
+        mousePosRef.current = { x: e.clientX, y: e.clientY };
+      };
+
+      // Listener Touch Global (untuk layar sentuh/trackpad hybrid)
+      const handleTouchMove = (e: TouchEvent) => {
+        if (e.touches[0]) {
+          mousePosRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          };
+        }
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      // Backup jika mouse keluar window saat drag
+      window.addEventListener("dragover", (e) => {
+        mousePosRef.current = { x: e.clientX, y: e.clientY };
+      });
+
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("touchmove", handleTouchMove);
+        window.removeEventListener("dragover", handleMouseMove);
+        if (animationFrameId.current)
+          cancelAnimationFrame(animationFrameId.current);
+      };
+    } else {
+      if (animationFrameId.current)
+        cancelAnimationFrame(animationFrameId.current);
+      mousePosRef.current = null;
+    }
+  }, [isDragging, autoScroll]);
+  // -------------------------------------------------------------
 
   useEffect(() => {
     const calculateBoardWidth = () => {
@@ -98,6 +145,12 @@ export default function ProjectAreaBoards({
 
   const onDragEnd = (result: DropResult) => {
     setIsDragging(false);
+
+    // Stop loop segera
+    if (animationFrameId.current) {
+      cancelAnimationFrame(animationFrameId.current);
+      animationFrameId.current = null;
+    }
     mousePosRef.current = null;
 
     const { source, destination, draggableId, type } = result;
@@ -140,24 +193,25 @@ export default function ProjectAreaBoards({
     }
   };
 
-  if (!isMounted) {
-    return null;
-  }
+  if (!isMounted) return null;
 
   if (!boards || boards.length === 0) {
     return <EmptyBoardsState />;
   }
 
   return (
-    <div className="h-full w-full relative overflow-hidden bg-secondary/5">
+    <div className="h-full w-full relative bg-secondary/5 flex flex-col">
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        {/* Container Utama:
+          - ref={scrollContainerRef} menangkap elemen ini.
+          - overflow-x-auto memungkinkan scroll horizontal.
+          - scroll-behavior: auto dipasang inline untuk mencegah konflik CSS smooth scroll saat di-drag.
+        */}
         <div
           ref={scrollContainerRef}
-          className="absolute inset-0 overflow-x-auto overflow-y-hidden"
+          className="flex-1 overflow-x-auto overflow-y-hidden"
           id="board-scroll-container"
-          style={{
-            scrollBehavior: "auto",
-          }}
+          style={{ scrollBehavior: "auto" }}
         >
           <Droppable
             droppableId="all-boards"
@@ -170,7 +224,7 @@ export default function ProjectAreaBoards({
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 style={{
-                  width: "fit-content",
+                  width: "fit-content", // Pastikan container melebar sesuai konten
                   minWidth: "100%",
                 }}
               >
@@ -179,7 +233,6 @@ export default function ProjectAreaBoards({
                     key={board.id}
                     draggableId={board.id}
                     index={index}
-                    isDragDisabled={false}
                   >
                     {(provided) => (
                       <div
