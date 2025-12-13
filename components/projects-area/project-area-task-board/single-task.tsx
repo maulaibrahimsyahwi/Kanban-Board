@@ -150,12 +150,10 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
   };
 
   const handleCardClick = () => {
-    taskActions.handleEditTask();
+    if (taskActions.handleEditTask) {
+      taskActions.handleEditTask();
+    }
   };
-
-  if (!taskActions.task || !taskActions.currentBoard || !selectedProject) {
-    return null;
-  }
 
   return (
     <div
@@ -196,13 +194,15 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
               onClick={(e) => e.stopPropagation()}
               className="dropdown-trigger-button"
             >
-              <TasksDropDown
-                {...taskActions}
-                task={taskActions.task}
-                currentBoard={taskActions.currentBoard}
-                onOpenDeleteDialog={() => setIsDeleteOpen(true)}
-                onOpenCopyDialog={() => taskActions.setIsCopyDialogOpen(true)}
-              />
+              {taskActions.task && taskActions.currentBoard && (
+                <TasksDropDown
+                  {...taskActions}
+                  task={taskActions.task}
+                  currentBoard={taskActions.currentBoard}
+                  onOpenDeleteDialog={() => setIsDeleteOpen(true)}
+                  onOpenCopyDialog={() => taskActions.setIsCopyDialogOpen(true)}
+                />
+              )}
             </div>
           </div>
         </CardHeader>
@@ -338,51 +338,58 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
           </div>
         </CardContent>
       </Card>
-      <EditTaskDialog
-        isOpen={taskActions.isEditDialogOpen}
-        isSaving={taskActions.isSaving}
-        onClose={() => taskActions.setIsEditDialogOpen(false)}
-        onSave={taskActions.handleSaveEdit}
-        title={taskActions.editTitle}
-        description={taskActions.editDescription}
-        priority={taskActions.editPriority}
-        progress={taskActions.editProgress}
-        startDate={taskActions.editStartDate}
-        dueDate={taskActions.editDueDate}
-        editLabels={taskActions.editLabels}
-        editBoardId={taskActions.editBoardId}
-        boards={selectedProject.boards}
-        setTitle={taskActions.setEditTitle}
-        setDescription={taskActions.setEditDescription}
-        setPriority={taskActions.setEditPriority}
-        setProgress={taskActions.setEditProgress}
-        setStartDate={taskActions.setEditStartDate}
-        setDueDate={taskActions.setEditDueDate}
-        setEditLabels={taskActions.setEditLabels}
-        setEditBoardId={taskActions.setEditBoardId}
-        boardName={taskActions.currentBoard.name}
-        editChecklist={taskActions.editChecklist}
-        editCardDisplayPreference={taskActions.editCardDisplayPreference}
-        setEditChecklist={taskActions.setEditChecklist}
-        setEditCardDisplayPreference={taskActions.setEditCardDisplayPreference}
-        editAssignees={taskActions.editAssignees}
-        setEditAssignees={taskActions.setEditAssignees}
-        editAttachments={taskActions.editAttachments}
-        setEditAttachments={taskActions.setEditAttachments}
-      />
-      <DeleteTaskDialog
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        task={task}
-        boardName={taskActions.currentBoard.name}
-        onDelete={taskActions.handleDeleteTask}
-      />
-      <CopyTaskDialog
-        isOpen={taskActions.isCopyDialogOpen}
-        onOpenChange={taskActions.setIsCopyDialogOpen}
-        task={task}
-        currentBoardId={boardId}
-      />
+
+      {taskActions.task && (
+        <>
+          <EditTaskDialog
+            isOpen={taskActions.isEditDialogOpen}
+            isSaving={taskActions.isSaving}
+            onClose={() => taskActions.setIsEditDialogOpen(false)}
+            onSave={taskActions.handleSaveEdit}
+            title={taskActions.editTitle}
+            description={taskActions.editDescription}
+            priority={taskActions.editPriority}
+            progress={taskActions.editProgress}
+            startDate={taskActions.editStartDate}
+            dueDate={taskActions.editDueDate}
+            editLabels={taskActions.editLabels}
+            editBoardId={taskActions.editBoardId}
+            boards={selectedProject?.boards || []}
+            setTitle={taskActions.setEditTitle}
+            setDescription={taskActions.setEditDescription}
+            setPriority={taskActions.setEditPriority}
+            setProgress={taskActions.setEditProgress}
+            setStartDate={taskActions.setEditStartDate}
+            setDueDate={taskActions.setEditDueDate}
+            setEditLabels={taskActions.setEditLabels}
+            setEditBoardId={taskActions.setEditBoardId}
+            boardName={taskActions.currentBoard?.name || ""}
+            editChecklist={taskActions.editChecklist}
+            editCardDisplayPreference={taskActions.editCardDisplayPreference}
+            setEditChecklist={taskActions.setEditChecklist}
+            setEditCardDisplayPreference={
+              taskActions.setEditCardDisplayPreference
+            }
+            editAssignees={taskActions.editAssignees}
+            setEditAssignees={taskActions.setEditAssignees}
+            editAttachments={taskActions.editAttachments}
+            setEditAttachments={taskActions.setEditAttachments}
+          />
+          <DeleteTaskDialog
+            isOpen={isDeleteOpen}
+            onOpenChange={setIsDeleteOpen}
+            task={task}
+            boardName={taskActions.currentBoard?.name || ""}
+            onDelete={taskActions.handleDeleteTask}
+          />
+          <CopyTaskDialog
+            isOpen={taskActions.isCopyDialogOpen}
+            onOpenChange={taskActions.setIsCopyDialogOpen}
+            task={task}
+            currentBoardId={boardId}
+          />
+        </>
+      )}
     </div>
   );
 };
