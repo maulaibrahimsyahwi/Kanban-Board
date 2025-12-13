@@ -70,13 +70,11 @@ const SingleBoard = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
               className={cn(
-                // PERBAIKAN: Tambahkan 'h-full' agar area drop mengisi seluruh sisa ruang board
                 "flex-1 h-full overflow-y-auto pr-1 task-scroll-container transition-colors rounded-lg flex flex-col",
                 snapshot.isDraggingOver ? "bg-muted/50" : ""
               )}
               style={{
-                // Pastikan minHeight 100% dari parent container agar tidak ada area mati (dead zone)
-                minHeight: "100%",
+                minHeight: "100px",
               }}
             >
               {tasks.length === 0 && !snapshot.isDraggingOver ? (
@@ -103,7 +101,6 @@ const SingleBoard = ({
               )}
               {provided.placeholder}
 
-              {/* Tombol Add Task diletakkan di bagian bawah flow, tapi tetap di dalam container droppable */}
               <div className="mt-2 sm:mt-3 flex-shrink-0">
                 <TaskDialog
                   boardId={boardId}
@@ -120,8 +117,7 @@ const SingleBoard = ({
                 />
               </div>
 
-              {/* Spacer agar area drop tetap aktif sampai paling bawah */}
-              <div className="flex-grow min-h-[20px]" />
+              <div className="flex-grow min-h-[40px]" />
             </div>
           )}
         </Droppable>

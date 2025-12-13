@@ -74,9 +74,9 @@ interface TaskDTO {
   dueDate: Date | null;
   cardDisplayPreference: string;
   createdAt: Date;
-  updatedAt: Date; // Added
-  order: number; // Added
-  boardId: string; // Added
+  updatedAt: Date;
+  order: number;
+  boardId: string;
   labels: LabelDTO[];
   checklist: ChecklistItemDTO[];
   assignees: {
@@ -123,7 +123,12 @@ interface ProjectContextType {
     boardId: string,
     projectId: string
   ) => void;
-  moveTask: (taskId: string, fromBoardId: string, toBoardId: string) => void;
+  moveTask: (
+    taskId: string,
+    fromBoardId: string,
+    toBoardId: string,
+    newIndex: number
+  ) => void;
   reorderTasksInBoard: (
     boardId: string,
     sourceIndex: number,
@@ -199,9 +204,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
                 (t.cardDisplayPreference as Task["cardDisplayPreference"]) ||
                 "none",
               createdAt: new Date(t.createdAt),
-              updatedAt: new Date(t.updatedAt), // Mapped
-              order: t.order, // Mapped
-              boardId: t.boardId, // Mapped
+              updatedAt: new Date(t.updatedAt),
+              order: t.order,
+              boardId: t.boardId,
               labels: t.labels,
               checklist: t.checklist,
               assignees: t.assignees || [],
@@ -240,14 +245,14 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "Task" },
-        (payload) => {
+        () => {
           loadData(true);
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "Board" },
-        (payload) => {
+        () => {
           loadData(true);
         }
       )
@@ -497,7 +502,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const moveTask = async (
     taskId: string,
     fromBoardId: string,
-    toBoardId: string
+    toBoardId: string,
+    newIndex: number
   ) => {
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
@@ -507,12 +513,12 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
       const currentProject = prevProjects[projectIndex];
       const fromBoard = currentProject.boards.find((b) => b.id === fromBoardId);
-
       const taskToMove = fromBoard?.tasks.find((task) => task.id === taskId);
+
       if (!taskToMove) return prevProjects;
 
       const newProjects = [...prevProjects];
-      const newBoards = newProjects[projectIndex].boards.map((board) => {
+      const newBoards = currentProject.boards.map((board) => {
         if (board.id === fromBoardId) {
           return {
             ...board,
@@ -520,7 +526,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           };
         }
         if (board.id === toBoardId) {
-          return { ...board, tasks: [...board.tasks, taskToMove] };
+          const newTasks = [...board.tasks];
+          newTasks.splice(newIndex, 0, { ...taskToMove, boardId: toBoardId });
+          return { ...board, tasks: newTasks };
         }
         return board;
       });
@@ -529,10 +537,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       return newProjects;
     });
 
-    const targetBoard = selectedProject?.boards.find((b) => b.id === toBoardId);
-    const newOrder = targetBoard ? targetBoard.tasks.length + 1 : 0;
-
-    const result = await moveTaskAction(taskId, toBoardId, newOrder);
+    const result = await moveTaskAction(taskId, toBoardId, newIndex);
     if (!result.success) {
       toast.error("Gagal memindahkan task");
       loadData(true);

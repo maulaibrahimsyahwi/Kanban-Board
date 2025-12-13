@@ -25,11 +25,8 @@ export default function ProjectAreaBoards({
   const [orderedBoards, setOrderedBoards] = useState(boards);
   const { moveTask, reorderTasksInBoard } = useProjects();
 
-  // 1. Ref untuk container scroll horizontal
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  // 2. State untuk melacak apakah sedang drag
   const [isDragging, setIsDragging] = useState(false);
-  // 3. Ref untuk menyimpan posisi mouse terakhir
   const mousePosRef = useRef<{ x: number } | null>(null);
 
   useEffect(() => {
@@ -40,7 +37,6 @@ export default function ProjectAreaBoards({
     setOrderedBoards(boards);
   }, [boards]);
 
-  // Logika Auto-Scroll Manual
   useEffect(() => {
     if (!isDragging) return;
 
@@ -53,26 +49,23 @@ export default function ProjectAreaBoards({
 
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Interval untuk mengecek posisi mouse dan melakukan scroll
     const intervalId = setInterval(() => {
       if (!mousePosRef.current) return;
 
       const { x } = mousePosRef.current;
       const { innerWidth } = window;
-      const edgeThreshold = 200; // Jarak pixel dari tepi layar untuk memicu scroll
-      const maxScrollSpeed = 20; // Kecepatan scroll maksimal
 
-      // Scroll ke Kanan
+      const edgeThreshold = 150;
+      const maxScrollSpeed = 25;
+
       if (x > innerWidth - edgeThreshold) {
         const intensity = (x - (innerWidth - edgeThreshold)) / edgeThreshold;
         scrollContainer.scrollLeft += maxScrollSpeed * intensity;
-      }
-      // Scroll ke Kiri
-      else if (x < edgeThreshold) {
+      } else if (x < edgeThreshold) {
         const intensity = (edgeThreshold - x) / edgeThreshold;
         scrollContainer.scrollLeft -= maxScrollSpeed * intensity;
       }
-    }, 10); // Jalankan setiap 10ms agar smooth
+    }, 10);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -104,7 +97,7 @@ export default function ProjectAreaBoards({
   };
 
   const onDragEnd = (result: DropResult) => {
-    setIsDragging(false); // Stop auto-scroll
+    setIsDragging(false);
     mousePosRef.current = null;
 
     const { source, destination, draggableId, type } = result;
@@ -129,10 +122,21 @@ export default function ProjectAreaBoards({
     const sourceBoardId = source.droppableId;
     const destBoardId = destination.droppableId;
 
+    const newBoards = orderedBoards.map((b) => ({ ...b, tasks: [...b.tasks] }));
+    const sourceBoard = newBoards.find((b) => b.id === sourceBoardId);
+    const destBoard = newBoards.find((b) => b.id === destBoardId);
+
+    if (sourceBoard && destBoard) {
+      const [movedTask] = sourceBoard.tasks.splice(source.index, 1);
+      movedTask.boardId = destBoardId;
+      destBoard.tasks.splice(destination.index, 0, movedTask);
+      setOrderedBoards(newBoards);
+    }
+
     if (sourceBoardId === destBoardId) {
       reorderTasksInBoard(sourceBoardId, source.index, destination.index);
     } else {
-      moveTask(draggableId, sourceBoardId, destBoardId);
+      moveTask(draggableId, sourceBoardId, destBoardId, destination.index);
     }
   };
 
@@ -146,15 +150,12 @@ export default function ProjectAreaBoards({
 
   return (
     <div className="h-full w-full relative overflow-hidden bg-secondary/5">
-      {/* Tambahkan onDragStart */}
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div
-          // Pasang ref di sini
           ref={scrollContainerRef}
           className="absolute inset-0 overflow-x-auto overflow-y-hidden"
           id="board-scroll-container"
           style={{
-            // Pastikan scroll behavior auto agar tidak konflik dengan JS scroll manual
             scrollBehavior: "auto",
           }}
         >
