@@ -177,12 +177,27 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const pendingMoveMutationsCount = useRef<number>(0);
+  const needsRefreshAfterPendingMoves = useRef<boolean>(false);
+  const pendingMoveQueue = useRef<
+    Map<
+      string,
+      { inFlight: boolean; next?: { toBoardId: string; index: number } }
+    >
+  >(new Map());
 
   const markLocalMutation = () => {
     lastLocalMutationAt.current = Date.now();
   };
 
   const loadData = useCallback(async (isBackgroundRefresh = false) => {
+    if (isBackgroundRefresh && pendingMoveMutationsCount.current > 0) {
+      // Menahan refresh realtime sementara ada mutation move yang masih jalan,
+      // supaya UI tidak "balik/ngacak" karena state DB perantara.
+      needsRefreshAfterPendingMoves.current = true;
+      return;
+    }
+
     if (!isBackgroundRefresh) setIsLoading(true);
 
     try {
@@ -254,6 +269,72 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       if (!isBackgroundRefresh) setIsLoading(false);
     }
   }, []);
+
+  const flushMoveQueue = useCallback(
+    async (taskId: string) => {
+      const entry = pendingMoveQueue.current.get(taskId);
+      if (!entry) return;
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const current = pendingMoveQueue.current.get(taskId);
+        if (!current) return;
+
+        const next = current.next;
+        if (!next) {
+          current.inFlight = false;
+          pendingMoveQueue.current.set(taskId, current);
+          return;
+        }
+
+        current.next = undefined;
+        pendingMoveQueue.current.set(taskId, current);
+
+        pendingMoveMutationsCount.current += 1;
+        try {
+          const result = await moveTaskAction(taskId, next.toBoardId, next.index);
+          if (!result.success) {
+            toast.error(result.message || "Gagal memindahkan task");
+            // Reset queue untuk task ini agar tidak mengirim state usang setelah gagal.
+            pendingMoveQueue.current.delete(taskId);
+            loadData(true);
+            return;
+          }
+        } finally {
+          pendingMoveMutationsCount.current = Math.max(
+            0,
+            pendingMoveMutationsCount.current - 1
+          );
+          if (
+            pendingMoveMutationsCount.current === 0 &&
+            needsRefreshAfterPendingMoves.current
+          ) {
+            needsRefreshAfterPendingMoves.current = false;
+            loadData(true);
+          }
+        }
+      }
+    },
+    [loadData]
+  );
+
+  const queueMoveTaskMutation = useCallback(
+    (taskId: string, toBoardId: string, index: number) => {
+      const existing = pendingMoveQueue.current.get(taskId) ?? {
+        inFlight: false,
+      };
+
+      existing.next = { toBoardId, index };
+      pendingMoveQueue.current.set(taskId, existing);
+
+      if (existing.inFlight) return;
+
+      existing.inFlight = true;
+      pendingMoveQueue.current.set(taskId, existing);
+      void flushMoveQueue(taskId);
+    },
+    [flushMoveQueue]
+  );
 
   useEffect(() => {
     loadData();
@@ -580,6 +661,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       typeof newIndex === "number" && Number.isFinite(newIndex)
         ? Math.trunc(newIndex)
         : undefined;
+    let didOptimisticMove = false;
 
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
@@ -642,14 +724,12 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       });
 
       newProjects[projectIndex] = { ...currentProject, boards: newBoards };
+      didOptimisticMove = true;
       return newProjects;
     });
 
-    const result = await moveTaskAction(taskId, toBoardId, resolvedIndex ?? 0);
-    if (!result.success) {
-      toast.error("Gagal memindahkan task");
-      loadData(true);
-    }
+    if (!didOptimisticMove) return;
+    queueMoveTaskMutation(taskId, toBoardId, resolvedIndex ?? 0);
   };
 
   const reorderTasksInBoard = async (
@@ -682,7 +762,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       ?.tasks[sourceIndex];
 
     if (taskInBoard) {
-      await moveTaskAction(taskInBoard.id, boardId, destinationIndex);
+      queueMoveTaskMutation(taskInBoard.id, boardId, destinationIndex);
     }
   };
 
