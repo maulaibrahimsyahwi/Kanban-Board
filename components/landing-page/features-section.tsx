@@ -1,7 +1,16 @@
 "use client";
 
-import { Layout, Zap, Users, Shield, Globe, CheckCircle2 } from "lucide-react";
+import {
+  Bell,
+  Layout,
+  ListChecks,
+  ShieldCheck,
+  Tags,
+  Users,
+} from "lucide-react";
 import { motion } from "framer-motion";
+
+import { SectionHeader } from "./section-header";
 
 export function FeaturesSection() {
   const features = [
@@ -12,54 +21,46 @@ export function FeaturesSection() {
       color: "bg-blue-500/10 text-blue-600",
     },
     {
-      title: "Real-time Sync",
-      desc: "Collaborate with your team and see updates instantly.",
-      icon: Zap,
-      color: "bg-yellow-500/10 text-yellow-600",
-    },
-    {
-      title: "Team Management",
-      desc: "Invite members, assign roles, and track individual progress.",
-      icon: Users,
+      title: "Multiple Views",
+      desc: "Switch between board, list, calendar, charts, and people view.",
+      icon: ListChecks,
       color: "bg-purple-500/10 text-purple-600",
     },
     {
-      title: "Secure & Private",
-      desc: "Enterprise-grade security with 2FA and data encryption.",
-      icon: Shield,
-      color: "bg-green-500/10 text-green-600",
+      title: "Team Management",
+      desc: "Invite members, assign roles, and manage access in settings.",
+      icon: Users,
+      color: "bg-orange-500/10 text-orange-600",
     },
     {
-      title: "Global Access",
-      desc: "Access your boards from anywhere, on any device.",
-      icon: Globe,
+      title: "Labels, priorities, due dates",
+      desc: "Organize tasks with rich metadata so nothing slips through.",
+      icon: Tags,
       color: "bg-pink-500/10 text-pink-600",
     },
     {
-      title: "Progress Tracking",
-      desc: "Visual charts and calendars to keep your project on track.",
-      icon: CheckCircle2,
-      color: "bg-orange-500/10 text-orange-600",
+      title: "Notifications",
+      desc: "Tune email and push notifications to match your workflow.",
+      icon: Bell,
+      color: "bg-yellow-500/10 text-yellow-700",
+    },
+    {
+      title: "2FA Security",
+      desc: "Add an extra layer of protection with two-factor auth.",
+      icon: ShieldCheck,
+      color: "bg-green-500/10 text-green-600",
     },
   ];
 
   return (
-    <section
-      id="features"
-      className="py-24 bg-muted/30 border-y border-border/50"
-    >
+    <section id="features" className="py-24 bg-muted/30 scroll-mt-24">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">
-            Everything you need to ship
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Powerful features designed to help your team focus on what matters
-            most.
-          </p>
-        </div>
+        <SectionHeader
+          title="Everything you need to ship"
+          description="Features mapped to the real workflow inside FreeKanban — from task planning to team and security settings."
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
           {features.map((feature, idx) => (
             <motion.div
               key={idx}

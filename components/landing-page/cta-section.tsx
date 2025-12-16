@@ -19,8 +19,8 @@ export function CTASection() {
             Ready to streamline your workflow?
           </h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Join thousands of teams who have switched to FreeKanban for a better
-            project management experience.
+            Start organizing tasks in minutes — then scale with views,
+            notifications, and security settings when your team grows.
           </p>
           <Button
             size="lg"

@@ -21,7 +21,7 @@ export function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-background/80 backdrop-blur-md border-b border-border/40 py-3"
+          ? "bg-background/80 backdrop-blur-md py-3"
           : "bg-transparent py-5"
       }`}
     >
@@ -46,20 +46,42 @@ export function Navbar() {
             Features
           </a>
           <a
+            href="#views"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Views
+          </a>
+          <a
             href="#demo"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             How it works
           </a>
+          <a
+            href="#security"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Security
+          </a>
+          <a
+            href="#faq"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            FAQ
+          </a>
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/?login=true")}>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/?login=true")}
+            className="cursor-pointer"
+          >
             Log in
           </Button>
           <Button
             onClick={() => router.push("/?login=true")}
-            className="rounded-full px-6"
+            className="rounded-full px-6 cursor-pointer"
           >
             Get Started
           </Button>
@@ -90,11 +112,32 @@ export function Navbar() {
                 Features
               </a>
               <a
+                href="#views"
+                className="text-sm font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Views
+              </a>
+              <a
                 href="#demo"
                 className="text-sm font-medium py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How it works
+              </a>
+              <a
+                href="#security"
+                className="text-sm font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Security
+              </a>
+              <a
+                href="#faq"
+                className="text-sm font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                FAQ
               </a>
               <Button
                 className="w-full"

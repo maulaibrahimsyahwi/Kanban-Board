@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Github } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function HeroSection() {
   const router = useRouter();
+  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL;
 
   return (
     <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
@@ -19,7 +20,7 @@ export function HeroSection() {
           >
             <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground mb-6">
               <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-              v2.0 is now available
+              Built for real project workflows
             </span>
           </motion.div>
 
@@ -53,7 +54,7 @@ export function HeroSection() {
           >
             <Button
               size="lg"
-              className="h-12 px-8 rounded-full text-base"
+              className="h-12 px-8 rounded-full text-base cursor-pointer"
               onClick={() => router.push("/?login=true")}
             >
               Start for free <ArrowRight className="ml-2 h-4 w-4" />
@@ -62,9 +63,23 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               className="h-12 px-8 rounded-full text-base"
+              asChild
             >
-              View Github
+              <a href="#demo">See how it works</a>
             </Button>
+            {githubUrl ? (
+              <Button
+                size="lg"
+                variant="ghost"
+                className="h-12 px-8 rounded-full text-base"
+                asChild
+              >
+                <a href={githubUrl} target="_blank" rel="noreferrer">
+                  <Github className="h-4 w-4" />
+                  View GitHub
+                </a>
+              </Button>
+            ) : null}
           </motion.div>
         </div>
       </div>

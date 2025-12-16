@@ -4,6 +4,8 @@ import { Layout } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 
 export function Footer() {
+  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL;
+
   return (
     <footer className="py-12 border-t border-border bg-background">
       <div className="container mx-auto px-4">
@@ -16,10 +18,15 @@ export function Footer() {
             © {new Date().getFullYear()} FreeKanban. Built by Maula Ibrahim.
           </p>
           <div className="flex gap-4">
-            <FaGithub className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer" />
+            {githubUrl ? (
+              <a href={githubUrl} target="_blank" rel="noreferrer">
+                <FaGithub className="w-5 h-5 text-muted-foreground hover:text-foreground cursor-pointer" />
+              </a>
+            ) : null}
           </div>
         </div>
       </div>
     </footer>
   );
 }
+
