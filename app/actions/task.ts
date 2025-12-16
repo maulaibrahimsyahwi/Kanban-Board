@@ -238,7 +238,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
 export async function moveTaskAction(
   taskId: string,
   newBoardId: string,
-  newOrder: number
+  newIndex: number
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
@@ -258,53 +258,72 @@ export async function moveTaskAction(
   }
 
   const oldBoardId = task.boardId;
-  const oldOrder = task.order;
 
   try {
     await prisma.$transaction(async (tx) => {
-      if (oldBoardId === newBoardId) {
-        if (newOrder > oldOrder) {
-          await tx.task.updateMany({
-            where: {
-              boardId: oldBoardId,
-              order: { gt: oldOrder, lte: newOrder },
-            },
-            data: { order: { decrement: 1 } },
-          });
-        } else if (newOrder < oldOrder) {
-          await tx.task.updateMany({
-            where: {
-              boardId: oldBoardId,
-              order: { gte: newOrder, lt: oldOrder },
-            },
-            data: { order: { increment: 1 } },
-          });
-        }
-      } else {
-        await tx.task.updateMany({
-          where: {
-            boardId: oldBoardId,
-            order: { gt: oldOrder },
-          },
-          data: { order: { decrement: 1 } },
-        });
+      // Catatan penting: client mengirim `destination.index` (index di UI), bukan nilai `order` yang pasti rapat.
+      // Karena `order` bisa memiliki gap (mis. setelah delete), kita perlakukan parameter ini sebagai "index tujuan"
+      // lalu normalisasi ulang `order` agar rapat (0..n-1) supaya UI tidak "mantul" saat data di-refresh.
+      const [sourceTasks, destinationTasks] = await Promise.all([
+        tx.task.findMany({
+          where: { boardId: oldBoardId },
+          orderBy: { order: "asc" },
+          select: { id: true },
+        }),
+        oldBoardId === newBoardId
+          ? Promise.resolve([] as { id: string }[])
+          : tx.task.findMany({
+              where: { boardId: newBoardId },
+              orderBy: { order: "asc" },
+              select: { id: true },
+            }),
+      ]);
 
-        await tx.task.updateMany({
-          where: {
-            boardId: newBoardId,
-            order: { gte: newOrder },
-          },
-          data: { order: { increment: 1 } },
-        });
+      const sourceIds = sourceTasks.map((t) => t.id).filter((id) => id !== taskId);
+
+      if (oldBoardId === newBoardId) {
+        const nextIds = [...sourceIds];
+        const clampedIndex = Math.max(
+          0,
+          Math.min(Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0, nextIds.length)
+        );
+        nextIds.splice(clampedIndex, 0, taskId);
+
+        await Promise.all(
+          nextIds.map((id, index) =>
+            tx.task.update({ where: { id }, data: { order: index } })
+          )
+        );
+        return;
       }
 
-      await tx.task.update({
-        where: { id: taskId },
-        data: {
-          boardId: newBoardId,
-          order: newOrder,
-        },
-      });
+      const destIdsOriginal = destinationTasks
+        .map((t) => t.id)
+        .filter((id) => id !== taskId);
+      const clampedIndex = Math.max(
+        0,
+        Math.min(
+          Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0,
+          destIdsOriginal.length
+        )
+      );
+      const destIds = [...destIdsOriginal];
+      destIds.splice(clampedIndex, 0, taskId);
+
+      await Promise.all([
+        ...sourceIds.map((id, index) =>
+          tx.task.update({ where: { id }, data: { order: index } })
+        ),
+        ...destIds.map((id, index) =>
+          tx.task.update({
+            where: { id },
+            data:
+              id === taskId
+                ? { boardId: newBoardId, order: index }
+                : { order: index },
+          })
+        ),
+      ]);
     });
 
     revalidatePath("/");
@@ -325,7 +344,17 @@ export async function deleteTaskAction(taskId: string) {
   }
 
   try {
-    await prisma.task.delete({ where: { id: taskId } });
+    // Jaga `order` tetap rapat setelah delete agar drag/drop berbasis index tetap konsisten.
+    await prisma.$transaction(async (tx) => {
+      await tx.task.delete({ where: { id: taskId } });
+      await tx.task.updateMany({
+        where: {
+          boardId: existingTask.boardId,
+          order: { gt: existingTask.order },
+        },
+        data: { order: { decrement: 1 } },
+      });
+    });
     revalidatePath("/");
     return { success: true };
   } catch (error) {

@@ -5,6 +5,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
   useCallback,
 } from "react";
@@ -162,6 +163,16 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Hindari UI "mantul" karena realtime refresh (Supabase) menarik data lama tepat setelah optimistic update.
+  const lastLocalMutationAt = useRef<number>(0);
+  const realtimeRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const markLocalMutation = () => {
+    lastLocalMutationAt.current = Date.now();
+  };
+
   const loadData = useCallback(async (isBackgroundRefresh = false) => {
     if (!isBackgroundRefresh) setIsLoading(true);
 
@@ -240,26 +251,44 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   }, [loadData]);
 
   useEffect(() => {
+    const scheduleRealtimeRefresh = () => {
+      const minDelayMs = 600;
+      const elapsed = Date.now() - lastLocalMutationAt.current;
+      const delay = elapsed < minDelayMs ? minDelayMs - elapsed : 0;
+
+      if (realtimeRefreshTimeout.current) {
+        clearTimeout(realtimeRefreshTimeout.current);
+      }
+
+      realtimeRefreshTimeout.current = setTimeout(() => {
+        loadData(true);
+      }, delay);
+    };
+
     const channel = supabase
       .channel("project_updates")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "Task" },
         () => {
-          loadData(true);
+          scheduleRealtimeRefresh();
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "Board" },
         () => {
-          loadData(true);
+          scheduleRealtimeRefresh();
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      if (realtimeRefreshTimeout.current) {
+        clearTimeout(realtimeRefreshTimeout.current);
+        realtimeRefreshTimeout.current = null;
+      }
     };
   }, [loadData]);
 
@@ -471,6 +500,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const deleteTask = async (taskId: string, boardId: string) => {
     if (!selectedProjectId) return;
 
+    markLocalMutation();
     const prevProjects = [...projects];
     setProjects((prev) =>
       prev.map((project) => {
@@ -505,6 +535,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     toBoardId: string,
     newIndex: number
   ) => {
+    markLocalMutation();
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
         (p) => p.id === selectedProjectId
@@ -551,6 +582,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     if (!selectedProjectId) return;
 
+    markLocalMutation();
     setProjects((prevProjects) => {
       return prevProjects.map((project) => {
         if (project.id === selectedProjectId) {
