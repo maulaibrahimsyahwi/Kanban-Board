@@ -22,7 +22,9 @@ import { toast } from "sonner";
 
 interface DeleteBoardDialogProps {
   board: Board;
-  onDelete: (boardId: string) => void;
+  onDelete: (
+    boardId: string
+  ) => Promise<{ success: boolean; message?: string; variant?: "warning" }>;
   trigger?: React.ReactNode;
   disabled?: boolean;
 }
@@ -44,16 +46,29 @@ export default function DeleteBoardDialog({
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Panggil function delete dari parent
-      onDelete(board.id);
+      const result = await onDelete(board.id);
 
-      // Show success toast with Sonner
-      toast.success("Board deleted successfully", {
-        description: `${board.name} board and all its tasks have been removed.`,
+      if (result.success) {
+        toast.success("Board deleted successfully", {
+          description: `${board.name} board and all its tasks have been removed.`,
+          duration: 5000,
+        });
+        setIsOpen(false);
+        return;
+      }
+
+      if (result.variant === "warning") {
+        toast.warning(result.message || "Unable to delete board", {
+          duration: 5000,
+        });
+        setIsOpen(false);
+        return;
+      }
+
+      toast.error("Failed to delete board", {
+        description: result.message || "An error occurred while deleting the board.",
         duration: 5000,
       });
-
-      // Tutup dialog
-      setIsOpen(false);
     } catch (error) {
       console.error("Error deleting board:", error);
 

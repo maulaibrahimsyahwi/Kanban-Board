@@ -35,7 +35,7 @@ export default function BoardDropDown({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State untuk dialog edit
 
   const handleDeleteBoard = (boardId: string) => {
-    deleteBoard(boardId);
+    return deleteBoard(boardId, { toast: false });
   };
 
   const canDelete = totalBoards > 1;

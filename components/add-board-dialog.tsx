@@ -81,14 +81,24 @@ export default function AddBoardDialog({ trigger }: AddBoardDialogProps) {
     setIsCreating(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      addBoard(boardName.trim());
-      toast.success("Board created successfully", {
-        description: `${boardName.trim()} board has been added to your project.`,
-        duration: 4000,
-      });
-      setBoardName("");
-      setError("");
-      setIsOpen(false);
+      const trimmedName = boardName.trim();
+      const result = await addBoard(trimmedName, { toast: false });
+
+      if (result.success) {
+        toast.success("Board created successfully", {
+          description: `${trimmedName} board has been added to your project.`,
+          duration: 4000,
+        });
+        setBoardName("");
+        setError("");
+        setIsOpen(false);
+      } else {
+        const message = result.message || "Failed to create board";
+        toast.error("Failed to create board", {
+          description: message,
+          duration: 5000,
+        });
+      }
     } catch (error) {
       console.error("Error creating board:", error);
       toast.error("Failed to create board", {

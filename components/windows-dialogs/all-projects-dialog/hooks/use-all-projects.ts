@@ -85,13 +85,21 @@ export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
     dispatch({ type: "SET_IS_DELETING", payload: true });
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
-      deleteProject(projectId);
-      dispatch({ type: "CLOSE_DELETE_PROJECT_CONFIRM" });
-      toast.success("Project deleted", {
-        description: "Project has been permanently deleted.",
+      const result = await deleteProject(projectId, { toast: false });
+      if (result.success) {
+        dispatch({ type: "CLOSE_DELETE_PROJECT_CONFIRM" });
+        toast.success("Project deleted", {
+          description: "Project has been permanently deleted.",
+        });
+      } else {
+        toast.error("Failed to delete project", {
+          description: result.message,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to delete project", {
+        description: (error as Error).message,
       });
-    } catch {
-      toast.error("Failed to delete project");
     } finally {
       dispatch({ type: "SET_IS_DELETING", payload: false });
     }
@@ -101,14 +109,29 @@ export function useAllProjectsDialog({ setIsOpen }: UseAllProjectsDialogProps) {
     dispatch({ type: "SET_IS_DELETING", payload: true });
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      projects.forEach((project) => deleteProject(project.id));
-      dispatch({ type: "CLOSE_DELETE_ALL_CONFIRM" });
-      setIsOpen(false);
-      toast.success("All projects deleted", {
-        description: "All projects have been permanently deleted.",
+      const projectIds = projects.map((project) => project.id);
+      const results = [];
+      for (const projectId of projectIds) {
+        // hapus 1 per 1 agar update state lebih stabil
+        results.push(await deleteProject(projectId, { toast: false }));
+      }
+
+      const failedCount = results.filter((r) => !r.success).length;
+      if (failedCount === 0) {
+        dispatch({ type: "CLOSE_DELETE_ALL_CONFIRM" });
+        setIsOpen(false);
+        toast.success("All projects deleted", {
+          description: "All projects have been permanently deleted.",
+        });
+      } else {
+        toast.error("Failed to delete all projects", {
+          description: `${failedCount} project(s) failed to delete.`,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to delete all projects", {
+        description: (error as Error).message,
       });
-    } catch {
-      toast.error("Failed to delete all projects");
     } finally {
       dispatch({ type: "SET_IS_DELETING", payload: false });
     }

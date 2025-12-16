@@ -141,14 +141,23 @@ interface ProjectContextType {
     boardId: string,
     updatedTask: Partial<Task>
   ) => void;
-  deleteProject: (projectId: string) => void;
+  deleteProject: (
+    projectId: string,
+    options?: { toast?: boolean }
+  ) => Promise<{ success: boolean; message?: string }>;
   editProject: (
     projectId: string,
     updates: Partial<Pick<Project, "name" | "icon">>
   ) => void;
-  deleteBoard: (boardId: string) => void;
+  deleteBoard: (
+    boardId: string,
+    options?: { toast?: boolean }
+  ) => Promise<{ success: boolean; message?: string; variant?: "warning" }>;
   editBoard: (boardId: string, updates: Partial<Pick<Board, "name">>) => void;
-  addBoard: (boardName: string) => void;
+  addBoard: (
+    boardName: string,
+    options?: { toast?: boolean }
+  ) => Promise<{ success: boolean; message?: string }>;
   updateProjectStatus: (projectId: string, statusId: string) => void;
   refreshStatuses: () => void;
 }
@@ -342,23 +351,29 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteProject = async (projectId: string) => {
-    const prevProjects = [...projects];
+  const deleteProject = async (
+    projectId: string,
+    options?: { toast?: boolean }
+  ) => {
+    const shouldToast = options?.toast !== false;
+
     setProjects((prev) => {
       const filtered = prev.filter((p) => p.id !== projectId);
-      if (selectedProjectId === projectId) {
-        setSelectedProjectId(filtered.length > 0 ? filtered[0].id : null);
-      }
+      setSelectedProjectId((prevSelected) =>
+        prevSelected === projectId ? (filtered[0]?.id ?? null) : prevSelected
+      );
       return filtered;
     });
 
     const result = await deleteProjectAction(projectId);
     if (!result.success) {
-      setProjects(prevProjects);
-      toast.error("Gagal menghapus project");
-    } else {
-      toast.success("Project dihapus");
+      if (shouldToast) toast.error(result.message || "Gagal menghapus project");
+      loadData(true);
+      return { success: false, message: result.message || "Gagal menghapus project" };
     }
+
+    if (shouldToast) toast.success("Project dihapus");
+    return { success: true };
   };
 
   const editProject = async (
@@ -382,30 +397,50 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addBoard = async (boardName: string) => {
-    if (!selectedProjectId) return;
+  const addBoard = async (
+    boardName: string,
+    options?: { toast?: boolean }
+  ) => {
+    if (!selectedProjectId) {
+      return { success: false, message: "No project selected" };
+    }
 
+    const shouldToast = options?.toast !== false;
     const result = await createBoardAction(selectedProjectId, boardName);
 
-    if (result.success && result.data) {
-      toast.success("Board berhasil dibuat");
+    if (result.success) {
+      if (shouldToast) toast.success("Board berhasil dibuat");
       loadData(true);
-    } else {
-      toast.error("Gagal membuat board");
+      return { success: true };
     }
+
+    if (shouldToast) toast.error(result.message || "Gagal membuat board");
+    return { success: false, message: result.message || "Gagal membuat board" };
   };
 
-  const deleteBoard = async (boardId: string) => {
-    if (!selectedProjectId) return;
+  const deleteBoard = async (
+    boardId: string,
+    options?: { toast?: boolean }
+  ) => {
+    if (!selectedProjectId) {
+      return { success: false, message: "No project selected" };
+    }
 
-    const prevProjects = [...projects];
+    const shouldToast = options?.toast !== false;
+    const currentProject = projects.find((p) => p.id === selectedProjectId);
+
+    if (currentProject && currentProject.boards.length <= 1) {
+      if (shouldToast) toast.warning("Tidak bisa menghapus board terakhir");
+      return {
+        success: false,
+        message: "Tidak bisa menghapus board terakhir",
+        variant: "warning" as const,
+      };
+    }
+
     setProjects((prev) =>
       prev.map((project) => {
         if (project.id === selectedProjectId) {
-          if (project.boards.length <= 1) {
-            toast.warning("Tidak bisa menghapus board terakhir");
-            return project;
-          }
           return {
             ...project,
             boards: project.boards.filter((b) => b.id !== boardId),
@@ -417,9 +452,12 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
     const result = await deleteBoardAction(boardId);
     if (!result.success) {
-      setProjects(prevProjects);
-      toast.error("Gagal menghapus board");
+      if (shouldToast) toast.error(result.message || "Gagal menghapus board");
+      loadData(true);
+      return { success: false, message: result.message || "Gagal menghapus board" };
     }
+
+    return { success: true };
   };
 
   const editBoard = async (
