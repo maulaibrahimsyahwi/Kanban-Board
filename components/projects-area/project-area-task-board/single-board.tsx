@@ -36,7 +36,9 @@ const SingleBoard = ({
       // @hello-pangea/dnd akan menghadapi nested scroll container -> posisi droppable offscreen
       // bisa tidak terupdate saat horizontal auto-scroll, sehingga drop ke board yang awalnya
       // tidak terlihat jadi terasa "terbatas".
-      ignoreContainerClipping={false}
+      // Lebih aman untuk layout dengan horizontal scroll (boards-container) + auto-scroll:
+      // hindari clipping oleh scroll container yang kadang membuat hitbox droppable terasa "terbatas".
+      ignoreContainerClipping={true}
     >
       {(provided, snapshot) => (
         <div

@@ -128,7 +128,7 @@ interface ProjectContextType {
     taskId: string,
     fromBoardId: string,
     toBoardId: string,
-    newIndex: number
+    newIndex?: number
   ) => void;
   reorderTasksInBoard: (
     boardId: string,
@@ -533,9 +533,16 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     taskId: string,
     fromBoardId: string,
     toBoardId: string,
-    newIndex: number
+    newIndex?: number
   ) => {
+    if (!selectedProjectId) return;
+
     markLocalMutation();
+    let resolvedIndex =
+      typeof newIndex === "number" && Number.isFinite(newIndex)
+        ? Math.trunc(newIndex)
+        : undefined;
+
     setProjects((prevProjects) => {
       const projectIndex = prevProjects.findIndex(
         (p) => p.id === selectedProjectId
@@ -544,12 +551,33 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
       const currentProject = prevProjects[projectIndex];
       const fromBoard = currentProject.boards.find((b) => b.id === fromBoardId);
-      const taskToMove = fromBoard?.tasks.find((task) => task.id === taskId);
+      const toBoard = currentProject.boards.find((b) => b.id === toBoardId);
+      if (!fromBoard || !toBoard) return prevProjects;
+
+      const fromTaskIndex = fromBoard.tasks.findIndex((t) => t.id === taskId);
+      if (fromTaskIndex === -1) return prevProjects;
+
+      const taskToMove = fromBoard.tasks[fromTaskIndex];
 
       if (!taskToMove) return prevProjects;
 
       const newProjects = [...prevProjects];
       const newBoards = currentProject.boards.map((board) => {
+        if (fromBoardId === toBoardId && board.id === fromBoardId) {
+          const tasks = [...board.tasks];
+          tasks.splice(fromTaskIndex, 1);
+
+          if (resolvedIndex === undefined) resolvedIndex = fromTaskIndex;
+          const clampedIndex = Math.max(
+            0,
+            Math.min(resolvedIndex, tasks.length)
+          );
+          resolvedIndex = clampedIndex;
+
+          tasks.splice(clampedIndex, 0, { ...taskToMove, boardId: toBoardId });
+          return { ...board, tasks };
+        }
+
         if (board.id === fromBoardId) {
           return {
             ...board,
@@ -558,7 +586,18 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         }
         if (board.id === toBoardId) {
           const newTasks = [...board.tasks];
-          newTasks.splice(newIndex, 0, { ...taskToMove, boardId: toBoardId });
+
+          if (resolvedIndex === undefined) resolvedIndex = newTasks.length;
+          const clampedIndex = Math.max(
+            0,
+            Math.min(resolvedIndex, newTasks.length)
+          );
+          resolvedIndex = clampedIndex;
+
+          newTasks.splice(clampedIndex, 0, {
+            ...taskToMove,
+            boardId: toBoardId,
+          });
           return { ...board, tasks: newTasks };
         }
         return board;
@@ -568,7 +607,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       return newProjects;
     });
 
-    const result = await moveTaskAction(taskId, toBoardId, newIndex);
+    const result = await moveTaskAction(taskId, toBoardId, resolvedIndex ?? 0);
     if (!result.success) {
       toast.error("Gagal memindahkan task");
       loadData(true);

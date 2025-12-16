@@ -22,7 +22,6 @@ export default function ProjectAreaBoards({
   boards?: Board[];
 }) {
   const [isMounted, setIsMounted] = useState(false);
-  const [boardWidth, setBoardWidth] = useState(300);
   const [orderedBoards, setOrderedBoards] = useState(boards);
   const { moveTask, reorderTasksInBoard } = useProjects();
 
@@ -39,6 +38,7 @@ export default function ProjectAreaBoards({
     setOrderedBoards(boards);
   }, [boards]);
 
+  // Auto-scroll logic saat dragging task ke pinggir layar
   const autoScroll = useCallback(() => {
     if (!scrollContainerRef.current) return;
 
@@ -54,10 +54,9 @@ export default function ProjectAreaBoards({
     lastScrollTime.current = now;
 
     const edgeSize = 150;
-    const maxScrollSpeed = 15;
+    const maxScrollSpeed = 20; // Sedikit dipercepat
 
     let scrollAmount = 0;
-
     const mouseX = (window as any).__dragMouseX || 0;
 
     if (mouseX > 0) {
@@ -89,13 +88,22 @@ export default function ProjectAreaBoards({
     const handleMouseMove = (e: MouseEvent) => {
       (window as any).__dragMouseX = e.clientX;
     };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        (window as any).__dragMouseX = e.touches[0].clientX;
+      }
+    };
 
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
+      // Touch events support for mobile drag scrolling
+      window.addEventListener("touchmove", handleTouchMove, { passive: true });
+
       animationFrameId.current = requestAnimationFrame(autoScroll);
 
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("touchmove", handleTouchMove);
         if (animationFrameId.current) {
           cancelAnimationFrame(animationFrameId.current);
         }
@@ -103,31 +111,8 @@ export default function ProjectAreaBoards({
     }
   }, [isDragging, autoScroll]);
 
-  useEffect(() => {
-    const calculateBoardWidth = () => {
-      const width = window.innerWidth;
-      if (width < 640) return 280;
-      if (width < 768) return 300;
-      if (width < 1024) return 320;
-      if (width < 1280) return 340;
-      return 360;
-    };
-    const updateBoardWidth = () => {
-      setBoardWidth(calculateBoardWidth());
-    };
-    updateBoardWidth();
-    window.addEventListener("resize", updateBoardWidth);
-    return () => {
-      window.removeEventListener("resize", updateBoardWidth);
-    };
-  }, []);
-
   const onDragStart = (start: DragStart) => {
     setIsDragging(true);
-  };
-
-  const onDragUpdate = (update: DragUpdate) => {
-    if (!scrollContainerRef.current) return;
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -150,6 +135,7 @@ export default function ProjectAreaBoards({
       return;
     }
 
+    // Reorder Board
     if (type === "board") {
       const newBoards = Array.from(orderedBoards);
       const [movedBoard] = newBoards.splice(source.index, 1);
@@ -158,6 +144,7 @@ export default function ProjectAreaBoards({
       return;
     }
 
+    // Reorder/Move Task
     const sourceBoardId = source.droppableId;
     const destBoardId = destination.droppableId;
 
@@ -187,16 +174,13 @@ export default function ProjectAreaBoards({
 
   return (
     <div className="h-full w-full relative bg-secondary/5 flex flex-col">
-      <DragDropContext
-        onDragStart={onDragStart}
-        onDragUpdate={onDragUpdate}
-        onDragEnd={onDragEnd}
-      >
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden"
+          className={`flex-1 overflow-x-auto overflow-y-hidden boards-container ${
+            isDragging ? "drag-active" : ""
+          }`}
           id="board-scroll-container"
-          style={{ scrollBehavior: isDragging ? "auto" : "smooth" }}
         >
           <Droppable
             droppableId="all-boards"
@@ -205,13 +189,9 @@ export default function ProjectAreaBoards({
           >
             {(provided) => (
               <div
-                className="flex h-full p-4 gap-4"
+                className="boards-wrapper"
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                style={{
-                  width: "fit-content",
-                  minWidth: "100%",
-                }}
               >
                 {orderedBoards.map((board, index) => (
                   <Draggable
@@ -223,9 +203,8 @@ export default function ProjectAreaBoards({
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className="h-full shrink-0"
+                        className="h-full board-column"
                         style={{
-                          width: `${boardWidth}px`,
                           ...provided.draggableProps.style,
                         }}
                       >
@@ -240,14 +219,13 @@ export default function ProjectAreaBoards({
                   </Draggable>
                 ))}
                 {provided.placeholder}
-                <div
-                  className="h-full shrink-0"
-                  style={{ width: `${boardWidth}px` }}
-                >
+
+                {/* Add Board Button Column */}
+                <div className="h-full board-column">
                   <AddBoardDialog
                     trigger={
                       <div className="w-full h-full p-1">
-                        <div className="w-full h-full border-2 border-dashed border-border rounded-xl md:rounded-2xl flex items-center justify-center bg-card/50 hover:bg-muted/50 transition-colors cursor-pointer group">
+                        <div className="w-full h-full border-2 border-dashed border-border rounded-xl md:rounded-2xl flex items-center justify-center bg-card/50 hover:bg-muted/50 transition-colors cursor-pointer group min-h-[150px]">
                           <div className="text-center text-muted-foreground transition-colors group-hover:text-primary">
                             <MdDashboardCustomize className="w-6 h-6 mx-auto mb-2" />
                             <p className="font-semibold text-sm">

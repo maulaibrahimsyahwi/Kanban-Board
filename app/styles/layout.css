@@ -2,40 +2,57 @@
 .page-container {
   display: flex;
   flex-direction: row;
-  height: 100vh;
   width: 100%;
   max-width: 100vw;
   overflow: hidden;
   position: relative;
+
+  /* Fallback untuk browser lama */
+  height: 100vh;
+  /* Modern browsers (fix mobile address bar issue) */
+  height: 100dvh;
 }
 
 .main-container {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
   transition: gap 0.3s ease-in-out;
+
   height: 100vh;
+  height: 100dvh;
+
+  display: flex;
+  flex-direction: column;
 }
 
 /* === PROJECT AREA === */
-.project-area-card,
-.project-area-container {
+.project-area-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
   transition: all 0.3s ease-in-out;
+  height: 100%; /* Pastikan mengisi parent */
 }
 
-/* Prevent unwanted transforms on containers */
-.page-container,
-.main-container,
-.project-area-card,
-.project-area-container,
-.boards-container,
-.boards-wrapper {
-  transform: none;
+.project-area-container {
+  flex: 1;
+  overflow: hidden; /* Penting: biarkan child scroll, bukan container ini */
+  width: 100%;
+  position: relative;
 }
+
+/*
+  Note: `@hello-pangea/dnd` (react-beautiful-dnd fork) relies on `position: fixed`
+  for the dragged element. Any transformed ancestor (even `translateZ(0)`) will
+  change the containing block for `position: fixed`, which can make dragging feel
+  "tertahan" and cause drops to be detected as outside (task "mantul" balik).
+*/
