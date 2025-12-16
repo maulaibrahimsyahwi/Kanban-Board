@@ -23,7 +23,7 @@ export default function ProjectAreaBoards({
 }) {
   const [isMounted, setIsMounted] = useState(false);
   const [orderedBoards, setOrderedBoards] = useState(boards);
-  const { moveTask, reorderTasksInBoard } = useProjects();
+  const { moveTask } = useProjects();
 
   const [isDragging, setIsDragging] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -153,17 +153,29 @@ export default function ProjectAreaBoards({
     const destBoard = newBoards.find((b) => b.id === destBoardId);
 
     if (sourceBoard && destBoard) {
-      const [movedTask] = sourceBoard.tasks.splice(source.index, 1);
-      movedTask.boardId = destBoardId;
-      destBoard.tasks.splice(destination.index, 0, movedTask);
-      setOrderedBoards(newBoards);
+      // Guard untuk case cepat/bersamaan (data berubah saat drag): splice bisa menghasilkan `undefined`
+      const sourceTaskIndex = sourceBoard.tasks.findIndex(
+        (task) => task.id === draggableId
+      );
+
+      if (sourceTaskIndex !== -1) {
+        const [movedTask] = sourceBoard.tasks.splice(sourceTaskIndex, 1);
+        if (movedTask) {
+          const insertIndex = Math.max(
+            0,
+            Math.min(destination.index, destBoard.tasks.length)
+          );
+          destBoard.tasks.splice(insertIndex, 0, {
+            ...movedTask,
+            boardId: destBoardId,
+          });
+          setOrderedBoards(newBoards);
+        }
+      }
     }
 
-    if (sourceBoardId === destBoardId) {
-      reorderTasksInBoard(sourceBoardId, source.index, destination.index);
-    } else {
-      moveTask(draggableId, sourceBoardId, destBoardId, destination.index);
-    }
+    // Persist + optimistic update di context pakai `taskId`, lebih stabil daripada index saat list berubah.
+    moveTask(draggableId, sourceBoardId, destBoardId, destination.index);
   };
 
   if (!isMounted) return null;
