@@ -114,10 +114,8 @@ export default function ListView({ filteredBoards }: ListViewProps) {
       b: Task & { boardName: string; boardId: string }
     ) => {
       const direction = sortDirection === "asc" ? 1 : -1;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valA: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valB: any;
+      let valA: string | number;
+      let valB: string | number;
 
       switch (sortBy) {
         case "title":
@@ -183,6 +181,7 @@ export default function ListView({ filteredBoards }: ListViewProps) {
   };
 
   const tasksWithBoardInfo = useMemo(() => {
+    void tasksUpdated;
     const allTasks = filteredBoards.flatMap((board: Board) =>
       board.tasks.map((task: Task) => ({
         ...task,

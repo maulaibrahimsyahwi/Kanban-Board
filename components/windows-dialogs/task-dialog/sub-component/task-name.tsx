@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FaCircleExclamation } from "react-icons/fa6";
-import { useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
+import { useMemo, ChangeEvent, KeyboardEvent } from "react";
 
 interface TaskNameProps {
   value: string;
@@ -10,19 +10,11 @@ interface TaskNameProps {
 }
 
 export default function TaskName({ value, onChange, onEnter }: TaskNameProps) {
-  const [error, setError] = useState("");
-
-  // Update error when value changes
-  useEffect(() => {
-    if (value.trim() === "") {
-      setError("Task name is required");
-    } else if (value.length < 3) {
-      setError("Task name must be at least 3 characters");
-    } else if (value.length > 30) {
-      setError("Task name must be less than 30 characters");
-    } else {
-      setError("");
-    }
+  const error = useMemo(() => {
+    if (value.trim() === "") return "Task name is required";
+    if (value.length < 3) return "Task name must be at least 3 characters";
+    if (value.length > 30) return "Task name must be less than 30 characters";
+    return "";
   }, [value]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {

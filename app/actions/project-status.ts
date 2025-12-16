@@ -4,6 +4,18 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+async function verifyProjectAccess(userId: string, projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { members: { select: { id: true } } },
+  });
+
+  if (!project) return false;
+  return (
+    project.ownerId === userId || project.members.some((m) => m.id === userId)
+  );
+}
+
 export async function getProjectStatusesAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, data: [] };
@@ -111,6 +123,19 @@ export async function setProjectStatusAction(
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
   try {
+    const hasProjectAccess = await verifyProjectAccess(session.user.id, projectId);
+    if (!hasProjectAccess) {
+      return { success: false, message: "Forbidden" };
+    }
+
+    const status = await prisma.projectStatus.findFirst({
+      where: { id: statusId, userId: session.user.id },
+      select: { id: true },
+    });
+    if (!status) {
+      return { success: false, message: "Invalid status" };
+    }
+
     await prisma.project.update({
       where: { id: projectId },
       data: { statusId },

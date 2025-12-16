@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import SingleBoard from "./single-board";
 import { Board } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
@@ -38,53 +38,9 @@ export default function ProjectAreaBoards({
     setOrderedBoards(boards);
   }, [boards]);
 
-  // Auto-scroll logic saat dragging task ke pinggir layar
-  const autoScroll = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-
-    const container = scrollContainerRef.current;
-    const rect = container.getBoundingClientRect();
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-
-    const now = Date.now();
-    if (now - lastScrollTime.current < 16) {
-      animationFrameId.current = requestAnimationFrame(autoScroll);
-      return;
-    }
-    lastScrollTime.current = now;
-
-    const edgeSize = 150;
-    const maxScrollSpeed = 20; // Sedikit dipercepat
-
-    let scrollAmount = 0;
-    const mouseX = (window as any).__dragMouseX || 0;
-
-    if (mouseX > 0) {
-      const distanceFromRightEdge = rect.right - mouseX;
-      const distanceFromLeftEdge = mouseX - rect.left;
-
-      if (
-        distanceFromRightEdge < edgeSize &&
-        scrollLeft + clientWidth < scrollWidth
-      ) {
-        const intensity = 1 - distanceFromRightEdge / edgeSize;
-        scrollAmount = maxScrollSpeed * intensity;
-      } else if (distanceFromLeftEdge < edgeSize && scrollLeft > 0) {
-        const intensity = 1 - distanceFromLeftEdge / edgeSize;
-        scrollAmount = -maxScrollSpeed * intensity;
-      }
-    }
-
-    if (scrollAmount !== 0) {
-      container.scrollLeft += scrollAmount;
-    }
-
-    if (isDragging) {
-      animationFrameId.current = requestAnimationFrame(autoScroll);
-    }
-  }, [isDragging]);
-
   useEffect(() => {
+    if (!isDragging) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       (window as any).__dragMouseX = e.clientX;
     };
@@ -94,22 +50,62 @@ export default function ProjectAreaBoards({
       }
     };
 
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      // Touch events support for mobile drag scrolling
-      window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    const tick = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-      animationFrameId.current = requestAnimationFrame(autoScroll);
+      const rect = container.getBoundingClientRect();
+      const { scrollLeft, scrollWidth, clientWidth } = container;
 
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("touchmove", handleTouchMove);
-        if (animationFrameId.current) {
-          cancelAnimationFrame(animationFrameId.current);
+      const now = Date.now();
+      if (now - lastScrollTime.current < 16) {
+        animationFrameId.current = requestAnimationFrame(tick);
+        return;
+      }
+      lastScrollTime.current = now;
+
+      const edgeSize = 150;
+      const maxScrollSpeed = 20;
+
+      let scrollAmount = 0;
+      const mouseX = (window as any).__dragMouseX || 0;
+
+      if (mouseX > 0) {
+        const distanceFromRightEdge = rect.right - mouseX;
+        const distanceFromLeftEdge = mouseX - rect.left;
+
+        if (
+          distanceFromRightEdge < edgeSize &&
+          scrollLeft + clientWidth < scrollWidth
+        ) {
+          const intensity = 1 - distanceFromRightEdge / edgeSize;
+          scrollAmount = maxScrollSpeed * intensity;
+        } else if (distanceFromLeftEdge < edgeSize && scrollLeft > 0) {
+          const intensity = 1 - distanceFromLeftEdge / edgeSize;
+          scrollAmount = -maxScrollSpeed * intensity;
         }
-      };
+      }
+
+      if (scrollAmount !== 0) {
+        container.scrollLeft += scrollAmount;
+      }
+
+      animationFrameId.current = requestAnimationFrame(tick);
     }
-  }, [isDragging, autoScroll]);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    animationFrameId.current = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
+      }
+    };
+  }, [isDragging]);
 
   const onDragStart = (start: DragStart) => {
     setIsDragging(true);

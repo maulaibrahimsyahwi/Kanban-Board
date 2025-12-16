@@ -145,6 +145,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   const [editLabelName, setEditLabelName] = useState("");
   const [editLabelColor, setEditLabelColor] = useState("");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const initialLabelsWithId = initialTask.labels.map((label) => {
       const stateLabel = localAvailableLabels.find(
@@ -164,6 +165,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
     setEditDueDate(initialTask.dueDate);
     setEditBoardId(initialBoardId);
   }, [initialTask, initialBoardId, localAvailableLabels]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSave = (key: keyof Task | "boardId", value: unknown) => {
     if (!selectedProject) return;

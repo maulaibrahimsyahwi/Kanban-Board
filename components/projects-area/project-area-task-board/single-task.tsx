@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/refs */
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   BellRing,

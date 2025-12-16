@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,18 +46,19 @@ export default function ProjectStatusPage() {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadStatuses();
-  }, []);
-
-  const loadStatuses = async () => {
+  const loadStatuses = useCallback(async () => {
     setIsLoading(true);
     const res = await getProjectStatusesAction();
     if (res.success && res.data) {
       setStatuses(res.data);
     }
     setIsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadStatuses();
+  }, [loadStatuses]);
 
   const handleAddStatus = async () => {
     const tempId = "temp-" + Date.now();
@@ -67,7 +68,7 @@ export default function ProjectStatusPage() {
       color: "bg-blue-600",
       isSystem: false,
     };
-    setStatuses([...statuses, newStatus]);
+    setStatuses((prev) => [...prev, newStatus]);
 
     const res = await createProjectStatusAction("New Status", "bg-blue-600");
     if (res.success && res.data) {
@@ -76,12 +77,12 @@ export default function ProjectStatusPage() {
       refreshStatuses();
     } else {
       toast.error("Failed to create status");
-      loadStatuses();
+      void loadStatuses();
     }
   };
 
   const handleDeleteStatus = async (id: string) => {
-    setStatuses(statuses.filter((s) => s.id !== id));
+    setStatuses((prev) => prev.filter((s) => s.id !== id));
 
     const res = await deleteProjectStatusAction(id);
     if (res.success) {
@@ -89,7 +90,7 @@ export default function ProjectStatusPage() {
       refreshStatuses();
     } else {
       toast.error("Failed to delete status");
-      loadStatuses();
+      void loadStatuses();
     }
   };
 
@@ -98,8 +99,8 @@ export default function ProjectStatusPage() {
     field: "name" | "color",
     value: string
   ) => {
-    setStatuses(
-      statuses.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    setStatuses((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
 
     await updateProjectStatusAction(id, { [field]: value });

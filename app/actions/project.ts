@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createProjectAction(projectName: string) {
+export async function createProjectAction(projectName: string, icon?: string) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, message: "Unauthorized" };
@@ -14,6 +14,7 @@ export async function createProjectAction(projectName: string) {
     const newProject = await prisma.project.create({
       data: {
         name: projectName,
+        icon: icon || "FaDiagramProject",
         ownerId: session.user.id,
         boards: {
           create: [

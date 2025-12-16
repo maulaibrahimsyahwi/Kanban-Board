@@ -275,7 +275,6 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       const entry = pendingMoveQueue.current.get(taskId);
       if (!entry) return;
 
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         const current = pendingMoveQueue.current.get(taskId);
         if (!current) return;
@@ -419,14 +418,17 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     projectName: string,
     iconName: string = "FaDiagramProject"
   ) => {
-    const result = await createProjectAction(projectName);
+    const result = await createProjectAction(projectName, iconName);
 
     if (result.success && result.data) {
       loadData(true);
       toast.success("Project berhasil dibuat!");
 
-      const newProj = result.data as any;
-      if (newProj?.id) setSelectedProjectId(newProj.id);
+      const maybeProjectId =
+        typeof (result.data as unknown as { id?: unknown })?.id === "string"
+          ? (result.data as unknown as { id: string }).id
+          : null;
+      if (maybeProjectId) setSelectedProjectId(maybeProjectId);
     } else {
       toast.error(result.message || "Gagal membuat project");
     }
