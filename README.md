@@ -11,17 +11,22 @@ A modern task management application built with Next.js and TypeScript.
 
 ## Tech Stack
 
-- Next.js 15
+- Next.js 16
 - TypeScript
 - Tailwind CSS
 - Radix UI
 - Drag & Drop
+- Prisma + PostgreSQL
+- NextAuth (Auth.js)
 
 ## Getting Started
 
 ```bash
 # Install dependencies
 npm install
+
+# Configure environment
+cp .env.example .env
 
 # Start development server
 npm run dev
@@ -37,6 +42,11 @@ npm run build   # Production build
 npm run start   # Production server
 npm run lint    # Code linting
 ```
+
+## Notes
+
+- Set `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` if you want Sentry enabled.
+- If your Postgres requires SSL, configure `PG_SSL_MODE` (see `.env.example`).
 
 ## License
 

@@ -21,6 +21,29 @@ if (!connectionString) {
 //   console.error("[DB Config] Failed to parse DATABASE_URL string");
 // }
 
+const ssl = (() => {
+  const modeRaw = process.env.PG_SSL_MODE;
+  const mode = modeRaw?.trim().toLowerCase();
+
+  if (!mode || mode === "auto") {
+    return process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: true }
+      : undefined;
+  }
+
+  if (["disable", "off", "false", "0"].includes(mode)) return undefined;
+  if (["no-verify", "require-no-verify"].includes(mode)) {
+    return { rejectUnauthorized: false };
+  }
+  if (["verify", "verify-full", "require", "true", "1"].includes(mode)) {
+    return { rejectUnauthorized: true };
+  }
+
+  throw new Error(
+    `Invalid PG_SSL_MODE value: "${modeRaw}". Expected auto|disable|no-verify|verify-full.`
+  );
+})();
+
 const pool = new Pool({
   connectionString,
   max: (() => {
@@ -32,9 +55,7 @@ const pool = new Pool({
   allowExitOnIdle: true,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 15000,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ...(ssl ? { ssl } : {}),
 });
 
 const adapter = new PrismaPg(pool);

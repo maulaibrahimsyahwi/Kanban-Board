@@ -3,10 +3,14 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 export async function getSSOSettingsAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, data: null };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, data: null, message: unlock.message };
 
   try {
     const settings = await prisma.sSOSettings.findUnique({
@@ -30,6 +34,9 @@ interface SSOSettingsData {
 export async function updateSSOSettingsAction(data: SSOSettingsData) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const existing = await prisma.sSOSettings.findUnique({
@@ -109,6 +116,9 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
 export async function deactivateSSOAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const existing = await prisma.sSOSettings.findUnique({

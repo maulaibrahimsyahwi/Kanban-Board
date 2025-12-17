@@ -8,8 +8,11 @@ class SentryExampleAPIError extends Error {
   }
 }
 export function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   throw new SentryExampleAPIError(
     "This error is raised on the backend called by the example page."
   );
-  return NextResponse.json({ data: "Testing Sentry Error..." });
 }

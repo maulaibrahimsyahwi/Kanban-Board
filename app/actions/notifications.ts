@@ -4,10 +4,14 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { NotificationSettingsState } from "@/types";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 export async function getNotificationSettingsAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, data: null };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, data: null, message: unlock.message };
 
   try {
     let settings = await prisma.notificationSettings.findUnique({
@@ -31,6 +35,9 @@ export async function updateNotificationSettingsAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.notificationSettings.update({
@@ -68,6 +75,9 @@ export async function updateNotificationSettingsAction(
 export async function restoreDefaultNotificationSettingsAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.notificationSettings.update({

@@ -6,8 +6,8 @@ declare module "next-auth" {
       id: string;
       onboardingCompleted: boolean;
       twoFactorEnabled: boolean;
-      requires2FA?: boolean;
       dateFormat: string;
+      authProvider?: string;
     } & DefaultSession["user"];
   }
 
@@ -22,7 +22,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     onboardingCompleted: boolean;
     twoFactorEnabled: boolean;
-    requires2FA?: boolean;
     dateFormat: string;
+    authProvider?: string;
   }
 }

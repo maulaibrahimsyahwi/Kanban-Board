@@ -71,25 +71,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.onboardingCompleted = user.onboardingCompleted;
         token.twoFactorEnabled = user.twoFactorEnabled;
         token.dateFormat = user.dateFormat || "dd/MM/yyyy";
-
-        if (account?.provider === "google") {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: user.email! },
-          });
-
-          if (dbUser?.twoFactorEnabled) {
-            token.requires2FA = true;
-          }
-        } else if (account?.provider === "credentials") {
-          token.requires2FA = false;
-        }
+        if (account?.provider) token.authProvider = account.provider;
       }
 
       if (trigger === "update" && session) {
         if (session.dateFormat) token.dateFormat = session.dateFormat;
         if (session.user?.image) token.picture = session.user.image;
-        if (session.requires2FA !== undefined)
-          token.requires2FA = session.requires2FA;
       }
 
       if (token.sub) {
@@ -115,9 +102,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.sub;
         session.user.onboardingCompleted = token.onboardingCompleted as boolean;
         session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
-        session.user.requires2FA = token.requires2FA as boolean;
         session.user.dateFormat = (token.dateFormat as string) || "dd/MM/yyyy";
         session.user.image = token.picture;
+        session.user.authProvider =
+          typeof token.authProvider === "string" ? token.authProvider : undefined;
       }
       return session;
     },

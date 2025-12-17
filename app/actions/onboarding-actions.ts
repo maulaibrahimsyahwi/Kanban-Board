@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 interface OnboardingData {
   teamSize: string;
@@ -15,6 +16,9 @@ export async function submitOnboardingAction(data: OnboardingData) {
   if (!session?.user?.id) {
     return { success: false, message: "Unauthorized" };
   }
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.user.update({

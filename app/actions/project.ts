@@ -3,12 +3,16 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 export async function createProjectAction(projectName: string, icon?: string) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, message: "Unauthorized" };
   }
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const newProject = await prisma.project.create({
@@ -40,6 +44,9 @@ export async function createProjectAction(projectName: string, icon?: string) {
 export async function getProjectsAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, data: [] };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, data: [], message: unlock.message };
 
   try {
     const projects = await prisma.project.findMany({
@@ -76,6 +83,9 @@ export async function deleteProjectAction(projectId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   try {
     await prisma.project.delete({
       where: { id: projectId, ownerId: session.user.id },
@@ -94,6 +104,9 @@ export async function updateProjectAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.project.update({
@@ -114,6 +127,9 @@ export async function updateProjectAction(
 export async function addMemberAction(projectId: string, email: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const userInvited = await prisma.user.findUnique({

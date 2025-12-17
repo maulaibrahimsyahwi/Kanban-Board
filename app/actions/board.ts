@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
   const project = await prisma.project.findFirst({
@@ -34,6 +35,9 @@ export async function createBoardAction(projectId: string, name: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   const hasAccess = await verifyProjectAccess(session.user.id, projectId);
   if (!hasAccess) return { success: false, message: "Forbidden" };
 
@@ -64,6 +68,9 @@ export async function deleteBoardAction(boardId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   const hasAccess = await verifyBoardAccess(session.user.id, boardId);
   if (!hasAccess) return { success: false, message: "Forbidden" };
 
@@ -81,6 +88,9 @@ export async function deleteBoardAction(boardId: string) {
 export async function updateBoardAction(boardId: string, name: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   const hasAccess = await verifyBoardAccess(session.user.id, boardId);
   if (!hasAccess) return { success: false, message: "Forbidden" };

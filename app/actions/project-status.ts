@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
   const project = await prisma.project.findFirst({
@@ -19,6 +20,9 @@ async function verifyProjectAccess(userId: string, projectId: string) {
 export async function getProjectStatusesAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, data: [] };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, data: [], message: unlock.message };
 
   try {
     // Cek apakah user sudah punya status
@@ -57,6 +61,9 @@ export async function createProjectStatusAction(name: string, color: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   try {
     const lastStatus = await prisma.projectStatus.findFirst({
       where: { userId: session.user.id },
@@ -88,6 +95,9 @@ export async function updateProjectStatusAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   try {
     await prisma.projectStatus.update({
       where: { id, userId: session.user.id },
@@ -103,6 +113,9 @@ export async function updateProjectStatusAction(
 export async function deleteProjectStatusAction(id: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.projectStatus.delete({
@@ -121,6 +134,9 @@ export async function setProjectStatusAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const hasProjectAccess = await verifyProjectAccess(session.user.id, projectId);

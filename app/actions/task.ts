@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { Task } from "@/types";
 import { verifyProjectAccess, verifyTaskAccess } from "./task-access";
 import { TaskUpdateSchema } from "./task-schemas";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 export async function createTaskAction(
   boardId: string,
@@ -13,6 +14,9 @@ export async function createTaskAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   const hasAccess = await verifyProjectAccess(session.user.id, boardId);
   if (!hasAccess) {
@@ -77,6 +81,9 @@ export async function createTaskAction(
 export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   const existingTask = await verifyTaskAccess(session.user.id, taskId);
   if (!existingTask) {
@@ -167,6 +174,9 @@ export async function moveTaskAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   const task = await verifyTaskAccess(session.user.id, taskId);
   if (!task) return { success: false, message: "Forbidden or Task not found." };
@@ -267,6 +277,9 @@ export async function moveTaskAction(
 export async function deleteTaskAction(taskId: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   const existingTask = await verifyTaskAccess(session.user.id, taskId);
   if (!existingTask) {

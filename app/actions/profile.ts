@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 
 export async function changePasswordAction(
   currentPassword: string,
@@ -11,6 +12,9 @@ export async function changePasswordAction(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     const user = await prisma.user.findUnique({
@@ -47,6 +51,9 @@ export async function deleteAccountAction() {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
   try {
     await prisma.user.delete({ where: { id: session.user.id } });
     return { success: true, message: "Akun berhasil dihapus." };
@@ -58,6 +65,9 @@ export async function deleteAccountAction() {
 export async function updateProfileImageAction(imageUrl: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.user.update({
@@ -74,6 +84,9 @@ export async function updateProfileImageAction(imageUrl: string) {
 export async function updateDateFormatAction(format: string) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
     await prisma.user.update({

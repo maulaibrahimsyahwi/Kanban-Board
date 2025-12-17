@@ -33,10 +33,13 @@ export default function SecurityPageContent() {
         const res = await generateTwoFactorSecretAction();
         if (res.success && res.secret && res.otpauth) {
           setSecretKey(res.secret);
-          const encodedUrl = encodeURIComponent(res.otpauth);
-          setQrCodeUrl(
-            `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}`
-          );
+          const qrcode = await import("qrcode");
+          const dataUrl = await qrcode.toDataURL(res.otpauth, {
+            errorCorrectionLevel: "M",
+            margin: 1,
+            width: 300,
+          });
+          setQrCodeUrl(dataUrl);
         } else {
           toast.error("Failed to generate security keys");
         }

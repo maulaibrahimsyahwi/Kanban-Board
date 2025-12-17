@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
   Dialog,
@@ -14,25 +14,66 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { verifyTwoFactorLoginAction } from "@/app/actions/security";
+import {
+  getTwoFactorLockStateAction,
+  verifyTwoFactorLoginAction,
+} from "@/app/actions/security";
 
 export default function TwoFactorGuard() {
-  const { data: session, update } = useSession();
+  const { data: session, status } = useSession();
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [didCheck, setDidCheck] = useState(false);
 
-  const isLocked = session?.user?.requires2FA === true;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      if (status !== "authenticated") {
+        if (!cancelled) {
+          setIsLocked(false);
+          setDidCheck(true);
+        }
+        return;
+      }
+
+      try {
+        const res = await getTwoFactorLockStateAction();
+        if (!cancelled) {
+          setIsLocked(res.locked === true);
+          setDidCheck(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setIsLocked(true);
+          setDidCheck(true);
+        }
+      }
+    }
+
+    void check();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.user?.id]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code) return;
+
+    const normalized = code.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(normalized)) {
+      toast.error("Masukkan 6 digit kode.");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const res = await verifyTwoFactorLoginAction(code);
+      const res = await verifyTwoFactorLoginAction(normalized);
 
       if (res.success) {
-        await update({ requires2FA: false });
+        const statusRes = await getTwoFactorLockStateAction();
+        setIsLocked(statusRes.locked === true);
         toast.success("Identity verified successfully");
       } else {
         toast.error(res.message || "Invalid code");
@@ -48,7 +89,7 @@ export default function TwoFactorGuard() {
     signOut({ callbackUrl: "/?login=true" });
   };
 
-  if (!isLocked) return null;
+  if (!didCheck || !isLocked) return null;
 
   return (
     <Dialog open={true} onOpenChange={() => {}}>
@@ -74,7 +115,7 @@ export default function TwoFactorGuard() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="text-center text-lg tracking-widest font-mono"
-              maxLength={6}
+              maxLength={8}
               autoFocus
             />
           </div>
