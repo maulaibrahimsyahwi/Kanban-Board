@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
+import { publishProjectInvalidation } from "@/lib/ably";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
   const project = await prisma.project.findFirst({
@@ -156,6 +157,13 @@ export async function setProjectStatusAction(
       where: { id: projectId },
       data: { statusId },
     });
+
+    await publishProjectInvalidation({
+      projectId,
+      actorId: session.user.id,
+      kind: "project:status",
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch {

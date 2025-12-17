@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
+import { publishProjectInvalidation } from "@/lib/ably";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
   const project = await prisma.project.findFirst({
@@ -57,6 +58,12 @@ export async function createBoardAction(projectId: string, name: string) {
       include: { tasks: true },
     });
 
+    await publishProjectInvalidation({
+      projectId,
+      actorId: session.user.id,
+      kind: "board:create",
+    });
+
     revalidatePath("/");
     return { success: true, data: newBoard };
   } catch (error) {
@@ -74,10 +81,24 @@ export async function deleteBoardAction(boardId: string) {
   const hasAccess = await verifyBoardAccess(session.user.id, boardId);
   if (!hasAccess) return { success: false, message: "Forbidden" };
 
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    select: { projectId: true },
+  });
+
   try {
     await prisma.board.delete({
       where: { id: boardId },
     });
+
+    if (board?.projectId) {
+      await publishProjectInvalidation({
+        projectId: board.projectId,
+        actorId: session.user.id,
+        kind: "board:delete",
+      });
+    }
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -100,6 +121,13 @@ export async function updateBoardAction(boardId: string, name: string) {
       where: { id: boardId },
       data: { name },
     });
+
+    await publishProjectInvalidation({
+      projectId: updatedBoard.projectId,
+      actorId: session.user.id,
+      kind: "board:update",
+    });
+
     revalidatePath("/");
     return { success: true, data: updatedBoard };
   } catch (error) {

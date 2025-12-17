@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
+import { publishProjectInvalidation } from "@/lib/ably";
 
 export async function createProjectAction(projectName: string, icon?: string) {
   const session = await auth();
@@ -31,6 +32,12 @@ export async function createProjectAction(projectName: string, icon?: string) {
       include: {
         boards: { include: { tasks: true } },
       },
+    });
+
+    await publishProjectInvalidation({
+      projectId: newProject.id,
+      actorId: session.user.id,
+      kind: "project:create",
     });
 
     revalidatePath("/");
@@ -90,6 +97,13 @@ export async function deleteProjectAction(projectId: string) {
     await prisma.project.delete({
       where: { id: projectId, ownerId: session.user.id },
     });
+
+    await publishProjectInvalidation({
+      projectId,
+      actorId: session.user.id,
+      kind: "project:delete",
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -116,6 +130,13 @@ export async function updateProjectAction(
         ...(data.icon && { icon: data.icon }),
       },
     });
+
+    await publishProjectInvalidation({
+      projectId,
+      actorId: session.user.id,
+      kind: "project:update",
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -161,6 +182,12 @@ export async function addMemberAction(projectId: string, email: string) {
           connect: { id: userInvited.id },
         },
       },
+    });
+
+    await publishProjectInvalidation({
+      projectId,
+      actorId: session.user.id,
+      kind: "project:member:add",
     });
 
     revalidatePath("/");

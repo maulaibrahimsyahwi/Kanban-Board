@@ -47,6 +47,7 @@ npm run lint    # Code linting
 
 - Set `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` if you want Sentry enabled.
 - If your Postgres requires SSL, configure `PG_SSL_MODE` (see `.env.example`).
+- To enable realtime collaboration, set `NEXT_PUBLIC_REALTIME_ENABLED=true` and `ABLY_API_KEY` (see `.env.example`).
 
 ## License
 

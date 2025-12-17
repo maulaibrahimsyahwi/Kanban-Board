@@ -7,6 +7,7 @@ import { Task } from "@/types";
 import { verifyProjectAccess, verifyTaskAccess } from "./task-access";
 import { TaskUpdateSchema } from "./task-schemas";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
+import { publishProjectInvalidation } from "@/lib/ably";
 
 export async function createTaskAction(
   boardId: string,
@@ -69,6 +70,19 @@ export async function createTaskAction(
         attachments: true,
       },
     });
+
+    const board = await prisma.board.findUnique({
+      where: { id: boardId },
+      select: { projectId: true },
+    });
+
+    if (board?.projectId) {
+      await publishProjectInvalidation({
+        projectId: board.projectId,
+        actorId: session.user.id,
+        kind: "task:create",
+      });
+    }
 
     revalidatePath("/");
     return { success: true, data: newTask };
@@ -159,6 +173,19 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       },
     });
 
+    const board = await prisma.board.findUnique({
+      where: { id: updatedTask.boardId },
+      select: { projectId: true },
+    });
+
+    if (board?.projectId) {
+      await publishProjectInvalidation({
+        projectId: board.projectId,
+        actorId: session.user.id,
+        kind: "task:update",
+      });
+    }
+
     revalidatePath("/");
     return { success: true, data: updatedTask };
   } catch (error) {
@@ -193,6 +220,16 @@ export async function moveTaskAction(
   }
 
   const oldBoardId = task.boardId;
+  const [oldBoard, newBoard] = await Promise.all([
+    prisma.board.findUnique({
+      where: { id: oldBoardId },
+      select: { projectId: true },
+    }),
+    prisma.board.findUnique({
+      where: { id: newBoardId },
+      select: { projectId: true },
+    }),
+  ]);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -266,6 +303,20 @@ export async function moveTaskAction(
       ]);
     });
 
+    const projectIds = new Set<string>();
+    if (oldBoard?.projectId) projectIds.add(oldBoard.projectId);
+    if (newBoard?.projectId) projectIds.add(newBoard.projectId);
+
+    await Promise.all(
+      [...projectIds].map((projectId) =>
+        publishProjectInvalidation({
+          projectId,
+          actorId: session.user.id,
+          kind: "task:move",
+        })
+      )
+    );
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -286,6 +337,11 @@ export async function deleteTaskAction(taskId: string) {
     return { success: false, message: "Forbidden or Task not found." };
   }
 
+  const board = await prisma.board.findUnique({
+    where: { id: existingTask.boardId },
+    select: { projectId: true },
+  });
+
   try {
     // Jaga `order` tetap rapat setelah delete agar drag/drop berbasis index tetap konsisten.
     await prisma.$transaction(async (tx) => {
@@ -298,6 +354,15 @@ export async function deleteTaskAction(taskId: string) {
         data: { order: { decrement: 1 } },
       });
     });
+
+    if (board?.projectId) {
+      await publishProjectInvalidation({
+        projectId: board.projectId,
+        actorId: session.user.id,
+        kind: "task:delete",
+      });
+    }
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {

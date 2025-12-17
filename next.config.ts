@@ -13,7 +13,7 @@ const cspHeader = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://o*.ingest.sentry.io",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ably.io wss://*.ably.io https://*.sentry.io https://o*.ingest.sentry.io",
 ].join("; ");
 
 const nextConfig: NextConfig = {

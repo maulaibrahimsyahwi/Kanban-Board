@@ -9,9 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import Ably from "ably";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
-import { supabase } from "@/lib/supabase";
 import type { Project, ProjectStatus } from "@/types";
 import { getProjectsAction } from "@/app/actions/project";
 import { getProjectStatusesAction, setProjectStatusAction } from "@/app/actions/project-status";
@@ -24,8 +25,10 @@ import { mapProjectsFromDto } from "./map-projects";
 import type { ProjectContextType, ProjectDTO } from "./types";
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
+const realtimeEnabled = process.env.NEXT_PUBLIC_REALTIME_ENABLED === "true";
 
 export const ProjectProvider = ({ children }: { children: ReactNode }) => {
+  const { data: session, status } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -155,6 +158,11 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   }, [loadData]);
 
   useEffect(() => {
+    if (!realtimeEnabled) return;
+    if (status !== "authenticated") return;
+    if (!session?.user?.id) return;
+    if (!selectedProjectId) return;
+
     const scheduleRealtimeRefresh = () => {
       const minDelayMs = 600;
       const elapsed = Date.now() - lastLocalMutationAt.current;
@@ -169,24 +177,34 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       }, delay);
     };
 
-    const channel = supabase
-      .channel("project_updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "Task" }, () => {
-        scheduleRealtimeRefresh();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "Board" }, () => {
-        scheduleRealtimeRefresh();
-      })
-      .subscribe();
+    const realtime = new Ably.Realtime({
+      authUrl: `/api/realtime/auth?projectId=${encodeURIComponent(selectedProjectId)}`,
+      authMethod: "GET",
+      closeOnUnload: true,
+    });
+
+    const channel = realtime.channels.get(`project:${selectedProjectId}`);
+    const handler = (message: Ably.Message) => {
+      const data =
+        message.data && typeof message.data === "object"
+          ? (message.data as { actorId?: unknown })
+          : null;
+
+      if (data?.actorId === session.user.id) return;
+      scheduleRealtimeRefresh();
+    };
+
+    channel.subscribe("invalidate", handler);
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe("invalidate", handler);
+      realtime.close();
       if (realtimeRefreshTimeout.current) {
         clearTimeout(realtimeRefreshTimeout.current);
         realtimeRefreshTimeout.current = null;
       }
     };
-  }, [loadData]);
+  }, [loadData, selectedProjectId, session?.user?.id, status]);
 
   const refreshStatuses = async () => {
     const res = await getProjectStatusesAction();
