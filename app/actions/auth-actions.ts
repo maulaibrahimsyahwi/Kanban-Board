@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "@/lib/mail";
 import { z } from "zod";
 import { headers } from "next/headers";
+import crypto from "crypto";
 
 const RegisterSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter"),
@@ -130,7 +131,7 @@ export async function requestPasswordResetAction(email: string) {
       };
     }
 
-    const token = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = crypto.randomInt(100000, 1000000).toString();
     const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
 
     await prisma.verificationToken.deleteMany({

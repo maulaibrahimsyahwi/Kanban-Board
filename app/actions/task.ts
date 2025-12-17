@@ -83,14 +83,12 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
     return { success: false, message: "Forbidden or Task not found." };
   }
 
-  // 1. Parse dan validasi data. Ini akan membuang field yang tidak ada di schema (seperti boardId).
   const validation = TaskUpdateSchema.safeParse(updates);
   if (!validation.success) {
     return { success: false, message: "Invalid data format" };
   }
 
   try {
-    // 2. Gunakan validation.data, BUKAN updates
     const {
       labels,
       checklist,
@@ -104,13 +102,11 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       where: { id: taskId },
       data: {
         ...primitiveData,
-        // Tangani status secara eksplisit dengan connect/disconnect
         ...(statusId !== undefined && {
           status: statusId
             ? { connect: { id: statusId } }
             : { disconnect: true },
         }),
-        // Operasi relasi lainnya
         ...(labels && {
           labels: {
             deleteMany: {},
@@ -127,8 +123,14 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
           assignees: {
             set: [],
             connect: assignees
-              .filter((u: any) => u.email)
-              .map((u: any) => ({ email: u.email! })),
+              .filter(
+                (u): u is { email: string } =>
+                  typeof u === "object" &&
+                  u !== null &&
+                  "email" in u &&
+                  typeof u.email === "string"
+              )
+              .map((u) => ({ email: u.email })),
           },
         }),
         ...(attachments && {
@@ -202,13 +204,18 @@ export async function moveTaskAction(
             }),
       ]);
 
-      const sourceIds = sourceTasks.map((t) => t.id).filter((id) => id !== taskId);
+      const sourceIds = sourceTasks
+        .map((t) => t.id)
+        .filter((id) => id !== taskId);
 
       if (oldBoardId === newBoardId) {
         const nextIds = [...sourceIds];
         const clampedIndex = Math.max(
           0,
-          Math.min(Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0, nextIds.length)
+          Math.min(
+            Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0,
+            nextIds.length
+          )
         );
         nextIds.splice(clampedIndex, 0, taskId);
 
