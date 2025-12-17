@@ -8,6 +8,20 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kanban_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kanban_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -15,9 +29,28 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: npm ci
+    - name: Run Prisma migrations
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+        DIRECT_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+      run: npx prisma migrate deploy
+    - name: Lint
+      run: npm run lint
+    - name: Build
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+        DIRECT_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+        AUTH_SECRET: ci-auth-secret-please-change
+        NEXTAUTH_URL: http://localhost:3000
+      run: npm run build
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+        DIRECT_URL: postgresql://postgres:postgres@localhost:5432/kanban_test?schema=public
+        AUTH_SECRET: ci-auth-secret-please-change
+        NEXTAUTH_URL: http://localhost:3000
       run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}

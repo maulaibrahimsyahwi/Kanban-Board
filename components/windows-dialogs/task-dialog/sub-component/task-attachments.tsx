@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
+import { useSession } from "next-auth/react";
 
 import {
   DropdownMenu,
@@ -38,6 +39,8 @@ export default function TaskAttachmentsMenu({
   setIsUploading,
   onOpenLinkDialog,
 }: TaskAttachmentsMenuProps) {
+  const { data: session } = useSession();
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -69,9 +72,16 @@ export default function TaskAttachmentsMenu({
     const toastId = toast.loading("Mengunggah file...");
 
     try {
+      const userId = session?.user?.id;
+      if (!userId) {
+        toast.error("Anda harus login untuk mengunggah file.", { id: toastId });
+        return;
+      }
+
       const fileExt = file.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const safeExt = fileExt ? fileExt.replace(/[^a-zA-Z0-9]/g, "") : "bin";
+      const fileName = `${uuidv4()}.${safeExt}`;
+      const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("attachments")

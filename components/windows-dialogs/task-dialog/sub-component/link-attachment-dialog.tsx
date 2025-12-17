@@ -44,7 +44,11 @@ export default function LinkAttachmentDialog({
     }
 
     try {
-      new URL(linkUrl);
+      const parsed = new URL(linkUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        toast.error("URL tidak valid. Gunakan http:// atau https://");
+        return;
+      }
     } catch {
       toast.error("URL tidak valid. Gunakan http:// atau https://");
       return;
@@ -104,4 +108,3 @@ export default function LinkAttachmentDialog({
     </Dialog>
   );
 }
-

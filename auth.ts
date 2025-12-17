@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { authenticator } from "otplib";
 import type { Adapter } from "next-auth/adapters";
 import type { User } from "next-auth";
+import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -28,10 +29,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
         code: { label: "2FA Code", type: "text" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = credentials.email as string;
+        const ip = getClientIpFromHeaders(request?.headers ?? new Headers());
+        const limitedByIp = rateLimit(`auth:login:ip:${ip}`, {
+          windowMs: 60 * 1000,
+          max: 30,
+        });
+        const limitedByIdentity = rateLimit(`auth:login:ip_email:${ip}:${email}`, {
+          windowMs: 60 * 1000,
+          max: 10,
+        });
+        if (!limitedByIp.ok || !limitedByIdentity.ok) {
+          throw new Error("RATE_LIMIT");
+        }
+
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user || !user.password) return null;

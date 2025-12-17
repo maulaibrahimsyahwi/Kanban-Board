@@ -5,9 +5,11 @@ export const AttachmentSchema = z.object({
   name: z.string(),
   url: z
     .string()
-    .refine((val) => val.startsWith("http") || val.startsWith("data:"), {
-      message: "Invalid URL format",
-    }),
+    .url()
+    .refine((val) => {
+      const parsed = new URL(val);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    }, "Invalid URL format"),
   type: z.string(),
 });
 

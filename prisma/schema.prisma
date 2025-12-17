@@ -43,6 +43,7 @@ model User {
 
   notificationSettings NotificationSettings?
   assignedTasks        Task[] @relation("TaskAssignees")
+  passwordResetTokens  PasswordResetToken[]
   
   sSOSettings          SSOSettings?
 }
@@ -116,6 +117,20 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  tokenHash String
+  expires   DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "PasswordResetToken_userId_idx")
 }
 
 model Project {

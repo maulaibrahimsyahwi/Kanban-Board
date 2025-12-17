@@ -6,6 +6,7 @@ import { sendPasswordResetEmail } from "@/lib/mail";
 import { z } from "zod";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 const RegisterSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter"),
@@ -13,32 +14,13 @@ const RegisterSchema = z.object({
   password: z.string().min(8, "Password minimal 8 karakter"),
 });
 
-const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
-
-function checkRateLimit(ip: string) {
-  const WINDOW_MS = 60 * 1000;
-  const MAX_REQUESTS = 5;
-
-  const now = Date.now();
-  const record = rateLimitMap.get(ip) || { count: 0, lastReset: now };
-
-  if (now - record.lastReset > WINDOW_MS) {
-    record.count = 0;
-    record.lastReset = now;
-  }
-
-  if (record.count >= MAX_REQUESTS) {
-    return false;
-  }
-
-  record.count++;
-  rateLimitMap.set(ip, record);
-  return true;
-}
-
 export async function registerUserAction(formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) {
+  const ip = getClientIpFromHeaders(await headers());
+  const limited = rateLimit(`auth:register:ip:${ip}`, {
+    windowMs: 60 * 1000,
+    max: 5,
+  });
+  if (!limited.ok) {
     return {
       success: false,
       message: "Terlalu banyak percobaan. Silakan coba lagi dalam 1 menit.",
@@ -68,21 +50,11 @@ export async function registerUserAction(formData: FormData) {
     });
 
     if (existingUser) {
-      if (!existingUser.password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await prisma.user.update({
-          where: { email },
-          data: {
-            password: hashedPassword,
-            name: existingUser.name || name,
-          },
-        });
-        return {
-          success: true,
-          message: "Akun Google berhasil disinkronkan. Silakan login.",
-        };
-      }
-      return { success: false, message: "Email sudah terdaftar" };
+      return {
+        success: false,
+        message:
+          "Email sudah terdaftar. Silakan login (Google/credentials). Jika akun Anda dibuat via Google, login dulu lalu atur password dari Settings.",
+      };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -122,6 +94,22 @@ export async function requestPasswordResetAction(email: string) {
   }
 
   try {
+    const ip = getClientIpFromHeaders(await headers());
+    const limitedByIp = rateLimit(`auth:pwreset:request:ip:${ip}`, {
+      windowMs: 60 * 1000,
+      max: 5,
+    });
+    const limitedByEmail = rateLimit(`auth:pwreset:request:email:${email}`, {
+      windowMs: 10 * 60 * 1000,
+      max: 3,
+    });
+    if (!limitedByIp.ok || !limitedByEmail.ok) {
+      return {
+        success: false,
+        message: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+      };
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -131,18 +119,33 @@ export async function requestPasswordResetAction(email: string) {
       };
     }
 
+    const authSecret = process.env.AUTH_SECRET;
+    if (!authSecret) {
+      return { success: false, message: "Konfigurasi server belum lengkap." };
+    }
+
     const token = crypto.randomInt(100000, 1000000).toString();
     const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
 
-    await prisma.verificationToken.deleteMany({
-      where: { identifier: email },
-    });
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(`${email}:${token}:${authSecret}`)
+      .digest("hex");
 
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
+    await prisma.passwordResetToken.upsert({
+      where: { email },
+      update: {
+        tokenHash,
         expires,
+        attempts: 0,
+        userId: user.id,
+      },
+      create: {
+        email,
+        tokenHash,
+        expires,
+        attempts: 0,
+        userId: user.id,
       },
     });
 
@@ -178,19 +181,65 @@ export async function resetPasswordAction(
   }
 
   try {
-    const verificationToken = await prisma.verificationToken.findFirst({
-      where: {
-        identifier: email,
-        token: code,
-      },
+    const ip = getClientIpFromHeaders(await headers());
+    const limitedByIp = rateLimit(`auth:pwreset:confirm:ip:${ip}`, {
+      windowMs: 60 * 1000,
+      max: 10,
     });
-
-    if (!verificationToken) {
-      return { success: false, message: "Kode salah atau tidak ditemukan." };
+    const limitedByEmail = rateLimit(`auth:pwreset:confirm:email:${email}`, {
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+    });
+    if (!limitedByIp.ok || !limitedByEmail.ok) {
+      return {
+        success: false,
+        message: "Terlalu banyak percobaan. Silakan coba lagi nanti.",
+      };
     }
 
-    if (new Date() > verificationToken.expires) {
-      return { success: false, message: "Kode telah kadaluarsa." };
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+    }
+
+    const authSecret = process.env.AUTH_SECRET;
+    if (!authSecret) {
+      return { success: false, message: "Konfigurasi server belum lengkap." };
+    }
+
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { email },
+    });
+
+    if (!resetToken) {
+      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+    }
+
+    if (new Date() > resetToken.expires) {
+      await prisma.passwordResetToken.delete({ where: { email } });
+      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+    }
+
+    const MAX_ATTEMPTS = 5;
+    if (resetToken.attempts >= MAX_ATTEMPTS) {
+      await prisma.passwordResetToken.delete({ where: { email } });
+      return {
+        success: false,
+        message: "Terlalu banyak percobaan. Silakan request kode ulang.",
+      };
+    }
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(`${email}:${code}:${authSecret}`)
+      .digest("hex");
+
+    if (tokenHash !== resetToken.tokenHash) {
+      await prisma.passwordResetToken.update({
+        where: { email },
+        data: { attempts: { increment: 1 } },
+      });
+      return { success: false, message: "Kode salah atau telah kadaluarsa." };
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -200,14 +249,7 @@ export async function resetPasswordAction(
       data: { password: hashedPassword },
     });
 
-    await prisma.verificationToken.delete({
-      where: {
-        identifier_token: {
-          identifier: email,
-          token: code,
-        },
-      },
-    });
+    await prisma.passwordResetToken.delete({ where: { email } });
 
     return {
       success: true,

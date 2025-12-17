@@ -11,6 +11,8 @@ import {
   isTwoFactorVerifiedForCurrentRequest,
   setTwoFactorVerifiedCookie,
 } from "@/lib/two-factor-session";
+import { headers } from "next/headers";
+import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 export async function getTwoFactorLockStateAction() {
   const session = await auth();
@@ -91,6 +93,22 @@ export async function verifyTwoFactorLoginAction(code: string) {
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
   try {
+    const ip = getClientIpFromHeaders(await headers());
+    const limitedByIp = rateLimit(`auth:2fa:verify:ip:${ip}`, {
+      windowMs: 60 * 1000,
+      max: 10,
+    });
+    const limitedByUser = rateLimit(`auth:2fa:verify:user:${session.user.id}`, {
+      windowMs: 60 * 1000,
+      max: 5,
+    });
+    if (!limitedByIp.ok || !limitedByUser.ok) {
+      return {
+        success: false,
+        message: "Terlalu banyak percobaan. Silakan coba lagi nanti.",
+      };
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
     });

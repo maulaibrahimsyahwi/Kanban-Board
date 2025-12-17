@@ -103,6 +103,11 @@ export function useAuthCard() {
           setTempEmail(email);
           setTempPassword(password);
           toast.info("Two-factor authentication required");
+        } else if (
+          result.error === "RATE_LIMIT" ||
+          result.error.includes("RATE_LIMIT")
+        ) {
+          toast.error("Terlalu banyak percobaan. Silakan coba lagi sebentar.");
         } else {
           toast.error("Login failed", {
             description: "Check your credentials.",
@@ -227,4 +232,3 @@ export function useAuthCard() {
     backFromTwoFactor,
   };
 }
-
