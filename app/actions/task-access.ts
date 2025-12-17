@@ -1,48 +1,29 @@
 import { prisma } from "@/lib/prisma";
 
 export async function verifyProjectAccess(userId: string, boardId: string) {
-  const board = await prisma.board.findUnique({
-    where: { id: boardId },
-    include: {
+  const board = await prisma.board.findFirst({
+    where: {
+      id: boardId,
       project: {
-        include: {
-          members: { select: { id: true } },
-        },
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
     },
+    select: { id: true },
   });
 
-  if (!board) return false;
-
-  const isOwner = board.project.ownerId === userId;
-  const isMember = board.project.members.some((member) => member.id === userId);
-
-  return isOwner || isMember;
+  return !!board;
 }
 
 export async function verifyTaskAccess(userId: string, taskId: string) {
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    include: {
+  return prisma.task.findFirst({
+    where: {
+      id: taskId,
       board: {
-        include: {
-          project: {
-            include: {
-              members: { select: { id: true } },
-            },
-          },
+        project: {
+          OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
         },
       },
     },
+    select: { id: true, boardId: true, order: true },
   });
-
-  if (!task) return null;
-
-  const isOwner = task.board.project.ownerId === userId;
-  const isMember = task.board.project.members.some((member) => member.id === userId);
-
-  if (!isOwner && !isMember) return null;
-
-  return task;
 }
-

@@ -14,16 +14,16 @@ export type SortDirection = "asc" | "desc";
 export type TaskWithBoardInfo = Task & { boardName: string; boardId: string };
 
 const priorityOrder: { [key in Task["priority"]]: number } = {
-  urgent: 4,
-  important: 3,
+  critical: 4,
+  high: 3,
   medium: 2,
   low: 1,
 };
 
 const progressOrder: { [key in Task["progress"]]: number } = {
-  "not-started": 0,
-  "in-progress": 1,
-  completed: 2,
+  not_started: 0,
+  in_progress: 1,
+  done: 2,
 };
 
 export const createTaskComparator = (
@@ -67,4 +67,3 @@ export const createTaskComparator = (
     }
   };
 };
-

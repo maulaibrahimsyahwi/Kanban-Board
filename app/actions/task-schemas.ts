@@ -14,8 +14,8 @@ export const AttachmentSchema = z.object({
 export const TaskUpdateSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().max(2000).optional().nullable(),
-  priority: z.enum(["low", "medium", "important", "urgent"]).optional(),
-  progress: z.enum(["not-started", "in-progress", "completed"]).optional(),
+  priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+  progress: z.enum(["not_started", "in_progress", "done"]).optional(),
   statusId: z.string().optional().nullable(),
   startDate: z.date().nullable().optional(),
   dueDate: z.date().nullable().optional(),
@@ -29,4 +29,3 @@ export const TaskUpdateSchema = z.object({
   assignees: z.array(z.any()).optional(),
   attachments: z.array(AttachmentSchema).optional(),
 });
-

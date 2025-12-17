@@ -22,13 +22,13 @@ type PriorityItem = {
 
 const PriorityListArray: PriorityItem[] = [
   {
-    id: "urgent",
+    id: "critical",
     name: "Mendesak",
     icon: BellRing,
     className: "text-red-600 dark:text-red-400",
   },
   {
-    id: "important",
+    id: "high",
     name: "Penting",
     icon: AlertCircle,
     className: "text-orange-600 dark:text-orange-400",

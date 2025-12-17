@@ -6,6 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum TaskProgress {
+  not_started
+  in_progress
+  done
+}
+
 model User {
   id                  String    @id @default(cuid())
   name                String?
@@ -84,6 +97,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId], map: "Account_userId_idx")
 }
 
 model Session {
@@ -92,6 +106,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "Session_userId_idx")
 }
 
 model VerificationToken {
@@ -117,7 +133,7 @@ model Project {
   boards    Board[]
 
   statusId  String?
-  status    ProjectStatus? @relation(fields: [statusId], references: [id])
+  status    ProjectStatus? @relation(fields: [statusId], references: [id], onDelete: SetNull)
 }
 
 model ProjectStatus {
@@ -135,6 +151,9 @@ model ProjectStatus {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId], map: "ProjectStatus_userId_idx")
+  @@index([userId, order], map: "ProjectStatus_userId_order_idx")
 }
 
 model Board {
@@ -147,14 +166,17 @@ model Board {
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks     Task[]
+
+  @@index([projectId], map: "Board_projectId_idx")
+  @@index([projectId, order], map: "Board_projectId_order_idx")
 }
 
 model Task {
   id                    String          @id @default(cuid())
   title                 String
   description           String?         @db.Text
-  priority              String          @default("low")
-  progress              String          @default("not-started")
+  priority              Priority        @default(low)
+  progress              TaskProgress    @default(not_started)
   startDate             DateTime?
   dueDate               DateTime?
   cardDisplayPreference String          @default("none")
@@ -166,13 +188,17 @@ model Task {
   board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
   
   statusId  String?
-  status    ProjectStatus? @relation(fields: [statusId], references: [id])
+  status    ProjectStatus? @relation(fields: [statusId], references: [id], onDelete: SetNull)
 
   checklist ChecklistItem[]
   labels    Label[]
   
   assignees   User[]        @relation("TaskAssignees")
   attachments Attachment[]
+
+  @@index([boardId], map: "Task_boardId_idx")
+  @@index([boardId, order], map: "Task_boardId_order_idx")
+  @@index([statusId], map: "Task_statusId_idx")
 }
 
 model ChecklistItem {
@@ -181,6 +207,8 @@ model ChecklistItem {
   isDone Boolean @default(false)
   taskId String
   task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId], map: "ChecklistItem_taskId_idx")
 }
 
 model Label {
@@ -189,6 +217,8 @@ model Label {
   color  String
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId], map: "Label_taskId_idx")
 }
 
 model Attachment {
@@ -200,6 +230,8 @@ model Attachment {
   
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId], map: "Attachment_taskId_idx")
 }
 
 model SSOSettings {

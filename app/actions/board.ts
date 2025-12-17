@@ -5,32 +5,29 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: { members: { select: { id: true } } },
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+    },
+    select: { id: true },
   });
 
-  if (!project) return false;
-  return (
-    project.ownerId === userId || project.members.some((m) => m.id === userId)
-  );
+  return !!project;
 }
 
 async function verifyBoardAccess(userId: string, boardId: string) {
-  const board = await prisma.board.findUnique({
-    where: { id: boardId },
-    include: {
+  const board = await prisma.board.findFirst({
+    where: {
+      id: boardId,
       project: {
-        include: { members: { select: { id: true } } },
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
     },
+    select: { id: true },
   });
 
-  if (!board) return false;
-  const project = board.project;
-  return (
-    project.ownerId === userId || project.members.some((m) => m.id === userId)
-  );
+  return !!board;
 }
 
 export async function createBoardAction(projectId: string, name: string) {

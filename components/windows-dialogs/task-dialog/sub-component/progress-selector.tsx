@@ -26,19 +26,19 @@ type ProgressItem = {
 
 const ProgressListArray: ProgressItem[] = [
   {
-    id: "not-started",
+    id: "not_started",
     name: "Belum dimulai",
     icon: FaRegCircle,
     className: "text-muted-foreground",
   },
   {
-    id: "in-progress",
+    id: "in_progress",
     name: "Dalam proses",
     icon: BsCircleHalf,
     className: "text-blue-600 dark:text-blue-400",
   },
   {
-    id: "completed",
+    id: "done",
     name: "Selesai",
     icon: FaCircleCheck,
     className: "text-green-600 dark:text-green-500",

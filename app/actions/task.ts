@@ -38,7 +38,7 @@ export async function createTaskAction(
         title: taskData.title!,
         description: taskData.description,
         priority: taskData.priority || "low",
-        progress: taskData.progress || "not-started",
+        progress: taskData.progress || "not_started",
         statusId: taskData.statusId,
         startDate: taskData.startDate,
         dueDate: taskData.dueDate,

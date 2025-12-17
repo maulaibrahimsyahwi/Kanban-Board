@@ -27,7 +27,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
-  const [progress, setProgress] = useState<Task["progress"]>("not-started");
+  const [progress, setProgress] = useState<Task["progress"]>("not_started");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [labels, setLabels] = useState<Task["labels"]>([]);
@@ -114,7 +114,7 @@ export default function TaskDialog({ boardId, trigger }: TaskDialogProps) {
     setTitle("");
     setDescription("");
     setPriority("medium");
-    setProgress("not-started");
+    setProgress("not_started");
     setStartDate(null);
     setDueDate(null);
     setLabels([]);

@@ -36,7 +36,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [boardId, setBoardId] = useState(defaultBoard);
-  const [progress, setProgress] = useState<Task["progress"]>("not-started");
+  const [progress, setProgress] = useState<Task["progress"]>("not_started");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [isCreating, setIsCreating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -99,7 +99,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
       setStartDate(null);
       setDueDate(null);
       setBoardId(defaultBoard);
-      setProgress("not-started");
+      setProgress("not_started");
       setPriority("medium");
       setIsExpanded(false);
       onTaskAdded();

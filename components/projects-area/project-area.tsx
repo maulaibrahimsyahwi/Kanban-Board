@@ -102,7 +102,7 @@ export default function ProjectArea() {
           if (
             dueDates.has("overdue") &&
             taskTime < today.getTime() &&
-            task.progress !== "completed"
+            task.progress !== "done"
           )
             return true;
           if (dueDates.has("today") && taskTime === today.getTime())

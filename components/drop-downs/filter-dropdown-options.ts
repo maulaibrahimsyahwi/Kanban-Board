@@ -43,13 +43,13 @@ export const DUE_DATE_OPTIONS: FilterOption<DueDateFilter>[] = [
 
 export const PRIORITY_OPTIONS: FilterOption<PriorityFilter>[] = [
   {
-    id: "urgent",
+    id: "critical",
     label: "Mendesak",
     icon: BellRing,
     className: "text-red-600 dark:text-red-400",
   },
   {
-    id: "important",
+    id: "high",
     label: "Penting",
     icon: AlertCircle,
     className: "text-orange-600 dark:text-orange-400",
@@ -70,22 +70,21 @@ export const PRIORITY_OPTIONS: FilterOption<PriorityFilter>[] = [
 
 export const PROGRESS_OPTIONS: FilterOption<ProgressFilter>[] = [
   {
-    id: "not-started",
+    id: "not_started",
     label: "Belum dimulai",
     icon: FaRegCircle,
     className: "text-muted-foreground",
   },
   {
-    id: "in-progress",
+    id: "in_progress",
     label: "Dalam proses",
     icon: BsCircleHalf,
     className: "text-blue-600 dark:text-blue-400",
   },
   {
-    id: "completed",
+    id: "done",
     label: "Selesai",
     icon: FaCircleCheck,
     className: "text-green-600 dark:text-green-500",
   },
 ];
-

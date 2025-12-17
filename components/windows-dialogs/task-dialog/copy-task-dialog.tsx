@@ -108,7 +108,7 @@ export default function CopyTaskDialog({
       title: copyTaskName.trim(),
       description: copyOptions.description ? task.description : "",
       priority: task.priority,
-      progress: copyOptions.progress ? task.progress : "not-started",
+      progress: copyOptions.progress ? task.progress : "not_started",
       startDate: copyOptions.dates ? task.startDate : null,
       dueDate: copyOptions.dates ? task.dueDate : null,
       labels: copyOptions.labels ? task.labels : [],

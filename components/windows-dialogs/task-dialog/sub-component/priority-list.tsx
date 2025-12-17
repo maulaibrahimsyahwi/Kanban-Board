@@ -39,11 +39,18 @@ const PriorityListArray: PriorityItem[] = [
     backgroundColor: "bg-yellow-500/10",
   },
   {
-    id: "important",
+    id: "high",
     name: "High",
     icon: MdOutlineKeyboardDoubleArrowUp,
     textColor: "text-red-700",
     backgroundColor: "bg-red-500/10",
+  },
+  {
+    id: "critical",
+    name: "Critical",
+    icon: MdOutlineKeyboardDoubleArrowUp,
+    textColor: "text-red-800",
+    backgroundColor: "bg-red-500/20",
   },
 ];
 

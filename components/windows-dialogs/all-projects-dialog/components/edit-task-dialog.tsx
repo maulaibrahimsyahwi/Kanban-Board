@@ -45,8 +45,8 @@ export function EditTaskDialog({
   const priorityOptions = [
     { value: "low", label: "Low Priority" },
     { value: "medium", label: "Medium Priority" },
-    { value: "important", label: "Important" },
-    { value: "urgent", label: "Urgent" },
+    { value: "high", label: "High Priority" },
+    { value: "critical", label: "Critical Priority" },
   ] as const;
 
   return (

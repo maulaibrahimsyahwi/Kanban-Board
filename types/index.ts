@@ -17,10 +17,10 @@ export type Task = {
   id: string;
   title: string;
   description: string | null;
-  priority: "low" | "medium" | "important" | "urgent";
+  priority: "low" | "medium" | "high" | "critical";
   createdAt: Date;
   updatedAt: Date;
-  progress: "not-started" | "in-progress" | "completed";
+  progress: "not_started" | "in_progress" | "done";
   statusId?: string | null;
   status?: ProjectStatus | null;
   startDate: Date | null;

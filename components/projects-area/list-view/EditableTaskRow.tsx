@@ -221,7 +221,7 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   const completedChecklist =
     initialTask.checklist?.filter((c) => c.isDone).length || 0;
   const hasChecklist = totalChecklist > 0;
-  const isCompletedTask = initialTask.progress === "completed";
+  const isCompletedTask = initialTask.progress === "done";
   const currentBoardName =
     boards.find((b) => b.id === editBoardId)?.name || initialTask.boardName;
   const isOverdue = !!(

@@ -51,13 +51,13 @@ export default function StatusChart({ tasks }: StatusChartProps) {
     const isOverdue =
       task.dueDate &&
       new Date(task.dueDate) < today &&
-      task.progress !== "completed";
+      task.progress !== "done";
 
     if (isOverdue) {
       overdue++;
-    } else if (task.progress === "completed") {
+    } else if (task.progress === "done") {
       completed++;
-    } else if (task.progress === "in-progress") {
+    } else if (task.progress === "in_progress") {
       inProgress++;
     } else {
       notStarted++;

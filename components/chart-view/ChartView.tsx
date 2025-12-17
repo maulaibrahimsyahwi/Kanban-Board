@@ -32,13 +32,13 @@ const getTaskStacks = (tasks: Task[]) => {
     const isOverdue =
       task.dueDate &&
       new Date(task.dueDate) < today &&
-      task.progress !== "completed";
+      task.progress !== "done";
 
     if (isOverdue) {
       overdue++;
-    } else if (task.progress === "completed") {
+    } else if (task.progress === "done") {
       completed++;
-    } else if (task.progress === "in-progress") {
+    } else if (task.progress === "in_progress") {
       inProgress++;
     } else {
       notStarted++;
@@ -83,11 +83,11 @@ export default function ChartView() {
   const priorityChartData: BarChartData[] = [
     {
       label: "Mendesak",
-      stacks: getTaskStacks(allTasks.filter((t) => t.priority === "urgent")),
+      stacks: getTaskStacks(allTasks.filter((t) => t.priority === "critical")),
     },
     {
       label: "Penting",
-      stacks: getTaskStacks(allTasks.filter((t) => t.priority === "important")),
+      stacks: getTaskStacks(allTasks.filter((t) => t.priority === "high")),
     },
     {
       label: "Sedang",

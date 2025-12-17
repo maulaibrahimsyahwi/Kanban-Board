@@ -38,7 +38,7 @@ export function useTaskActions(taskId: string, boardId: string) {
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<Task["priority"]>("medium");
   const [editProgress, setEditProgress] =
-    useState<Task["progress"]>("not-started");
+    useState<Task["progress"]>("not_started");
   const [editStartDate, setEditStartDate] = useState<Date | null>(null);
   const [editDueDate, setEditDueDate] = useState<Date | null>(null);
   const [editLabels, setEditLabels] = useState<Task["labels"]>([]);

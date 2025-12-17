@@ -5,15 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 async function verifyProjectAccess(userId: string, projectId: string) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: { members: { select: { id: true } } },
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+    },
+    select: { id: true },
   });
 
-  if (!project) return false;
-  return (
-    project.ownerId === userId || project.members.some((m) => m.id === userId)
-  );
+  return !!project;
 }
 
 export async function getProjectStatusesAction() {

@@ -23,7 +23,12 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString,
-  max: 1,
+  max: (() => {
+    const raw = process.env.PG_POOL_MAX;
+    const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    return process.env.NODE_ENV === "production" ? 10 : 5;
+  })(),
   allowExitOnIdle: true,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 15000,

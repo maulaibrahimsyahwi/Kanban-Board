@@ -9,7 +9,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 export const getPriorityConfig = (priority: Task["priority"]) => {
   switch (priority) {
-    case "urgent":
+    case "critical":
       return {
         label: "Mendesak",
         icon: Star,
@@ -17,7 +17,7 @@ export const getPriorityConfig = (priority: Task["priority"]) => {
         display: "Mendesak",
         isIconFilled: true,
       };
-    case "important":
+    case "high":
       return {
         label: "Penting",
         icon: Star,
@@ -47,21 +47,21 @@ export const getPriorityConfig = (priority: Task["priority"]) => {
 
 export const getProgressConfig = (progress: Task["progress"]) => {
   switch (progress) {
-    case "completed":
+    case "done":
       return {
         label: "Selesai",
         icon: Check,
         colorClass: "text-green-600 dark:text-green-500",
         display: "Selesai",
       };
-    case "in-progress":
+    case "in_progress":
       return {
         label: "Dalam proses",
         icon: GoDotFill,
         colorClass: "text-blue-600 dark:text-blue-400",
         display: "Dalam proses",
       };
-    case "not-started":
+    case "not_started":
     default:
       return {
         label: "Belum dimulai",

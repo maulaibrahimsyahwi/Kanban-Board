@@ -24,7 +24,7 @@ export function TaskDueDateFooter({
   const dueDateOnly = new Date(taskDueDate.getTime());
   dueDateOnly.setHours(0, 0, 0, 0);
 
-  const isOverdue = dueDateOnly < today && progress !== "completed";
+  const isOverdue = dueDateOnly < today && progress !== "done";
   const formattedDate = format(taskDueDate, dateFormat, {
     locale: indonesianLocale,
   });
@@ -49,4 +49,3 @@ export function TaskDueDateFooter({
     </div>
   );
 }
-

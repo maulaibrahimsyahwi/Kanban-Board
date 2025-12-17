@@ -7,21 +7,21 @@ import type { Task } from "@/types";
 
 export const getProgressConfig = (progress: Task["progress"]) => {
   switch (progress) {
-    case "completed":
+    case "done":
       return {
         icon: FaCircleCheck,
         label: "Selesai",
         className: "text-green-600 dark:text-green-500",
         bgColor: "bg-green-500/10",
       };
-    case "in-progress":
+    case "in_progress":
       return {
         icon: BsCircleHalf,
         label: "Dalam proses",
         className: "text-blue-600 dark:text-blue-400",
         bgColor: "bg-blue-500/10",
       };
-    case "not-started":
+    case "not_started":
     default:
       return {
         icon: FaRegCircle,
@@ -34,14 +34,14 @@ export const getProgressConfig = (progress: Task["progress"]) => {
 
 export const getPriorityConfig = (priority: Task["priority"]) => {
   switch (priority) {
-    case "urgent":
+    case "critical":
       return {
         icon: BellRing,
         label: "Mendesak",
         className: "text-red-600 dark:text-red-400",
         bgColor: "bg-red-500/10",
       };
-    case "important":
+    case "high":
       return {
         icon: AlertCircle,
         label: "Penting",
@@ -65,4 +65,3 @@ export const getPriorityConfig = (priority: Task["priority"]) => {
       };
   }
 };
-
