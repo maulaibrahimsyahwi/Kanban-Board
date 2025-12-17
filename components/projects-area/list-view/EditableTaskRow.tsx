@@ -3,52 +3,15 @@
 import * as React from "react";
 import { useProjects } from "@/contexts/projectContext";
 import { Task, Board } from "@/types";
-import { cn } from "@/lib/utils";
-import { Check, ListChecks, X, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useMemo } from "react";
-import { Input } from "@/components/ui/input";
-import PrioritySelector from "@/components/windows-dialogs/task-dialog/sub-component/priority-selector";
-import ProgressSelector from "@/components/windows-dialogs/task-dialog/sub-component/progress-selector";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CompactDatePicker } from "./ListViewHelpers";
-import { DEFAULT_LABELS, TaskLabel } from "@/constants";
-import { IoCheckmark } from "react-icons/io5";
-
-const COLOR_PALETTE: { name: string; class: string }[] = [
-  { name: "Pink", class: "bg-pink-600 text-white" },
-  { name: "Merah", class: "bg-red-600 text-white" },
-  { name: "Perunggu", class: "bg-orange-600 text-white" },
-  { name: "Kuning", class: "bg-yellow-500 text-black" },
-  { name: "Lemon", class: "bg-lime-500 text-black" },
-  { name: "Hijau", class: "bg-green-600 text-white" },
-  { name: "Biru Laut", class: "bg-cyan-600 text-white" },
-  { name: "Biru", class: "bg-blue-600 text-white" },
-  { name: "Ungu", class: "bg-purple-600 text-white" },
-  { name: "Abu-abu", class: "bg-gray-500 text-white" },
-];
+import type { TaskLabel } from "@/constants";
+import {
+  AppliedLabel,
+  buildAvailableLabels,
+  mapTaskLabelsWithIds,
+} from "./editable-task-labels-utils";
+import { EditableTaskRowContent } from "./editable-task-row-content";
 
 interface EditableTaskRowProps {
   task: Task & { boardName: string; boardId: string };
@@ -57,8 +20,6 @@ interface EditableTaskRowProps {
   onUpdate: () => void;
   onOpenEditDialog: (task: Task, boardId: string, boardName: string) => void;
 }
-
-type AppliedLabel = TaskLabel & { id: string };
 
 export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   task: initialTask,
@@ -71,58 +32,12 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
 
   const [localAvailableLabels, setLocalAvailableLabels] = useState<
     AppliedLabel[]
-  >(() => {
-    const labelMap = new Map<string, AppliedLabel>(
-      DEFAULT_LABELS.map((label) => [label.id, label as AppliedLabel])
-    );
-
-    if (selectedProject) {
-      selectedProject.boards.forEach((board) => {
-        board.tasks.forEach((task) => {
-          task.labels.forEach((label) => {
-            const defaultMatch = DEFAULT_LABELS.find(
-              (d) => d.name === label.name
-            );
-
-            let id = defaultMatch?.id;
-
-            if (!id) {
-              const editedMatch = Array.from(labelMap.values()).find(
-                (l) => l.name === label.name
-              );
-              id = editedMatch?.id || label.name;
-            }
-
-            const currentLabelInMap = labelMap.get(id);
-            if (currentLabelInMap && currentLabelInMap.name !== label.name) {
-              labelMap.set(id, {
-                id: id,
-                name: label.name,
-                color: label.color,
-              });
-            }
-          });
-        });
-      });
-    }
-
-    initialTask.labels.forEach((appliedLabel) => {
-      const defaultMatch = DEFAULT_LABELS.find(
-        (d) => d.name === appliedLabel.name
-      );
-      const id = defaultMatch?.id || appliedLabel.name;
-      const appliedWithId: AppliedLabel = {
-        id: id,
-        name: appliedLabel.name,
-        color: appliedLabel.color,
-      };
-      if (labelMap.has(appliedWithId.id)) {
-        labelMap.set(appliedWithId.id, appliedWithId);
-      }
-    });
-
-    return Array.from(labelMap.values());
-  });
+  >(() =>
+    buildAvailableLabels({
+      selectedProject,
+      initialTaskLabels: initialTask.labels,
+    })
+  );
 
   const [task, setTask] = useState(
     initialTask as Omit<typeof initialTask, "labels"> & {
@@ -147,17 +62,10 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const initialLabelsWithId = initialTask.labels.map((label) => {
-      const stateLabel = localAvailableLabels.find(
-        (l) => l.name === label.name
-      );
-      const id = stateLabel?.id || label.name;
-      return {
-        id: id,
-        name: label.name,
-        color: label.color,
-      };
-    }) as AppliedLabel[];
+    const initialLabelsWithId = mapTaskLabelsWithIds({
+      taskLabels: initialTask.labels,
+      availableLabels: localAvailableLabels,
+    });
 
     setTask({ ...initialTask, labels: initialLabelsWithId });
     setEditTitle(initialTask.title);
@@ -323,301 +231,36 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
   );
 
   return (
-    <>
-      <div
-        className={cn(
-          "grid grid-cols-[1.5fr_150px_150px_150px_120px_180px_160px_150px_80px] items-center text-sm text-foreground px-4 hover:bg-muted/50 transition-colors"
-        )}
-      >
-        <div className="contents py-2.5">
-          <div className="font-medium truncate pr-2 py-1">
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={() => handleSave("title", editTitle)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.currentTarget.blur();
-                }
-              }}
-              className={cn(
-                "h-7 w-full border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 shadow-none hover:bg-muted/70 cursor-pointer text-sm",
-                editTitle.trim().length < 3 &&
-                  task.title.length >= 3 &&
-                  "ring-2 ring-red-500"
-              )}
-            />
-          </div>
-
-          <div className="text-muted-foreground truncate pr-2 py-1">Tugas</div>
-
-          <div className="text-muted-foreground truncate pr-2 py-1 pb-5">
-            <CompactDatePicker
-              date={editStartDate}
-              onDateChange={(d) => {
-                setEditStartDate(d);
-                handleSave("startDate", d);
-              }}
-              placeholder={"-"}
-              isOverdue={false}
-            />
-          </div>
-
-          <div
-            className={cn(
-              "truncate pr-2 py-1 pb-5",
-              isOverdue && "text-red-500 font-medium"
-            )}
-          >
-            <CompactDatePicker
-              date={editDueDate}
-              onDateChange={(d) => {
-                setEditDueDate(d);
-                handleSave("dueDate", d);
-              }}
-              placeholder={"-"}
-              isOverdue={isOverdue}
-            />
-          </div>
-
-          <div className="truncate pr-2 py-1">
-            <Select
-              value={editBoardId}
-              onValueChange={(newId) => handleSave("boardId", newId)}
-            >
-              <SelectTrigger
-                className="h-7 p-1 text-xs border-dashed text-muted-foreground"
-                size="sm"
-              >
-                <SelectValue placeholder={currentBoardName} />
-              </SelectTrigger>
-              <SelectContent>
-                {boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="pr-2 py-1 ">
-            <ProgressSelector
-              selectedProgress={task.progress}
-              onSelectProgress={(p) => handleSave("progress", p)}
-              size="sm"
-            />
-          </div>
-
-          <div className="py-1">
-            <PrioritySelector
-              selectedPriority={task.priority}
-              onSelectPriority={(p) => handleSave("priority", p)}
-              size="sm"
-            />
-          </div>
-
-          {/* LABEL SELECTOR DROP DOWN */}
-          <div className="py-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex flex-wrap gap-1 cursor-pointer hover:underline py-0.5 w-full h-full min-h-[30px] items-center">
-                  {task.labels &&
-                    task.labels.slice(0, 1).map((label) => (
-                      <Badge
-                        key={label.name}
-                        className={cn(
-                          "text-xs px-2 py-0.5 font-medium",
-                          label.color
-                        )}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {label.name}
-                        <X
-                          className="w-3 h-3 ml-1"
-                          onClick={(e) =>
-                            handleRemoveLabelFromBadge(e, label.name)
-                          }
-                        />
-                      </Badge>
-                    ))}
-                  {task.labels && task.labels.length > 1 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{task.labels.length - 1}
-                    </span>
-                  )}
-                  {!task.labels || task.labels.length === 0 ? (
-                    <span className="text-muted-foreground/70 italic text-xs hover:underline">
-                      Tambahkan label
-                    </span>
-                  ) : null}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-[200px] poppins"
-                align="start"
-              >
-                {/* BAGIAN 1: LABEL YANG SUDAH TERPILIH (Applied Labels) */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
-                  Label Terpilih
-                </div>
-                {task.labels.map((label) => (
-                  <DropdownMenuItem
-                    key={label.id}
-                    className={cn(
-                      "flex justify-between items-center cursor-pointer bg-accent/50 group"
-                    )}
-                    onSelect={(e) => e.preventDefault()}
-                    onClick={() => handleToggleLabel(label)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "w-3 h-3 rounded-full",
-                          label.color.split(" ")[0]
-                        )}
-                      />
-                      <span className="text-sm">{label.name}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <IoCheckmark className="w-4 h-4 text-primary" />
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-
-                {/* BAGIAN 2: LABEL YANG BELUM TERPILIH (Available Labels) */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1">
-                  Pilih Label
-                </div>
-                {availableLabelsForDropdown.map((label) => {
-                  const key = label.id;
-                  return (
-                    <DropdownMenuItem
-                      key={key}
-                      className={
-                        "flex justify-between items-center cursor-pointer group"
-                      }
-                      onSelect={(e) => e.preventDefault()}
-                      onClick={() => handleToggleLabel(label)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "w-3 h-3 rounded-full",
-                            label.color.split(" ")[0]
-                          )}
-                        />
-                        <span className="text-sm">{label.name}</span>
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="w-5 h-5 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100"
-                        onClick={(e) => handleOpenEditLabelDialog(e, label)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div
-            className="flex items-center justify-end py-1"
-            onClick={() =>
-              onOpenEditDialog(initialTask, initialBoardId, currentBoardName)
-            }
-          >
-            {hasChecklist ? (
-              <Badge
-                variant="secondary"
-                className={cn(
-                  "text-xs h-5 px-2 cursor-pointer transition-colors hover:bg-muted/70",
-                  completedChecklist === totalChecklist &&
-                    "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                )}
-              >
-                <Check className="w-3 h-3 mr-1" />
-                {completedChecklist}/{totalChecklist}
-              </Badge>
-            ) : task.description ? (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="w-8 h-8 text-muted-foreground hover:bg-muted"
-              >
-                <ListChecks className="w-4 h-4" />
-              </Button>
-            ) : (
-              <div className="w-8 h-8"></div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Edit Label Dialog Component */}
-      <Dialog
-        open={isEditLabelDialogOpen}
-        onOpenChange={setIsEditLabelDialogOpen}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5" /> Edit Label
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="label-name">Nama Label</Label>
-              <Input
-                id="label-name"
-                value={editLabelName}
-                onChange={(e) => setEditLabelName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Warna</Label>
-              <div className="grid grid-cols-5 gap-2">
-                {COLOR_PALETTE.map((color) => (
-                  <Button
-                    key={color.name}
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "h-12 w-full border-2",
-                      editLabelColor === color.class
-                        ? "border-primary ring-2 ring-primary"
-                        : "border-border"
-                    )}
-                    onClick={() => setEditLabelColor(color.class)}
-                  >
-                    <div
-                      className={cn("w-6 h-6 rounded-full", color.class)}
-                    ></div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsEditLabelDialogOpen(false)}
-            >
-              Batal
-            </Button>
-            <Button type="button" onClick={handleSaveLabelEdit}>
-              Simpan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <EditableTaskRowContent
+      task={task}
+      boards={boards}
+      editTitle={editTitle}
+      setEditTitle={setEditTitle}
+      editStartDate={editStartDate}
+      setEditStartDate={setEditStartDate}
+      editDueDate={editDueDate}
+      setEditDueDate={setEditDueDate}
+      editBoardId={editBoardId}
+      currentBoardName={currentBoardName}
+      isOverdue={isOverdue}
+      hasChecklist={hasChecklist}
+      totalChecklist={totalChecklist}
+      completedChecklist={completedChecklist}
+      availableLabelsForDropdown={availableLabelsForDropdown}
+      onSave={handleSave}
+      onToggleLabel={handleToggleLabel}
+      onRemoveLabelFromBadge={handleRemoveLabelFromBadge}
+      onOpenEditLabelDialog={handleOpenEditLabelDialog}
+      onOpenEditDialog={() =>
+        onOpenEditDialog(initialTask, initialBoardId, currentBoardName)
+      }
+      isEditLabelDialogOpen={isEditLabelDialogOpen}
+      setIsEditLabelDialogOpen={setIsEditLabelDialogOpen}
+      editLabelName={editLabelName}
+      setEditLabelName={setEditLabelName}
+      editLabelColor={editLabelColor}
+      setEditLabelColor={setEditLabelColor}
+      onSaveLabelEdit={handleSaveLabelEdit}
+    />
   );
 };

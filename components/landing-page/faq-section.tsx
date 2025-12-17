@@ -4,25 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 import { SectionHeader } from "./section-header";
-
-const faqs = [
-  {
-    q: "Can I use this as a personal kanban board?",
-    a: "Yes. Create a project, add boards, and manage tasks with priorities, labels, and due dates.",
-  },
-  {
-    q: "Does it support different views?",
-    a: "Yes — board, list, calendar, charts, and people view are available to fit different workflows.",
-  },
-  {
-    q: "Is 2FA available?",
-    a: "Yes. You can enable two-factor authentication from the security/team settings area.",
-  },
-  {
-    q: "Can I customize project statuses?",
-    a: "Yes. Project statuses can be created and edited so your team can use consistent progress labels.",
-  },
-];
+import { FAQS } from "./landing-content";
 
 export function FAQSection() {
   return (
@@ -34,7 +16,7 @@ export function FAQSection() {
         />
 
         <div className="mt-12 max-w-3xl mx-auto space-y-3">
-          {faqs.map((item, idx) => (
+          {FAQS.map((item, idx) => (
             <motion.details
               key={item.q}
               initial={{ opacity: 0, y: 10 }}

@@ -6,38 +6,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Filter,
-  CalendarDays,
-  AlertCircle,
-  Tag,
-  LayoutGrid,
-  ListChecks,
-  TimerOff,
-  CalendarCheck,
-  CalendarClock,
-  CalendarRange,
-  CalendarPlus,
-  TrendingUp,
-  CalendarX,
-  BellRing,
-  ArrowDown,
-  Layout,
-  Check,
-} from "lucide-react";
+import { Filter, CalendarDays, AlertCircle, Tag, LayoutGrid, ListChecks, Layout } from "lucide-react";
 import { BsCircleHalf } from "react-icons/bs";
-import { FaRegCircle } from "react-icons/fa";
-import { FaCircleCheck } from "react-icons/fa6";
-import { GoDotFill } from "react-icons/go";
 import { useProjects } from "@/contexts/projectContext";
 import { DEFAULT_LABELS } from "@/constants";
 import { DueDateFilter, PriorityFilter, ProgressFilter } from "@/types";
 import { cn } from "@/lib/utils";
+import { DUE_DATE_OPTIONS, PRIORITY_OPTIONS, PROGRESS_OPTIONS } from "./filter-dropdown-options";
+import { CustomCheckboxItem, FilterSubTrigger } from "./filter-dropdown-ui";
 
 interface FilterDropdownProps {
   dueDates: Set<DueDateFilter>;
@@ -51,28 +31,6 @@ interface FilterDropdownProps {
   boards: Set<string>;
   setBoards: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
-
-// Komponen item kustom untuk menggantikan DropdownMenuCheckboxItem
-const CustomCheckboxItem = ({
-  checked,
-  onCheckedChange,
-  children,
-  className,
-}: {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <DropdownMenuItem
-    className={cn("cursor-pointer justify-between", className)}
-    onSelect={(e) => e.preventDefault()}
-    onClick={() => onCheckedChange(!checked)}
-  >
-    <div className="flex items-center gap-2">{children}</div>
-    {checked && <Check className="w-4 h-4 text-primary" />}
-  </DropdownMenuItem>
-);
 
 export default function FilterDropdown({
   dueDates,
@@ -123,119 +81,6 @@ export default function FilterDropdown({
     });
   };
 
-  const dueDateOptions: {
-    id: DueDateFilter;
-    label: string;
-    icon: React.ElementType;
-    className: string;
-  }[] = [
-    {
-      id: "overdue",
-      label: "Terlambat",
-      icon: TimerOff,
-      className: "text-red-600 dark:text-red-400",
-    },
-    { id: "today", label: "Hari ini", icon: CalendarCheck, className: "" },
-    { id: "tomorrow", label: "Besok", icon: CalendarClock, className: "" },
-    {
-      id: "this-week",
-      label: "Minggu ini",
-      icon: CalendarRange,
-      className: "",
-    },
-    {
-      id: "next-week",
-      label: "Minggu depan",
-      icon: CalendarPlus,
-      className: "",
-    },
-    { id: "upcoming", label: "Mendatang", icon: TrendingUp, className: "" },
-    {
-      id: "no-date",
-      label: "Tidak ada tanggal",
-      icon: CalendarX,
-      className: "",
-    },
-  ];
-
-  const priorityOptions: {
-    id: PriorityFilter;
-    label: string;
-    icon: React.ElementType;
-    className: string;
-  }[] = [
-    {
-      id: "urgent",
-      label: "Mendesak",
-      icon: BellRing,
-      className: "text-red-600 dark:text-red-400",
-    },
-    {
-      id: "important",
-      label: "Penting",
-      icon: AlertCircle,
-      className: "text-orange-600 dark:text-orange-400",
-    },
-    {
-      id: "medium",
-      label: "Sedang",
-      icon: GoDotFill,
-      className: "text-green-600 dark:text-green-400",
-    },
-    {
-      id: "low",
-      label: "Rendah",
-      icon: ArrowDown,
-      className: "text-blue-600 dark:text-blue-400",
-    },
-  ];
-
-  const progressOptions: {
-    id: ProgressFilter;
-    label: string;
-    icon: React.ElementType;
-    className: string;
-  }[] = [
-    {
-      id: "not-started",
-      label: "Belum dimulai",
-      icon: FaRegCircle,
-      className: "text-muted-foreground",
-    },
-    {
-      id: "in-progress",
-      label: "Dalam proses",
-      icon: BsCircleHalf,
-      className: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      id: "completed",
-      label: "Selesai",
-      icon: FaCircleCheck,
-      className: "text-green-600 dark:text-green-500",
-    },
-  ];
-
-  const renderSubTrigger = (
-    Icon: React.ElementType,
-    title: string,
-    count: number,
-    total?: number
-  ) => (
-    <DropdownMenuSubTrigger className="cursor-pointer h-10">
-      <Icon className="w-4 h-4 mr-2" />
-      <span>
-        {title}
-        {total !== undefined && ` (${total})`}
-      </span>
-      {count > 0 && (
-        <span className="ml-auto mr-1 text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
-          {count}
-        </span>
-      )}
-    </DropdownMenuSubTrigger>
-  );
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -271,9 +116,13 @@ export default function FilterDropdown({
 
         <div className="p-1">
           <DropdownMenuSub>
-            {renderSubTrigger(CalendarDays, "Tenggat waktu", dueDates.size)}
+            <FilterSubTrigger
+              Icon={CalendarDays}
+              title="Tenggat waktu"
+              count={dueDates.size}
+            />
             <DropdownMenuSubContent className="w-44">
-              {dueDateOptions.map((opt) => (
+              {DUE_DATE_OPTIONS.map((opt) => (
                 <CustomCheckboxItem
                   key={opt.id}
                   checked={dueDates.has(opt.id)}
@@ -290,9 +139,13 @@ export default function FilterDropdown({
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            {renderSubTrigger(AlertCircle, "Prioritas", priorities.size)}
+            <FilterSubTrigger
+              Icon={AlertCircle}
+              title="Prioritas"
+              count={priorities.size}
+            />
             <DropdownMenuSubContent className="w-44">
-              {priorityOptions.map((opt) => (
+              {PRIORITY_OPTIONS.map((opt) => (
                 <CustomCheckboxItem
                   key={opt.id}
                   checked={priorities.has(opt.id)}
@@ -309,9 +162,13 @@ export default function FilterDropdown({
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            {renderSubTrigger(BsCircleHalf, "Kemajuan", progresses.size)}
+            <FilterSubTrigger
+              Icon={BsCircleHalf}
+              title="Kemajuan"
+              count={progresses.size}
+            />
             <DropdownMenuSubContent className="w-44">
-              {progressOptions.map((opt) => (
+              {PROGRESS_OPTIONS.map((opt) => (
                 <CustomCheckboxItem
                   key={opt.id}
                   checked={progresses.has(opt.id)}
@@ -328,7 +185,12 @@ export default function FilterDropdown({
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            {renderSubTrigger(Tag, "Label", labels.size, labelsList.length)}
+            <FilterSubTrigger
+              Icon={Tag}
+              title="Label"
+              count={labels.size}
+              total={labelsList.length}
+            />
             <DropdownMenuSubContent className="w-44">
               {labelsList.map((label) => (
                 <CustomCheckboxItem
@@ -346,12 +208,12 @@ export default function FilterDropdown({
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            {renderSubTrigger(
-              LayoutGrid,
-              "Wadah",
-              boards.size,
-              boardsList.length
-            )}
+            <FilterSubTrigger
+              Icon={LayoutGrid}
+              title="Wadah"
+              count={boards.size}
+              total={boardsList.length}
+            />
             <DropdownMenuSubContent className="w-44">
               {boardsList.map((board) => (
                 <CustomCheckboxItem

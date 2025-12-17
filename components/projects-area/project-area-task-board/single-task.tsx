@@ -4,31 +4,23 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  BellRing,
-  AlertCircle,
-  ArrowDown,
-  CalendarDays,
   AlignLeft,
   Paperclip,
 } from "lucide-react";
 import { FaRegCircle } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
-import { BsCircleHalf } from "react-icons/bs";
-import { GoDotFill } from "react-icons/go";
 import { useState, memo } from "react";
 import { DraggableProvided, DraggableStateSnapshot } from "@hello-pangea/dnd";
 import TasksDropDown from "../../drop-downs/task-drop-down";
 import { Task } from "@/types";
 import { useProjects } from "@/contexts/projectContext";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { id as indonesianLocale } from "date-fns/locale";
 import { useTaskActions } from "@/hooks/use-task-actions";
-import EditTaskDialog from "@/components/windows-dialogs/task-dialog/edit-task-dialog";
-import DeleteTaskDialog from "@/components/windows-dialogs/task-dialog/delete-task-dialog";
-import CopyTaskDialog from "@/components/windows-dialogs/task-dialog/copy-task-dialog";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getPriorityConfig, getProgressConfig } from "./single-task-config";
+import { TaskDueDateFooter } from "./single-task-due-date";
+import { SingleTaskDialogs } from "./single-task-dialogs";
 
 interface SingleTaskProps {
   task: Task;
@@ -38,67 +30,6 @@ interface SingleTaskProps {
   provided: DraggableProvided;
   snapshot?: DraggableStateSnapshot;
 }
-
-const getProgressConfig = (progress: Task["progress"]) => {
-  switch (progress) {
-    case "completed":
-      return {
-        icon: FaCircleCheck,
-        label: "Selesai",
-        className: "text-green-600 dark:text-green-500",
-        bgColor: "bg-green-500/10",
-      };
-    case "in-progress":
-      return {
-        icon: BsCircleHalf,
-        label: "Dalam proses",
-        className: "text-blue-600 dark:text-blue-400",
-        bgColor: "bg-blue-500/10",
-      };
-    case "not-started":
-    default:
-      return {
-        icon: FaRegCircle,
-        label: "Belum dimulai",
-        className: "text-muted-foreground",
-        bgColor: "bg-muted",
-      };
-  }
-};
-
-const getPriorityConfig = (priority: Task["priority"]) => {
-  switch (priority) {
-    case "urgent":
-      return {
-        icon: BellRing,
-        label: "Mendesak",
-        className: "text-red-600 dark:text-red-400",
-        bgColor: "bg-red-500/10",
-      };
-    case "important":
-      return {
-        icon: AlertCircle,
-        label: "Penting",
-        className: "text-orange-600 dark:text-orange-400",
-        bgColor: "bg-orange-500/10",
-      };
-    case "medium":
-      return {
-        icon: GoDotFill,
-        label: "Sedang",
-        className: "text-green-600 dark:text-green-400",
-        bgColor: "bg-green-500/10",
-      };
-    case "low":
-    default:
-      return {
-        icon: ArrowDown,
-        label: "Rendah",
-        className: "text-blue-600 dark:text-blue-400",
-        bgColor: "bg-blue-500/10",
-      };
-  }
-};
 
 const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -115,41 +46,6 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
     (item) => item.isDone
   ).length;
   const totalChecklistItems = checklistItems.length;
-
-  const renderDueDateFooter = (
-    dueDate: Date | null,
-    progress: Task["progress"]
-  ) => {
-    if (!dueDate) {
-      return <span></span>;
-    }
-    const taskDueDate = new Date(dueDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDateOnly = new Date(taskDueDate.getTime());
-    dueDateOnly.setHours(0, 0, 0, 0);
-    const isOverdue = dueDateOnly < today && progress !== "completed";
-    const formattedDate = format(taskDueDate, userDateFormat, {
-      locale: indonesianLocale,
-    });
-    const boxColorClasses = isOverdue
-      ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-      : "bg-muted text-muted-foreground";
-    const iconColorClasses = isOverdue
-      ? "text-red-600 dark:text-red-400"
-      : "text-muted-foreground";
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-1.5 px-2 py-1 rounded-md",
-          boxColorClasses
-        )}
-      >
-        <CalendarDays className={cn("w-3.5 h-3.5", iconColorClasses)} />
-        <span className="text-xs font-medium">{formattedDate}</span>
-      </div>
-    );
-  };
 
   const handleCardClick = () => {
     if (taskActions.handleEditTask) {
@@ -326,7 +222,11 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-            {renderDueDateFooter(task.dueDate, task.progress)}
+            <TaskDueDateFooter
+              dueDate={task.dueDate}
+              progress={task.progress}
+              dateFormat={userDateFormat}
+            />
             <div
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
@@ -341,57 +241,14 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
         </CardContent>
       </Card>
 
-      {taskActions.task && (
-        <>
-          <EditTaskDialog
-            isOpen={taskActions.isEditDialogOpen}
-            isSaving={taskActions.isSaving}
-            onClose={() => taskActions.setIsEditDialogOpen(false)}
-            onSave={taskActions.handleSaveEdit}
-            title={taskActions.editTitle}
-            description={taskActions.editDescription}
-            priority={taskActions.editPriority}
-            progress={taskActions.editProgress}
-            startDate={taskActions.editStartDate}
-            dueDate={taskActions.editDueDate}
-            editLabels={taskActions.editLabels}
-            editBoardId={taskActions.editBoardId}
-            boards={selectedProject?.boards || []}
-            setTitle={taskActions.setEditTitle}
-            setDescription={taskActions.setEditDescription}
-            setPriority={taskActions.setEditPriority}
-            setProgress={taskActions.setEditProgress}
-            setStartDate={taskActions.setEditStartDate}
-            setDueDate={taskActions.setEditDueDate}
-            setEditLabels={taskActions.setEditLabels}
-            setEditBoardId={taskActions.setEditBoardId}
-            boardName={taskActions.currentBoard?.name || ""}
-            editChecklist={taskActions.editChecklist}
-            editCardDisplayPreference={taskActions.editCardDisplayPreference}
-            setEditChecklist={taskActions.setEditChecklist}
-            setEditCardDisplayPreference={
-              taskActions.setEditCardDisplayPreference
-            }
-            editAssignees={taskActions.editAssignees}
-            setEditAssignees={taskActions.setEditAssignees}
-            editAttachments={taskActions.editAttachments}
-            setEditAttachments={taskActions.setEditAttachments}
-          />
-          <DeleteTaskDialog
-            isOpen={isDeleteOpen}
-            onOpenChange={setIsDeleteOpen}
-            task={task}
-            boardName={taskActions.currentBoard?.name || ""}
-            onDelete={taskActions.handleDeleteTask}
-          />
-          <CopyTaskDialog
-            isOpen={taskActions.isCopyDialogOpen}
-            onOpenChange={taskActions.setIsCopyDialogOpen}
-            task={task}
-            currentBoardId={boardId}
-          />
-        </>
-      )}
+      <SingleTaskDialogs
+        task={task}
+        boardId={boardId}
+        boards={selectedProject?.boards || []}
+        taskActions={taskActions}
+        isDeleteOpen={isDeleteOpen}
+        setIsDeleteOpen={setIsDeleteOpen}
+      />
     </div>
   );
 };

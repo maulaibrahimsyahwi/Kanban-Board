@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Layout, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { NAV_LINKS } from "./landing-content";
 
 export function Navbar() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const goToLogin = () => router.push("/?login=true");
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -39,48 +42,27 @@ export function Navbar() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8">
-          <a
-            href="#features"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Features
-          </a>
-          <a
-            href="#views"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Views
-          </a>
-          <a
-            href="#demo"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            How it works
-          </a>
-          <a
-            href="#security"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Security
-          </a>
-          <a
-            href="#faq"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            FAQ
-          </a>
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => router.push("/?login=true")}
+            onClick={goToLogin}
             className="cursor-pointer"
           >
             Log in
           </Button>
           <Button
-            onClick={() => router.push("/?login=true")}
+            onClick={goToLogin}
             className="rounded-full px-6 cursor-pointer"
           >
             Get Started
@@ -104,44 +86,19 @@ export function Navbar() {
             className="absolute top-full left-0 right-0 bg-background border-b border-border p-4 md:hidden shadow-xl"
           >
             <nav className="flex flex-col gap-4">
-              <a
-                href="#features"
-                className="text-sm font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </a>
-              <a
-                href="#views"
-                className="text-sm font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Views
-              </a>
-              <a
-                href="#demo"
-                className="text-sm font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                How it works
-              </a>
-              <a
-                href="#security"
-                className="text-sm font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Security
-              </a>
-              <a
-                href="#faq"
-                className="text-sm font-medium py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQ
-              </a>
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
               <Button
                 className="w-full"
-                onClick={() => router.push("/?login=true")}
+                onClick={goToLogin}
               >
                 Get Started
               </Button>

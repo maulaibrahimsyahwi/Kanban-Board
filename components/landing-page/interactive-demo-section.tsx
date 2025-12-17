@@ -2,15 +2,9 @@
 
 import { DemoFeatureList } from "./interactive-demo/demo-feature-list";
 import { DemoBoardPreview } from "./interactive-demo/demo-board-preview";
+import { DEMO_FEATURE_ITEMS } from "./landing-content";
 
 export function InteractiveDemoSection() {
-  const demoItems = [
-    "Customizable workflow stages",
-    "Rich text descriptions & checklists",
-    "Priority levels and due dates",
-    "Filtering and search capabilities",
-  ];
-
   return (
     <section id="demo" className="py-24 overflow-hidden scroll-mt-24">
       <div className="container mx-auto px-4">
@@ -26,7 +20,7 @@ export function InteractiveDemoSection() {
               automated actions.
             </p>
 
-            <DemoFeatureList items={demoItems} />
+            <DemoFeatureList items={[...DEMO_FEATURE_ITEMS]} />
           </div>
 
           <div className="lg:w-1/2 w-full">

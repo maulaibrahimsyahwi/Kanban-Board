@@ -3,15 +3,6 @@
 import { useState, useEffect } from "react";
 import { Bell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 // Pastikan path ini sesuai dengan nama file di server actions
@@ -21,31 +12,25 @@ import {
   restoreDefaultNotificationSettingsAction,
 } from "@/app/actions/notifications";
 import { NotificationSettingsState } from "@/types";
+import {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  NOTIFICATION_SELECT_ROWS,
+  NOTIFICATION_SIMPLE_ROWS,
+  NOTIFICATION_TOGGLE_ROWS,
+} from "./notification-data";
+import {
+  EmailPushHeader,
+  NotificationRowSimple,
+  NotificationRowWithSelect,
+  NotificationToggleRow,
+} from "./notification-rows";
 
 export default function NotificationsPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [settings, setSettings] = useState<NotificationSettingsState>({
-    endDateTrigger: "1day",
-    endDateEmail: true,
-    endDatePush: true,
-    deadlineTrigger: "1day",
-    deadlineEmail: true,
-    deadlinePush: true,
-    startDateTrigger: "1day",
-    startDateEmail: true,
-    startDatePush: true,
-    mentionsEmail: true,
-    mentionsPush: true,
-    assignedEmail: true,
-    assignedPush: true,
-    commentsEmail: true,
-    commentsPush: true,
-    attachmentsEmail: true,
-    attachmentsPush: true,
-    playSound: true,
-    marketingEmails: true,
-  });
+  const [settings, setSettings] = useState<NotificationSettingsState>(
+    DEFAULT_NOTIFICATION_SETTINGS
+  );
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -120,137 +105,46 @@ export default function NotificationsPage() {
         </div>
 
         <div className="space-y-1">
-          <div className="flex justify-end gap-8 px-4 mb-2 text-sm font-medium text-muted-foreground">
-            <span className="w-8 text-center">Email</span>
-            <span className="w-8 text-center">Push</span>
-          </div>
+          <EmailPushHeader />
 
-          <NotificationRowWithSelect
-            label={
-              <span>
-                Notify me about <span className="font-semibold">end date</span>{" "}
-                of task. Before:
-              </span>
-            }
-            selectValue={settings.endDateTrigger}
-            onSelectChange={(val) => handleUpdate("endDateTrigger", val)}
-            emailChecked={settings.endDateEmail}
-            onEmailChange={(val) => handleUpdate("endDateEmail", val)}
-            pushChecked={settings.endDatePush}
-            onPushChange={(val) => handleUpdate("endDatePush", val)}
-          />
-
-          <NotificationRowWithSelect
-            label={
-              <span>
-                Notify me about <span className="font-semibold">deadlines</span>
-                . Before:
-              </span>
-            }
-            selectValue={settings.deadlineTrigger}
-            onSelectChange={(val) => handleUpdate("deadlineTrigger", val)}
-            emailChecked={settings.deadlineEmail}
-            onEmailChange={(val) => handleUpdate("deadlineEmail", val)}
-            pushChecked={settings.deadlinePush}
-            onPushChange={(val) => handleUpdate("deadlinePush", val)}
-          />
-
-          <NotificationRowWithSelect
-            label={
-              <span>
-                Notify me about{" "}
-                <span className="font-semibold">start date</span> of task.
-                Before:
-              </span>
-            }
-            selectValue={settings.startDateTrigger}
-            onSelectChange={(val) => handleUpdate("startDateTrigger", val)}
-            emailChecked={settings.startDateEmail}
-            onEmailChange={(val) => handleUpdate("startDateEmail", val)}
-            pushChecked={settings.startDatePush}
-            onPushChange={(val) => handleUpdate("startDatePush", val)}
-          />
+          {NOTIFICATION_SELECT_ROWS.map((row) => (
+            <NotificationRowWithSelect
+              key={row.id}
+              label={row.label}
+              selectValue={settings[row.triggerKey] as string}
+              onSelectChange={(val) => handleUpdate(row.triggerKey, val)}
+              emailChecked={settings[row.emailKey] as boolean}
+              onEmailChange={(val) => handleUpdate(row.emailKey, val)}
+              pushChecked={settings[row.pushKey] as boolean}
+              onPushChange={(val) => handleUpdate(row.pushKey, val)}
+            />
+          ))}
 
           <Separator className="my-4 opacity-50" />
 
-          <NotificationRowSimple
-            label={
-              <span>
-                Notify me when someone{" "}
-                <span className="font-semibold">@mentions</span> me
-              </span>
-            }
-            emailChecked={settings.mentionsEmail}
-            onEmailChange={(val) => handleUpdate("mentionsEmail", val)}
-            pushChecked={settings.mentionsPush}
-            onPushChange={(val) => handleUpdate("mentionsPush", val)}
-          />
-          <NotificationRowSimple
-            label={
-              <span>
-                Notify me when someone{" "}
-                <span className="font-semibold">assigns</span> me a task
-              </span>
-            }
-            emailChecked={settings.assignedEmail}
-            onEmailChange={(val) => handleUpdate("assignedEmail", val)}
-            pushChecked={settings.assignedPush}
-            onPushChange={(val) => handleUpdate("assignedPush", val)}
-          />
-          <NotificationRowSimple
-            label={
-              <span>
-                Notify me about <span className="font-semibold">comments</span>{" "}
-                in my tasks
-              </span>
-            }
-            emailChecked={settings.commentsEmail}
-            onEmailChange={(val) => handleUpdate("commentsEmail", val)}
-            pushChecked={settings.commentsPush}
-            onPushChange={(val) => handleUpdate("commentsPush", val)}
-          />
-          <NotificationRowSimple
-            label={
-              <span>
-                Notify me about{" "}
-                <span className="font-semibold">attachments</span> in my tasks
-              </span>
-            }
-            emailChecked={settings.attachmentsEmail}
-            onEmailChange={(val) => handleUpdate("attachmentsEmail", val)}
-            pushChecked={settings.attachmentsPush}
-            onPushChange={(val) => handleUpdate("attachmentsPush", val)}
-          />
+          {NOTIFICATION_SIMPLE_ROWS.map((row) => (
+            <NotificationRowSimple
+              key={row.id}
+              label={row.label}
+              emailChecked={settings[row.emailKey] as boolean}
+              onEmailChange={(val) => handleUpdate(row.emailKey, val)}
+              pushChecked={settings[row.pushKey] as boolean}
+              onPushChange={(val) => handleUpdate(row.pushKey, val)}
+            />
+          ))}
         </div>
 
         <Separator />
 
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">
-              Play a sound when receiving a notification
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="h-[1px] flex-1 bg-border/50 border-dashed w-full min-w-[20px] mx-4 hidden sm:block" />
-              <Switch
-                checked={settings.playSound}
-                onCheckedChange={(val) => handleUpdate("playSound", val)}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">
-              Email notifications on special offers and updates
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="h-[1px] flex-1 bg-border/50 border-dashed w-full min-w-[20px] mx-4 hidden sm:block" />
-              <Switch
-                checked={settings.marketingEmails}
-                onCheckedChange={(val) => handleUpdate("marketingEmails", val)}
-              />
-            </div>
-          </div>
+          {NOTIFICATION_TOGGLE_ROWS.map((row) => (
+            <NotificationToggleRow
+              key={row.id}
+              label={row.label}
+              checked={settings[row.key] as boolean}
+              onCheckedChange={(val) => handleUpdate(row.key, val)}
+            />
+          ))}
         </div>
 
         <div className="flex justify-between items-center pt-8">
@@ -274,106 +168,6 @@ export default function NotificationsPage() {
               "Save Changes"
             )}
           </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NotificationRowWithSelect({
-  label,
-  selectValue,
-  onSelectChange,
-  emailChecked,
-  onEmailChange,
-  pushChecked,
-  onPushChange,
-}: {
-  label: React.ReactNode;
-  selectValue: string;
-  onSelectChange: (val: string) => void;
-  emailChecked: boolean;
-  onEmailChange: (val: boolean) => void;
-  pushChecked: boolean;
-  onPushChange: (val: boolean) => void;
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center py-3 gap-3 sm:gap-0">
-      <div className="flex-1 text-sm text-foreground flex items-center whitespace-nowrap mr-2">
-        {label}
-      </div>
-
-      <div className="hidden sm:block flex-1 border-b border-border border-dashed mx-2 h-1 relative top-[2px] opacity-60"></div>
-
-      <div className="flex items-center justify-end gap-4 sm:gap-6">
-        <Select value={selectValue} onValueChange={onSelectChange}>
-          <SelectTrigger className="w-[90px] h-8 text-xs">
-            <SelectValue placeholder="Select" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="15min">15 min</SelectItem>
-            <SelectItem value="1hour">1 hour</SelectItem>
-            <SelectItem value="1day">1 day</SelectItem>
-            <SelectItem value="2days">2 days</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-8 px-2">
-          <div className="w-8 flex justify-center">
-            <Checkbox
-              checked={emailChecked}
-              onCheckedChange={(checked) => onEmailChange(checked as boolean)}
-              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-            />
-          </div>
-          <div className="w-8 flex justify-center">
-            <Checkbox
-              checked={pushChecked}
-              onCheckedChange={(checked) => onPushChange(checked as boolean)}
-              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NotificationRowSimple({
-  label,
-  emailChecked,
-  onEmailChange,
-  pushChecked,
-  onPushChange,
-}: {
-  label: React.ReactNode;
-  emailChecked: boolean;
-  onEmailChange: (val: boolean) => void;
-  pushChecked: boolean;
-  onPushChange: (val: boolean) => void;
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center py-3 gap-3 sm:gap-0">
-      <div className="text-sm text-foreground whitespace-nowrap mr-2">
-        {label}
-      </div>
-
-      <div className="hidden sm:block flex-1 border-b border-border border-dashed mx-2 h-1 relative top-[2px] opacity-60"></div>
-
-      <div className="flex items-center justify-end gap-8 px-2">
-        <div className="w-8 flex justify-center">
-          <Checkbox
-            checked={emailChecked}
-            onCheckedChange={(checked) => onEmailChange(checked as boolean)}
-            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-          />
-        </div>
-        <div className="w-8 flex justify-center">
-          <Checkbox
-            checked={pushChecked}
-            onCheckedChange={(checked) => onPushChange(checked as boolean)}
-            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-          />
         </div>
       </div>
     </div>
