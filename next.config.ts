@@ -17,6 +17,9 @@ const cspHeader = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/**": ["supabase/prod-ca-2021.crt"],
+  },
   images: {
     remotePatterns: [
       {
