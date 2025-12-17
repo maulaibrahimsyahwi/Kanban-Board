@@ -13,6 +13,7 @@ import {
 } from "@/lib/two-factor-session";
 import { headers } from "next/headers";
 import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
+import { maybeDecryptString, maybeEncryptString } from "@/lib/crypto";
 
 export async function getTwoFactorLockStateAction() {
   const session = await auth();
@@ -54,7 +55,7 @@ export async function activateTwoFactorAction(token: string, secret: string) {
     where: { id: session.user.id },
     data: {
       twoFactorEnabled: true,
-      twoFactorSecret: secret,
+      twoFactorSecret: maybeEncryptString(secret),
     },
   });
 
@@ -94,14 +95,16 @@ export async function verifyTwoFactorLoginAction(code: string) {
 
   try {
     const ip = getClientIpFromHeaders(await headers());
-    const limitedByIp = rateLimit(`auth:2fa:verify:ip:${ip}`, {
-      windowMs: 60 * 1000,
-      max: 10,
-    });
-    const limitedByUser = rateLimit(`auth:2fa:verify:user:${session.user.id}`, {
-      windowMs: 60 * 1000,
-      max: 5,
-    });
+    const [limitedByIp, limitedByUser] = await Promise.all([
+      rateLimit(`auth:2fa:verify:ip:${ip}`, {
+        windowMs: 60 * 1000,
+        max: 10,
+      }),
+      rateLimit(`auth:2fa:verify:user:${session.user.id}`, {
+        windowMs: 60 * 1000,
+        max: 5,
+      }),
+    ]);
     if (!limitedByIp.ok || !limitedByUser.ok) {
       return {
         success: false,
@@ -117,9 +120,16 @@ export async function verifyTwoFactorLoginAction(code: string) {
       return { success: false, message: "2FA not setup correctly" };
     }
 
+    let decryptedSecret = "";
+    try {
+      decryptedSecret = maybeDecryptString(user.twoFactorSecret);
+    } catch {
+      return { success: false, message: "2FA not setup correctly" };
+    }
+
     const isValid = authenticator.verify({
       token: code,
-      secret: user.twoFactorSecret,
+      secret: decryptedSecret,
     });
 
     if (!isValid) {

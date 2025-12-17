@@ -16,7 +16,7 @@ const RegisterSchema = z.object({
 
 export async function registerUserAction(formData: FormData) {
   const ip = getClientIpFromHeaders(await headers());
-  const limited = rateLimit(`auth:register:ip:${ip}`, {
+  const limited = await rateLimit(`auth:register:ip:${ip}`, {
     windowMs: 60 * 1000,
     max: 5,
   });
@@ -95,14 +95,16 @@ export async function requestPasswordResetAction(email: string) {
 
   try {
     const ip = getClientIpFromHeaders(await headers());
-    const limitedByIp = rateLimit(`auth:pwreset:request:ip:${ip}`, {
-      windowMs: 60 * 1000,
-      max: 5,
-    });
-    const limitedByEmail = rateLimit(`auth:pwreset:request:email:${email}`, {
-      windowMs: 10 * 60 * 1000,
-      max: 3,
-    });
+    const [limitedByIp, limitedByEmail] = await Promise.all([
+      rateLimit(`auth:pwreset:request:ip:${ip}`, {
+        windowMs: 60 * 1000,
+        max: 5,
+      }),
+      rateLimit(`auth:pwreset:request:email:${email}`, {
+        windowMs: 10 * 60 * 1000,
+        max: 3,
+      }),
+    ]);
     if (!limitedByIp.ok || !limitedByEmail.ok) {
       return {
         success: false,
@@ -182,14 +184,16 @@ export async function resetPasswordAction(
 
   try {
     const ip = getClientIpFromHeaders(await headers());
-    const limitedByIp = rateLimit(`auth:pwreset:confirm:ip:${ip}`, {
-      windowMs: 60 * 1000,
-      max: 10,
-    });
-    const limitedByEmail = rateLimit(`auth:pwreset:confirm:email:${email}`, {
-      windowMs: 15 * 60 * 1000,
-      max: 20,
-    });
+    const [limitedByIp, limitedByEmail] = await Promise.all([
+      rateLimit(`auth:pwreset:confirm:ip:${ip}`, {
+        windowMs: 60 * 1000,
+        max: 10,
+      }),
+      rateLimit(`auth:pwreset:confirm:email:${email}`, {
+        windowMs: 15 * 60 * 1000,
+        max: 20,
+      }),
+    ]);
     if (!limitedByIp.ok || !limitedByEmail.ok) {
       return {
         success: false,

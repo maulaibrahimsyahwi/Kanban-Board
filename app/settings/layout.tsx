@@ -1,16 +1,23 @@
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { Metadata } from "next";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Account Settings",
   description: "Manage your account settings",
 };
 
-export default function SettingsLayout({
+export default async function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/?login=true");
+  }
+
   return (
     <div className="flex h-screen w-full bg-background text-foreground poppins overflow-hidden">
       <SettingsSidebar />

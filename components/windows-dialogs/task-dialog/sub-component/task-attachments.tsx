@@ -21,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import type { Attachment } from "@/types";
 
 type TaskAttachmentsMenuProps = {
@@ -81,22 +80,30 @@ export default function TaskAttachmentsMenu({
       const fileExt = file.name.split(".").pop();
       const safeExt = fileExt ? fileExt.replace(/[^a-zA-Z0-9]/g, "") : "bin";
       const fileName = `${uuidv4()}.${safeExt}`;
-      const filePath = `${userId}/${fileName}`;
+      const uploadBody = new FormData();
+      uploadBody.append("file", file, fileName);
 
-      const { error: uploadError } = await supabase.storage
-        .from("attachments")
-        .upload(filePath, file);
+      const uploadRes = await fetch("/api/attachments/upload", {
+        method: "POST",
+        body: uploadBody,
+      });
 
-      if (uploadError) {
-        throw uploadError;
+      const uploadJson = (await uploadRes.json().catch(() => null)) as
+        | { success: true; data: { path: string } }
+        | { success: false; message?: string }
+        | null;
+
+      if (!uploadRes.ok || !uploadJson || uploadJson.success !== true) {
+        const message =
+          (uploadJson && "message" in uploadJson && uploadJson.message) ||
+          "Gagal mengunggah file";
+        throw new Error(message);
       }
-
-      const { data } = supabase.storage.from("attachments").getPublicUrl(filePath);
 
       const newAttachment: Attachment = {
         id: uuidv4(),
         name: file.name,
-        url: data.publicUrl,
+        url: uploadJson.data.path,
         type: file.type,
       };
 
@@ -200,7 +207,13 @@ export function TaskAttachmentsList({
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <a
-                href={file.url}
+                href={
+                  file.type === "link"
+                    ? file.url
+                    : file.url.startsWith("http")
+                      ? file.url
+                      : `/api/attachments/download?path=${encodeURIComponent(file.url)}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 download={file.type !== "link" ? file.name : undefined}

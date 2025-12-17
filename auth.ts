@@ -8,6 +8,7 @@ import { authenticator } from "otplib";
 import type { Adapter } from "next-auth/adapters";
 import type { User } from "next-auth";
 import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
+import { maybeDecryptString } from "@/lib/crypto";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -34,14 +35,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const email = credentials.email as string;
         const ip = getClientIpFromHeaders(request?.headers ?? new Headers());
-        const limitedByIp = rateLimit(`auth:login:ip:${ip}`, {
-          windowMs: 60 * 1000,
-          max: 30,
-        });
-        const limitedByIdentity = rateLimit(`auth:login:ip_email:${ip}:${email}`, {
-          windowMs: 60 * 1000,
-          max: 10,
-        });
+        const [limitedByIp, limitedByIdentity] = await Promise.all([
+          rateLimit(`auth:login:ip:${ip}`, {
+            windowMs: 60 * 1000,
+            max: 30,
+          }),
+          rateLimit(`auth:login:ip_email:${ip}:${email}`, {
+            windowMs: 60 * 1000,
+            max: 10,
+          }),
+        ]);
         if (!limitedByIp.ok || !limitedByIdentity.ok) {
           throw new Error("RATE_LIMIT");
         }
@@ -64,9 +67,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("2FA_REQUIRED");
           }
 
+          let secret = "";
+          try {
+            secret = user.twoFactorSecret ? maybeDecryptString(user.twoFactorSecret) : "";
+          } catch {
+            throw new Error("2FA_INVALID");
+          }
+
           const isValidToken = authenticator.verify({
             token: inputCode,
-            secret: user.twoFactorSecret ?? "",
+            secret,
           });
 
           if (!isValidToken) {
