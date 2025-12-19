@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { headers } from "next/headers";
 import "./styles/globals.css";
 import AppWrapper from "./AppWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
 });
 
@@ -16,15 +17,17 @@ export const metadata: Metadata = {
     icon: "/favicon.ico", // ini relatif ke /public
   },
 };
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} antialiased`}>
-        <AppWrapper>{children}</AppWrapper>
+        <AppWrapper nonce={nonce}>{children}</AppWrapper>
       </body>
     </html>
   );

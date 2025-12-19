@@ -63,7 +63,14 @@ export function decryptString(value: string) {
 
 export function maybeEncryptString(plaintext: string) {
   const key = process.env.DATA_ENCRYPTION_KEY?.trim();
-  if (!key) return plaintext;
+  if (!key) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DATA_ENCRYPTION_KEY is required in production to encrypt sensitive fields."
+      );
+    }
+    return plaintext;
+  }
   if (isEncryptedString(plaintext)) return plaintext;
   return encryptString(plaintext);
 }

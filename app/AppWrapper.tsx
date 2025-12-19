@@ -8,8 +8,10 @@ import TwoFactorGuard from "@/components/auth/two-factor-guard";
 
 export default function AppWrapper({
   children,
+  nonce,
 }: {
   children: React.ReactNode;
+  nonce?: string;
 }) {
   return (
     <SessionProvider>
@@ -19,6 +21,7 @@ export default function AppWrapper({
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
+        nonce={nonce}
       >
         <ProjectProvider>
           {children}

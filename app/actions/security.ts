@@ -51,11 +51,22 @@ export async function activateTwoFactorAction(token: string, secret: string) {
     return { success: false, message: "Kode verifikasi salah." };
   }
 
+  let encryptedSecret: string;
+  try {
+    encryptedSecret = maybeEncryptString(secret);
+  } catch {
+    return {
+      success: false,
+      message:
+        "Konfigurasi server belum lengkap: DATA_ENCRYPTION_KEY wajib di-set untuk menyimpan 2FA secret dengan aman.",
+    };
+  }
+
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
       twoFactorEnabled: true,
-      twoFactorSecret: maybeEncryptString(secret),
+      twoFactorSecret: encryptedSecret,
     },
   });
 

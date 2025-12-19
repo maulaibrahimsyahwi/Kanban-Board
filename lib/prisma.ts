@@ -84,6 +84,11 @@ const ssl = (() => {
 
   if (["disable", "off", "false", "0"].includes(mode)) return undefined;
   if (["no-verify", "require-no-verify"].includes(mode)) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "PG_SSL_MODE=no-verify is not allowed in production. Use auto/verify-full and configure a trusted CA."
+      );
+    }
     return { rejectUnauthorized: false };
   }
   if (["verify", "verify-full", "require", "true", "1"].includes(mode)) {

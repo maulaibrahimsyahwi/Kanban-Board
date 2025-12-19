@@ -5,16 +5,36 @@ import ProjectAreaBoards from "./project-area-task-board/project-area-board";
 import ProjectAreaHeader from "./project-area-header/project-area-header";
 import { useProjects } from "@/contexts/projectContext";
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import {
   DueDateFilter,
   PriorityFilter,
   ProgressFilter,
   ProjectAreaView,
 } from "@/types";
-import ChartView from "../chart-view/ChartView";
-import CalendarView from "../calendar-view/CalendarView";
-import ListView from "./list-view/ListView";
-import PeopleView from "./people-view/people-view";
+
+const LoadingView = () => (
+  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+    Loading...
+  </div>
+);
+
+const ChartView = dynamic(() => import("../chart-view/ChartView"), {
+  ssr: false,
+  loading: LoadingView,
+});
+const CalendarView = dynamic(() => import("../calendar-view/CalendarView"), {
+  ssr: false,
+  loading: LoadingView,
+});
+const ListView = dynamic(() => import("./list-view/ListView"), {
+  ssr: false,
+  loading: LoadingView,
+});
+const PeopleView = dynamic(() => import("./people-view/people-view"), {
+  ssr: false,
+  loading: LoadingView,
+});
 
 const getToday = () => {
   const today = new Date();

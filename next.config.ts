@@ -3,19 +3,6 @@ import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
 
-const cspHeader = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' blob: data: https://*.supabase.co https://*.googleusercontent.com https://*.gravatar.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ably.io wss://*.ably.io https://*.sentry.io https://o*.ingest.sentry.io",
-].join("; ");
-
 const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["supabase/prod-ca-2021.crt"],
@@ -37,14 +24,6 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          ...(isProd
-            ? [
-                {
-                  key: "Content-Security-Policy",
-                  value: cspHeader,
-                },
-              ]
-            : []),
           {
             key: "X-Content-Type-Options",
             value: "nosniff",

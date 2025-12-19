@@ -21,6 +21,8 @@ type MemoryState = {
 const globalForRateLimit = globalThis as unknown as {
   rateLimitRedis?: Redis;
   rateLimitMemory?: Map<string, MemoryState>;
+  rateLimitMemoryLastSweepAt?: number;
+  rateLimitWarnedNoRedis?: boolean;
 };
 
 const redisFixedWindowScript = `
@@ -32,11 +34,48 @@ local ttl = redis.call("PTTL", KEYS[1])
 return {current, ttl}
 `;
 
+const MEMORY_SWEEP_INTERVAL_MS = 60 * 1000;
+const MEMORY_MAX_KEYS = 50_000;
+
 function getMemoryStore() {
   if (!globalForRateLimit.rateLimitMemory) {
     globalForRateLimit.rateLimitMemory = new Map<string, MemoryState>();
   }
   return globalForRateLimit.rateLimitMemory;
+}
+
+function warnIfNoRedisInProduction() {
+  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.REDIS_URL) return;
+  if (globalForRateLimit.rateLimitWarnedNoRedis) return;
+
+  globalForRateLimit.rateLimitWarnedNoRedis = true;
+  console.warn(
+    "[rateLimit] REDIS_URL is not set; using in-memory rate limiting (not shared across instances)."
+  );
+}
+
+function maybeSweepMemoryStore(now: number, store: Map<string, MemoryState>) {
+  const lastSweepAt = globalForRateLimit.rateLimitMemoryLastSweepAt ?? 0;
+  if (now - lastSweepAt < MEMORY_SWEEP_INTERVAL_MS) return;
+
+  globalForRateLimit.rateLimitMemoryLastSweepAt = now;
+
+  for (const [key, state] of store) {
+    if (now >= state.resetAt) {
+      store.delete(key);
+    }
+  }
+
+  if (store.size <= MEMORY_MAX_KEYS) return;
+
+  const overflow = store.size - MEMORY_MAX_KEYS;
+  let removed = 0;
+  for (const key of store.keys()) {
+    store.delete(key);
+    removed += 1;
+    if (removed >= overflow) break;
+  }
 }
 
 function getRedisClient() {
@@ -68,6 +107,7 @@ async function rateLimitWithMemory(
 ): Promise<RateLimitResult> {
   const store = getMemoryStore();
   const now = Date.now();
+  maybeSweepMemoryStore(now, store);
   const existing = store.get(key);
 
   if (!existing || now >= existing.resetAt) {
@@ -123,6 +163,8 @@ export async function rateLimit(
   if (options.max <= 0 || options.windowMs <= 0) {
     return { ok: true, remaining: 0, resetAt: Date.now() };
   }
+
+  warnIfNoRedisInProduction();
 
   try {
     if (process.env.REDIS_URL) return await rateLimitWithRedis(key, options);

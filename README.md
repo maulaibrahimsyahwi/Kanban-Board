@@ -47,7 +47,8 @@ npm run lint    # Code linting
 
 - Set `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` if you want Sentry enabled.
 - For Auth.js on Vercel, set `AUTH_URL` to your app URL and `AUTH_TRUST_HOST=true`.
-- If your Postgres requires SSL, configure `PG_SSL_MODE` (see `.env.example`).
+- In production, set `DATA_ENCRYPTION_KEY` (required if you enable 2FA) and `REDIS_URL` for reliable rate limiting.
+- If your Postgres requires SSL, configure `PG_SSL_MODE` (see `.env.example`). `no-verify` is for local debugging only.
 - To enable realtime collaboration, set `NEXT_PUBLIC_REALTIME_ENABLED=true` and `ABLY_API_KEY` (see `.env.example`).
 
 ## License
