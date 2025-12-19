@@ -9,18 +9,20 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-const MAX_SIZE_BYTES = 2 * 1024 * 1024;
-const ALLOWED_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "application/pdf",
-  "text/plain",
-]);
+const MAX_SIZE_BYTES = 1 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-function sanitizeExtension(raw: string | undefined) {
-  const cleaned = (raw || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
-  return cleaned || "bin";
+function extensionForMime(mime: string) {
+  switch (mime) {
+    case "image/jpeg":
+      return "jpg";
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+    default:
+      return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -50,10 +52,10 @@ export async function POST(request: Request) {
 
   const ip = getClientIpFromHeaders(request.headers);
   const [limitedByIp, limitedByUser] = await Promise.all([
-    rateLimit(`upload:attachments:ip:${ip}`, { windowMs: 60 * 1000, max: 60 }),
-    rateLimit(`upload:attachments:user:${session.user.id}`, {
+    rateLimit(`upload:avatar:ip:${ip}`, { windowMs: 60 * 1000, max: 30 }),
+    rateLimit(`upload:avatar:user:${session.user.id}`, {
       windowMs: 60 * 1000,
-      max: 30,
+      max: 10,
     }),
   ]);
 
@@ -84,7 +86,6 @@ export async function POST(request: Request) {
 
   const fileSize = Number((file as unknown as { size?: unknown })?.size ?? 0);
   const fileType = String((file as unknown as { type?: unknown })?.type ?? "");
-  const fileName = String((file as unknown as { name?: unknown })?.name ?? "upload.bin");
 
   if (!Number.isFinite(fileSize) || fileSize <= 0) {
     return NextResponse.json(
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
 
   if (fileSize > MAX_SIZE_BYTES) {
     return NextResponse.json(
-      { success: false, message: "File too large (max 2MB)" },
+      { success: false, message: "File too large (max 1MB)" },
       { status: 413, headers: { "Cache-Control": "no-store" } }
     );
   }
@@ -107,14 +108,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const ext = sanitizeExtension(fileName.split(".").pop());
+  const ext = extensionForMime(fileType);
+  if (!ext) {
+    return NextResponse.json(
+      { success: false, message: "Unsupported file type" },
+      { status: 415, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
   const objectPath = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
 
   try {
     const supabase = getSupabaseAdminClient();
     const { error } = await supabase.storage
-      .from("attachments")
-      .upload(objectPath, file, { contentType: fileType, upsert: false });
+      .from("avatars")
+      .upload(objectPath, file, { contentType: fileType, upsert: true });
 
     if (error) {
       return NextResponse.json(
@@ -123,8 +131,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const { data } = supabase.storage.from("avatars").getPublicUrl(objectPath);
+    const url = data.publicUrl;
+
     return NextResponse.json(
-      { success: true, data: { path: objectPath } },
+      { success: true, data: { url, path: objectPath } },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch {

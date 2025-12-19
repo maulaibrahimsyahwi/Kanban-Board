@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
 
 export default withSentryConfig(nextConfig, {
   org: "freekanban",
-  project: "javascript-nextjs",
+  project: "kanban-board",
   silent: !process.env.CI,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",

@@ -33,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials, request) => {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email as string;
+        const email = String(credentials.email).trim();
         const ip = getClientIpFromHeaders(request?.headers ?? new Headers());
         const [limitedByIp, limitedByIdentity] = await Promise.all([
           rateLimit(`auth:login:ip:${ip}`, {
@@ -49,7 +49,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("RATE_LIMIT");
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            emailVerified: true,
+            image: true,
+            password: true,
+            onboardingCompleted: true,
+            teamSize: true,
+            usagePurpose: true,
+            industry: true,
+            twoFactorEnabled: true,
+            twoFactorSecret: true,
+            dateFormat: true,
+          },
+        });
 
         if (!user || !user.password) return null;
 
@@ -85,7 +102,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         return {
-          ...user,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          image: user.image,
+          onboardingCompleted: user.onboardingCompleted,
+          twoFactorEnabled: user.twoFactorEnabled,
           dateFormat: user.dateFormat,
         } as User;
       },
@@ -111,6 +134,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
+            select: {
+              onboardingCompleted: true,
+              twoFactorEnabled: true,
+              dateFormat: true,
+              image: true,
+            },
           });
           if (dbUser) {
             token.onboardingCompleted = dbUser.onboardingCompleted;

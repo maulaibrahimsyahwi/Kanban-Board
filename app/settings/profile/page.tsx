@@ -11,8 +11,6 @@ import {
   updateProfileImageAction,
   updateDateFormatAction,
 } from "@/app/actions/profile";
-import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
 import {
   PasswordSection,
   PersonalInformationSection,
@@ -63,22 +61,27 @@ export default function ProfileSettingsPage() {
     const toastId = toast.loading("Mengunggah foto profil...");
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${session?.user?.id}-${uuidv4()}.${fileExt}`;
-      const filePath = `user-avatars/${fileName}`;
+      const uploadBody = new FormData();
+      uploadBody.append("file", file, file.name);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
+      const uploadRes = await fetch("/api/avatar/upload", {
+        method: "POST",
+        body: uploadBody,
+      });
 
-      if (uploadError) throw uploadError;
+      const uploadJson = (await uploadRes.json().catch(() => null)) as
+        | { success: true; data: { url: string; path: string } }
+        | { success: false; message?: string }
+        | null;
 
-      const { data: publicUrlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      if (!uploadRes.ok || !uploadJson || uploadJson.success !== true) {
+        const message =
+          (uploadJson && "message" in uploadJson && uploadJson.message) ||
+          "Gagal mengunggah gambar";
+        throw new Error(message);
+      }
 
-      const publicUrl = publicUrlData.publicUrl;
-
+      const publicUrl = uploadJson.data.url;
       const result = await updateProfileImageAction(publicUrl);
 
       if (result.success) {

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
+import { enforceSameOrigin } from "@/lib/request-security";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
@@ -18,11 +20,19 @@ function isSafeStoragePath(value: string) {
 }
 
 export async function GET(request: Request) {
+  const originCheck = enforceSameOrigin(request);
+  if (!originCheck.ok) {
+    return NextResponse.json(
+      { success: false, message: originCheck.message },
+      { status: 403, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
-      { status: 401 }
+      { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -30,7 +40,23 @@ export async function GET(request: Request) {
   if (!unlock.ok) {
     return NextResponse.json(
       { success: false, message: unlock.message },
-      { status: 403 }
+      { status: 403, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const ip = getClientIpFromHeaders(request.headers);
+  const [limitedByIp, limitedByUser] = await Promise.all([
+    rateLimit(`download:attachments:ip:${ip}`, { windowMs: 60 * 1000, max: 180 }),
+    rateLimit(`download:attachments:user:${session.user.id}`, {
+      windowMs: 60 * 1000,
+      max: 120,
+    }),
+  ]);
+
+  if (!limitedByIp.ok || !limitedByUser.ok) {
+    return NextResponse.json(
+      { success: false, message: "Too many requests" },
+      { status: 429, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -39,7 +65,7 @@ export async function GET(request: Request) {
   if (!rawPath) {
     return NextResponse.json(
       { success: false, message: "Missing path" },
-      { status: 400 }
+      { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -47,7 +73,7 @@ export async function GET(request: Request) {
   if (!isSafeStoragePath(path)) {
     return NextResponse.json(
       { success: false, message: "Invalid path" },
-      { status: 400 }
+      { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -74,7 +100,7 @@ export async function GET(request: Request) {
   if (!attachment && !isUploaderPreview) {
     return NextResponse.json(
       { success: false, message: "Not found" },
-      { status: 404 }
+      { status: 404, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -87,7 +113,7 @@ export async function GET(request: Request) {
     if (error || !data?.signedUrl) {
       return NextResponse.json(
         { success: false, message: "Failed to create signed URL" },
-        { status: 500 }
+        { status: 500, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -97,8 +123,7 @@ export async function GET(request: Request) {
   } catch {
     return NextResponse.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }
-

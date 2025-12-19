@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import Ably from "ably";
+import type { Message } from "ably";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -177,28 +177,46 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       }, delay);
     };
 
-    const realtime = new Ably.Realtime({
-      authUrl: `/api/realtime/auth?projectId=${encodeURIComponent(selectedProjectId)}`,
-      authMethod: "GET",
-      closeOnUnload: true,
-    });
+    let cancelled = false;
+    let realtime: { close: () => void; channels: { get: (name: string) => any } } | null =
+      null;
+    let channel: any = null;
+    let handler: ((message: Message) => void) | null = null;
 
-    const channel = realtime.channels.get(`project:${selectedProjectId}`);
-    const handler = (message: Ably.Message) => {
-      const data =
-        message.data && typeof message.data === "object"
-          ? (message.data as { actorId?: unknown })
-          : null;
+    void (async () => {
+      try {
+        const Ably = (await import("ably")).default;
+        if (cancelled) return;
 
-      if (data?.actorId === session.user.id) return;
-      scheduleRealtimeRefresh();
-    };
+        realtime = new Ably.Realtime({
+          authUrl: `/api/realtime/auth?projectId=${encodeURIComponent(selectedProjectId)}`,
+          authMethod: "GET",
+          closeOnUnload: true,
+        });
 
-    channel.subscribe("invalidate", handler);
+        channel = realtime.channels.get(`project:${selectedProjectId}`);
+        handler = (message: Message) => {
+          const data =
+            message.data && typeof message.data === "object"
+              ? (message.data as { actorId?: unknown })
+              : null;
+
+          if (data?.actorId === session.user.id) return;
+          scheduleRealtimeRefresh();
+        };
+
+        channel.subscribe("invalidate", handler);
+      } catch (error) {
+        console.warn("[realtime] Failed to initialize Ably client:", error);
+      }
+    })();
 
     return () => {
-      channel.unsubscribe("invalidate", handler);
-      realtime.close();
+      cancelled = true;
+      if (channel && handler) {
+        channel.unsubscribe("invalidate", handler);
+      }
+      realtime?.close();
       if (realtimeRefreshTimeout.current) {
         clearTimeout(realtimeRefreshTimeout.current);
         realtimeRefreshTimeout.current = null;

@@ -58,7 +58,10 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
       });
     }
 
-    if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY) {
+    const baseUrl =
+      process.env.AUTH_URL?.trim() || process.env.NEXTAUTH_URL?.trim() || "";
+
+    if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY && baseUrl) {
       const boxyUrl = `${process.env.BOXYHQ_ISSUER}/api/v1/sso`;
 
       const body = {
@@ -68,8 +71,8 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
         description: "SSO Configuration from FreeKanban Settings",
         clientID: session.user.id,
         clientSecret: process.env.SSO_CLIENT_SECRET,
-        redirectUrl: `${process.env.NEXTAUTH_URL}/api/auth/callback/boxyhq`,
-        defaultRedirectUrl: `${process.env.NEXTAUTH_URL}`,
+        redirectUrl: `${baseUrl}/api/auth/callback/boxyhq`,
+        defaultRedirectUrl: `${baseUrl}`,
         rawMetadata: `
           <EntityDescriptor entityID="${data.issuer}">
             <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
@@ -101,6 +104,11 @@ export async function updateSSOSettingsAction(data: SSOSettingsData) {
           message: "Disimpan lokal, namun gagal sinkron ke SSO Provider.",
         };
       }
+    } else if (process.env.BOXYHQ_ISSUER && process.env.BOXYHQ_API_KEY && !baseUrl) {
+      return {
+        success: true,
+        message: "Disimpan lokal, namun base URL auth belum dikonfigurasi.",
+      };
     }
 
     revalidatePath("/settings/security");

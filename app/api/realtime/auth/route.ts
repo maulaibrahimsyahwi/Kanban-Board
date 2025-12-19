@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
+import { enforceSameOrigin } from "@/lib/request-security";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { createProjectTokenRequest, isAblyConfigured } from "@/lib/ably";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  const originCheck = enforceSameOrigin(request);
+  if (!originCheck.ok) {
+    return NextResponse.json(
+      { success: false, message: originCheck.message },
+      { status: 403, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
   if (!isAblyConfigured()) {
     return NextResponse.json(
       { success: false, message: "Realtime is not configured." },
@@ -28,6 +38,22 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { success: false, message: unlock.message },
       { status: 403, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const ip = getClientIpFromHeaders(request.headers);
+  const [limitedByIp, limitedByUser] = await Promise.all([
+    rateLimit(`realtime:auth:ip:${ip}`, { windowMs: 60 * 1000, max: 120 }),
+    rateLimit(`realtime:auth:user:${session.user.id}`, {
+      windowMs: 60 * 1000,
+      max: 60,
+    }),
+  ]);
+
+  if (!limitedByIp.ok || !limitedByUser.ok) {
+    return NextResponse.json(
+      { success: false, message: "Too many requests" },
+      { status: 429, headers: { "Cache-Control": "no-store" } }
     );
   }
 
@@ -75,4 +101,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
