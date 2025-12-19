@@ -202,7 +202,7 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
                 task.description && (
                   <div
                     className="flex items-center gap-1"
-                    title="Tugas ini memiliki deskripsi"
+                    title="This task has a description"
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
                   </div>
@@ -211,7 +211,7 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
                 totalChecklistItems > 0 && (
                   <div
                     className="flex items-center gap-1"
-                    title="Tugas ini memiliki daftar periksa"
+                    title="This task has a checklist"
                   >
                     <FaCircleCheck className="w-3.5 h-3.5" />
                     <span>

@@ -66,7 +66,7 @@ export default function LeftSidebar({
               className={cn(
                 "w-full text-muted-foreground hover:text-foreground cursor-pointer overflow-hidden transition-all duration-300",
                 isSidebarOpen ? "justify-start px-4" : "justify-center px-0"
-              )}
+                )}
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
               <span className={textTransitionClass}>Create Project</span>

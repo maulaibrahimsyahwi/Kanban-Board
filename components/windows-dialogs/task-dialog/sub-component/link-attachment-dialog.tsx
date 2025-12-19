@@ -39,18 +39,18 @@ export default function LinkAttachmentDialog({
 }: LinkAttachmentDialogProps) {
   const handleAddLink = () => {
     if (!linkUrl.trim()) {
-      toast.error("URL tidak boleh kosong");
+      toast.error("URL cannot be empty");
       return;
     }
 
     try {
       const parsed = new URL(linkUrl);
       if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        toast.error("URL tidak valid. Gunakan http:// atau https://");
+        toast.error("Invalid URL. Use http:// or https://");
         return;
       }
     } catch {
-      toast.error("URL tidak valid. Gunakan http:// atau https://");
+      toast.error("Invalid URL. Use http:// or https://");
       return;
     }
 
@@ -65,7 +65,7 @@ export default function LinkAttachmentDialog({
     onOpenChange(false);
     setLinkUrl("");
     setLinkText("");
-    toast.success("Link dilampirkan");
+    toast.success("Link attached");
   };
 
   return (

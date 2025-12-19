@@ -4,19 +4,19 @@ import type { LucideIcon } from "lucide-react";
 export const STEPS = [
   {
     id: 1,
-    title: "Ukuran Tim",
-    desc: "Berapa banyak anggota tim yang akan menggunakan GanttPRO?",
+    title: "Team size",
+    desc: "How many people will use your workspace?",
   },
   {
     id: 2,
-    title: "Tujuan",
-    desc: "Untuk apa Anda berencana menggunakan GanttPRO?",
+    title: "Purpose",
+    desc: "What do you plan to use this workspace for?",
   },
-  { id: 3, title: "Industri", desc: "Di industri apa Anda bekerja?" },
+  { id: 3, title: "Industry", desc: "Which industry do you work in?" },
 ] as const;
 
 export const TEAM_SIZE_OPTIONS = [
-  "Hanya saya",
+  "Just me",
   "2-5",
   "6-10",
   "11-20",
@@ -29,21 +29,21 @@ export const PURPOSE_OPTIONS: ReadonlyArray<{
   label: string;
   icon: LucideIcon;
 }> = [
-  { id: "Work", label: "Pekerjaan", icon: Briefcase },
-  { id: "Personal projects", label: "Proyek Pribadi", icon: User },
-  { id: "Studying", label: "Belajar / Studi", icon: GraduationCap },
+  { id: "Work", label: "Work", icon: Briefcase },
+  { id: "Personal projects", label: "Personal projects", icon: User },
+  { id: "Studying", label: "Studying / Education", icon: GraduationCap },
 ];
 
 export const INDUSTRY_OPTIONS = [
-  "Konstruksi",
-  "Manufaktur",
-  "Teknologi & Engineering",
-  "Konsultan",
-  "Pemasaran & Digital",
+  "Construction",
+  "Manufacturing",
+  "Technology & Engineering",
+  "Consulting",
+  "Marketing & Digital",
   "IT / Software",
-  "Kesehatan",
-  "Keuangan",
-  "Lainnya...",
+  "Healthcare",
+  "Finance",
+  "Other...",
 ] as const;
 
 export const MOTION_VARIANTS = {
@@ -60,4 +60,3 @@ export const MOTION_VARIANTS = {
     opacity: 0,
   }),
 };
-

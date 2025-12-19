@@ -34,6 +34,6 @@ export async function submitOnboardingAction(data: OnboardingData) {
     revalidatePath("/");
     return { success: true };
   } catch {
-    return { success: false, message: "Gagal menyimpan data." };
+    return { success: false, message: "Failed to save data." };
   }
 }

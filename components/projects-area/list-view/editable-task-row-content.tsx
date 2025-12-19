@@ -105,7 +105,7 @@ export function EditableTaskRowContent({
             />
           </div>
 
-          <div className="text-muted-foreground truncate pr-2 py-1">Tugas</div>
+          <div className="text-muted-foreground truncate pr-2 py-1">Task</div>
 
           <div className="text-muted-foreground truncate pr-2 py-1 pb-5">
             <CompactDatePicker
@@ -220,4 +220,3 @@ export function EditableTaskRowContent({
     </>
   );
 }
-

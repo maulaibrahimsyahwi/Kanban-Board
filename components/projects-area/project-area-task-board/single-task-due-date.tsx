@@ -1,6 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import { format } from "date-fns";
-import { id as indonesianLocale } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { Task } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,7 @@ export function TaskDueDateFooter({
 
   const isOverdue = dueDateOnly < today && progress !== "done";
   const formattedDate = format(taskDueDate, dateFormat, {
-    locale: indonesianLocale,
+    locale: enUS,
   });
 
   const boxColorClasses = isOverdue

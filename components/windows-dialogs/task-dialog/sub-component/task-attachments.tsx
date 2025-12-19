@@ -48,7 +48,7 @@ export default function TaskAttachmentsMenu({
     const MAX_SIZE = 2 * 1024 * 1024;
 
     if (file.size > MAX_SIZE) {
-      toast.error("File terlalu besar (Max 2MB)");
+      toast.error("File is too large (max 2MB)");
       e.target.value = "";
       return;
     }
@@ -62,18 +62,18 @@ export default function TaskAttachmentsMenu({
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Tipe file tidak didukung");
+      toast.error("File type not supported");
       e.target.value = "";
       return;
     }
 
     setIsUploading(true);
-    const toastId = toast.loading("Mengunggah file...");
+    const toastId = toast.loading("Uploading file...");
 
     try {
       const userId = session?.user?.id;
       if (!userId) {
-        toast.error("Anda harus login untuk mengunggah file.", { id: toastId });
+        toast.error("You must be signed in to upload files.", { id: toastId });
         return;
       }
 
@@ -96,7 +96,7 @@ export default function TaskAttachmentsMenu({
       if (!uploadRes.ok || !uploadJson || uploadJson.success !== true) {
         const message =
           (uploadJson && "message" in uploadJson && uploadJson.message) ||
-          "Gagal mengunggah file";
+          "Failed to upload file";
         throw new Error(message);
       }
 
@@ -108,10 +108,10 @@ export default function TaskAttachmentsMenu({
       };
 
       setAttachments([...attachments, newAttachment]);
-      toast.success("File berhasil diunggah", { id: toastId });
+      toast.success("File uploaded successfully", { id: toastId });
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Gagal mengunggah file", { id: toastId });
+      toast.error("Failed to upload file", { id: toastId });
     } finally {
       setIsUploading(false);
       e.target.value = "";

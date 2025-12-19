@@ -63,7 +63,7 @@ export default function TwoFactorGuard() {
 
     const normalized = code.replace(/\s/g, "");
     if (!/^\d{6}$/.test(normalized)) {
-      toast.error("Masukkan 6 digit kode.");
+      toast.error("Enter the 6-digit code.");
       return;
     }
 

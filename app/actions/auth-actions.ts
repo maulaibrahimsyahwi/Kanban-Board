@@ -9,9 +9,9 @@ import crypto from "crypto";
 import { getClientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 const RegisterSchema = z.object({
-  name: z.string().min(2, "Nama minimal 2 karakter"),
-  email: z.string().email("Email tidak valid"),
-  password: z.string().min(8, "Password minimal 8 karakter"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export async function registerUserAction(formData: FormData) {
@@ -23,7 +23,7 @@ export async function registerUserAction(formData: FormData) {
   if (!limited.ok) {
     return {
       success: false,
-      message: "Terlalu banyak percobaan. Silakan coba lagi dalam 1 menit.",
+      message: "Too many attempts. Please try again in 1 minute.",
     };
   }
 
@@ -53,7 +53,7 @@ export async function registerUserAction(formData: FormData) {
       return {
         success: false,
         message:
-          "Email sudah terdaftar. Silakan login (Google/credentials). Jika akun Anda dibuat via Google, login dulu lalu atur password dari Settings.",
+          "Email is already registered. Please sign in (Google/credentials). If your account was created via Google, sign in first and then set a password in Settings.",
       };
     }
 
@@ -79,9 +79,9 @@ export async function registerUserAction(formData: FormData) {
       },
     });
 
-    return { success: true, message: "Registrasi berhasil! Silakan login." };
+    return { success: true, message: "Registration successful! Please sign in." };
   } catch {
-    return { success: false, message: "Terjadi kesalahan saat registrasi." };
+    return { success: false, message: "An error occurred during registration." };
   }
 }
 
@@ -90,7 +90,7 @@ export async function requestPasswordResetAction(email: string) {
   const validation = emailSchema.safeParse(email);
 
   if (!validation.success) {
-    return { success: false, message: "Email tidak valid." };
+    return { success: false, message: "Invalid email." };
   }
 
   try {
@@ -108,7 +108,7 @@ export async function requestPasswordResetAction(email: string) {
     if (!limitedByIp.ok || !limitedByEmail.ok) {
       return {
         success: false,
-        message: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+        message: "Too many requests. Please try again later.",
       };
     }
 
@@ -117,13 +117,13 @@ export async function requestPasswordResetAction(email: string) {
     if (!user) {
       return {
         success: true,
-        message: "Jika email terdaftar, kode telah dikirim.",
+        message: "If the email is registered, a code has been sent.",
       };
     }
 
     const authSecret = process.env.AUTH_SECRET;
     if (!authSecret) {
-      return { success: false, message: "Konfigurasi server belum lengkap." };
+      return { success: false, message: "Server configuration is incomplete." };
     }
 
     const token = crypto.randomInt(100000, 1000000).toString();
@@ -156,13 +156,13 @@ export async function requestPasswordResetAction(email: string) {
     if (!sent) {
       return {
         success: false,
-        message: "Gagal mengirim email. Coba lagi nanti.",
+        message: "Failed to send email. Please try again later.",
       };
     }
 
-    return { success: true, message: "Kode verifikasi dikirim ke email." };
+    return { success: true, message: "Verification code sent to your email." };
   } catch (error) {
-    return { success: false, message: "Terjadi kesalahan server." };
+    return { success: false, message: "Server error." };
   }
 }
 
@@ -179,7 +179,7 @@ export async function resetPasswordAction(
 
   const validation = schema.safeParse({ email, code, newPassword });
   if (!validation.success) {
-    return { success: false, message: "Data tidak valid." };
+    return { success: false, message: "Invalid data." };
   }
 
   try {
@@ -197,18 +197,18 @@ export async function resetPasswordAction(
     if (!limitedByIp.ok || !limitedByEmail.ok) {
       return {
         success: false,
-        message: "Terlalu banyak percobaan. Silakan coba lagi nanti.",
+        message: "Too many attempts. Please try again later.",
       };
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+      return { success: false, message: "Code is incorrect or expired." };
     }
 
     const authSecret = process.env.AUTH_SECRET;
     if (!authSecret) {
-      return { success: false, message: "Konfigurasi server belum lengkap." };
+      return { success: false, message: "Server configuration is incomplete." };
     }
 
     const resetToken = await prisma.passwordResetToken.findUnique({
@@ -216,12 +216,12 @@ export async function resetPasswordAction(
     });
 
     if (!resetToken) {
-      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+      return { success: false, message: "Code is incorrect or expired." };
     }
 
     if (new Date() > resetToken.expires) {
       await prisma.passwordResetToken.delete({ where: { email } });
-      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+      return { success: false, message: "Code is incorrect or expired." };
     }
 
     const MAX_ATTEMPTS = 5;
@@ -229,7 +229,7 @@ export async function resetPasswordAction(
       await prisma.passwordResetToken.delete({ where: { email } });
       return {
         success: false,
-        message: "Terlalu banyak percobaan. Silakan request kode ulang.",
+        message: "Too many attempts. Please request a new code.",
       };
     }
 
@@ -243,7 +243,7 @@ export async function resetPasswordAction(
         where: { email },
         data: { attempts: { increment: 1 } },
       });
-      return { success: false, message: "Kode salah atau telah kadaluarsa." };
+      return { success: false, message: "Code is incorrect or expired." };
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -257,9 +257,9 @@ export async function resetPasswordAction(
 
     return {
       success: true,
-      message: "Password berhasil diubah. Silakan login.",
+      message: "Password changed successfully. Please sign in.",
     };
   } catch (error) {
-    return { success: false, message: "Gagal mereset password." };
+    return { success: false, message: "Failed to reset password." };
   }
 }

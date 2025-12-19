@@ -23,25 +23,25 @@ type PriorityItem = {
 const PriorityListArray: PriorityItem[] = [
   {
     id: "critical",
-    name: "Mendesak",
+    name: "Critical",
     icon: BellRing,
     className: "text-red-600 dark:text-red-400",
   },
   {
     id: "high",
-    name: "Penting",
+    name: "High",
     icon: AlertCircle,
     className: "text-orange-600 dark:text-orange-400",
   },
   {
     id: "medium",
-    name: "Sedang",
+    name: "Medium",
     icon: GoDotFill,
     className: "text-green-600 dark:text-green-400",
   },
   {
     id: "low",
-    name: "Rendah",
+    name: "Low",
     icon: ArrowDown,
     className: "text-blue-600 dark:text-blue-400",
   },
@@ -108,7 +108,7 @@ export default function PrioritySelector({
   return (
     <div className={cn("space-y-2", size === "sm" && "space-y-0")}>
       {size === "default" && (
-        <Label className="text-sm font-medium">Prioritas</Label>
+        <Label className="text-sm font-medium">Priority</Label>
       )}
       <div className={cn(size === "default" ? "w-full" : "w-fit")}>
         <DropdownMenu>

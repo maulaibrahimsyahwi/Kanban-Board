@@ -26,7 +26,7 @@ export async function getNotificationSettingsAction() {
 
     return { success: true, data: settings };
   } catch {
-    return { success: false, message: "Gagal memuat pengaturan notifikasi" };
+    return { success: false, message: "Failed to load notification settings" };
   }
 }
 
@@ -66,9 +66,9 @@ export async function updateNotificationSettingsAction(
     });
 
     revalidatePath("/settings/notifications");
-    return { success: true, message: "Pengaturan notifikasi disimpan" };
+    return { success: true, message: "Notification settings saved" };
   } catch {
-    return { success: false, message: "Gagal menyimpan pengaturan" };
+    return { success: false, message: "Failed to save settings" };
   }
 }
 
@@ -106,8 +106,8 @@ export async function restoreDefaultNotificationSettingsAction() {
     });
 
     revalidatePath("/settings/notifications");
-    return { success: true, message: "Pengaturan dikembalikan ke default" };
+    return { success: true, message: "Settings reset to default" };
   } catch {
-    return { success: false, message: "Gagal mereset pengaturan" };
+    return { success: false, message: "Failed to reset settings" };
   }
 }

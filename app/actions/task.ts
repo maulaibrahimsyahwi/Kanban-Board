@@ -88,7 +88,7 @@ export async function createTaskAction(
     return { success: true, data: newTask };
   } catch (error) {
     console.error("Create task error:", error);
-    return { success: false, message: "Gagal membuat task" };
+    return { success: false, message: "Failed to create task" };
   }
 }
 
@@ -190,7 +190,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
     return { success: true, data: updatedTask };
   } catch (error) {
     console.error("Update task error:", error);
-    return { success: false, message: "Gagal update task" };
+    return { success: false, message: "Failed to update task" };
   }
 }
 
@@ -321,7 +321,7 @@ export async function moveTaskAction(
     return { success: true };
   } catch (error) {
     console.error("Move task error:", error);
-    return { success: false, message: "Gagal memindahkan task" };
+    return { success: false, message: "Failed to move task" };
   }
 }
 
@@ -366,6 +366,6 @@ export async function deleteTaskAction(taskId: string) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    return { success: false, message: "Gagal menghapus task" };
+    return { success: false, message: "Failed to delete task" };
   }
 }

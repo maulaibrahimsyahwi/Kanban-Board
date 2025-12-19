@@ -97,7 +97,7 @@ export default function CopyTaskDialog({
 
   const handleCopyTask = async () => {
     if (!copyTaskName.trim() || !copyTargetBoardId) {
-      toast.error("Nama tugas baru dan wadah tidak boleh kosong.");
+      toast.error("New task name and board are required.");
       return;
     }
 
@@ -123,12 +123,12 @@ export default function CopyTaskDialog({
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
       addTaskToProject(newTaskData, copyTargetBoardId, copyTargetProjectId);
-      toast.success("Tugas berhasil disalin", {
-        description: `"${newTaskData.title}" telah ditambahkan.`,
+      toast.success("Task copied", {
+        description: `"${newTaskData.title}" has been added.`,
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error("Gagal menyalin tugas.");
+      toast.error("Failed to copy task.");
       console.error(error);
     } finally {
       setIsCopying(false);
@@ -141,13 +141,13 @@ export default function CopyTaskDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Copy className="w-5 h-5" />
-            Salin Tugas
+            Copy Task
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="copy-task-name">Nama tugas baru</Label>
+            <Label htmlFor="copy-task-name">New task name</Label>
             <Input
               id="copy-task-name"
               value={copyTaskName}
@@ -156,13 +156,13 @@ export default function CopyTaskDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="copy-project-select">Nama rencana</Label>
+            <Label htmlFor="copy-project-select">Project</Label>
             <Select
               value={copyTargetProjectId}
               onValueChange={handleProjectChange}
             >
               <SelectTrigger id="copy-project-select">
-                <SelectValue placeholder="Pilih proyek..." />
+                <SelectValue placeholder="Select a project..." />
               </SelectTrigger>
               <SelectContent>
                 {projects.map((project) => (
@@ -175,14 +175,14 @@ export default function CopyTaskDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="copy-board-select">Nama wadah</Label>
+            <Label htmlFor="copy-board-select">Board</Label>
             <Select
               value={copyTargetBoardId}
               onValueChange={setCopyTargetBoardId}
               disabled={availableBoards.length === 0}
             >
               <SelectTrigger id="copy-board-select">
-                <SelectValue placeholder="Pilih wadah..." />
+                <SelectValue placeholder="Select a board..." />
               </SelectTrigger>
               <SelectContent>
                 {availableBoards.map((board) => (
@@ -194,14 +194,14 @@ export default function CopyTaskDialog({
             </Select>
           </div>
 
-          <div className="space-y-2 pt-2">
-            <Label>Sertakan</Label>
-            <p className="text-xs text-muted-foreground">
-              Beberapa detail tugas tidak dapat disalin di seluruh rencana.
-            </p>
             <div className="space-y-2 pt-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
+              <Label>Include</Label>
+              <p className="text-xs text-muted-foreground">
+              Some task details can&apos;t be copied across projects.
+              </p>
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                   id="copy-progress"
                   checked={copyOptions.progress}
                   onCheckedChange={() => handleOptionChange("progress")}
@@ -210,7 +210,7 @@ export default function CopyTaskDialog({
                   htmlFor="copy-progress"
                   className="font-normal cursor-pointer"
                 >
-                  Kemajuan
+                  Progress
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -223,7 +223,7 @@ export default function CopyTaskDialog({
                   htmlFor="copy-dates"
                   className="font-normal cursor-pointer"
                 >
-                  Hari
+                  Dates
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -236,7 +236,7 @@ export default function CopyTaskDialog({
                   htmlFor="copy-description"
                   className="font-normal cursor-pointer"
                 >
-                  Deskripsi
+                  Description
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -249,7 +249,7 @@ export default function CopyTaskDialog({
                   htmlFor="copy-checklist"
                   className="font-normal cursor-pointer"
                 >
-                  Daftar Periksa
+                  Checklist
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -262,7 +262,7 @@ export default function CopyTaskDialog({
                   htmlFor="copy-labels"
                   className="font-normal cursor-pointer"
                 >
-                  Label
+                  Labels
                 </Label>
               </div>
             </div>
@@ -275,14 +275,14 @@ export default function CopyTaskDialog({
             onClick={() => onOpenChange(false)}
             disabled={isCopying}
           >
-            Batal
+            Cancel
           </Button>
           <Button
             onClick={handleCopyTask}
             disabled={isCopying || !copyTaskName.trim() || !copyTargetBoardId}
             className="min-w-[100px]"
           >
-            {isCopying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salin"}
+            {isCopying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Copy"}
           </Button>
         </DialogFooter>
       </DialogContent>

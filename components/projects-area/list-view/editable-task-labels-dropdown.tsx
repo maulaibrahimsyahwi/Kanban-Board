@@ -85,7 +85,7 @@ export function EditableTaskLabelsDropdown({
         ))}
 
         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1">
-          Pilih Label
+          Select label
         </div>
         {availableLabels.map((label) => (
           <DropdownMenuItem
@@ -115,4 +115,3 @@ export function EditableTaskLabelsDropdown({
     </DropdownMenu>
   );
 }
-

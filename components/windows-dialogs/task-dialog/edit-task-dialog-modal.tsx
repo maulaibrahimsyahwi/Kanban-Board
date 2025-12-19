@@ -241,22 +241,22 @@ export function EditTaskDialogModal({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-start-date" className="text-sm font-medium">
-                  Tanggal mulai
+                  Start date
                 </Label>
                 <DatePicker
                   date={startDate}
                   onDateChange={setStartDate}
-                  placeholder="Pilih tanggal"
+                  placeholder="Select date"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-due-date" className="text-sm font-medium">
-                  Tenggat waktu
+                  Due date
                 </Label>
                 <DatePicker
                   date={dueDate}
                   onDateChange={setDueDate}
-                  placeholder="Pilih tanggal"
+                  placeholder="Select date"
                 />
               </div>
             </div>
@@ -290,4 +290,3 @@ export function EditTaskDialogModal({
     </Dialog>
   );
 }
-

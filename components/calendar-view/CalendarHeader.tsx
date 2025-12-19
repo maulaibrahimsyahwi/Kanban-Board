@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface CalendarHeaderProps {
   currentMonth: Date;
@@ -37,7 +37,7 @@ export default function CalendarHeader({
           onClick={() => onMonthChange(new Date())}
           className="font-semibold text-sm hover:bg-transparent text-foreground"
         >
-          {format(currentMonth, "MMMM yyyy", { locale: id })}
+          {format(currentMonth, "MMMM yyyy", { locale: enUS })}
         </Button>
         <Button
           variant="ghost"

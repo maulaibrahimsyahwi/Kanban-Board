@@ -34,12 +34,12 @@ const computePasswordStrength = (pwd: string): PasswordStrength => {
   switch (score) {
     case 0:
     case 1:
-      return { score, label: "Lemah", color: "bg-red-500" };
+      return { score, label: "Weak", color: "bg-red-500" };
     case 2:
     case 3:
-      return { score, label: "Sedang", color: "bg-yellow-500" };
+      return { score, label: "Medium", color: "bg-yellow-500" };
     case 4:
-      return { score, label: "Kuat", color: "bg-green-500" };
+      return { score, label: "Strong", color: "bg-green-500" };
     default:
       return { score: 0, label: "", color: "bg-muted" };
   }
@@ -107,7 +107,7 @@ export function useAuthCard() {
           result.error === "RATE_LIMIT" ||
           result.error.includes("RATE_LIMIT")
         ) {
-          toast.error("Terlalu banyak percobaan. Silakan coba lagi sebentar.");
+          toast.error("Too many attempts. Please try again shortly.");
         } else {
           toast.error("Login failed", {
             description: "Check your credentials.",
@@ -127,11 +127,11 @@ export function useAuthCard() {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error("Password tidak cocok");
+      toast.error("Passwords do not match");
       return;
     }
     if (passwordStrength.score < 2) {
-      toast.warning("Password terlalu lemah");
+      toast.warning("Password is too weak");
       return;
     }
 
@@ -165,7 +165,7 @@ export function useAuthCard() {
     setIsLoading(false);
 
     if (res.success) {
-      toast.success("Kode telah dikirim ke email Anda.");
+      toast.success("A code has been sent to your email.");
       setCurrentView("forgot-code");
     } else {
       toast.error(res.message);
@@ -175,7 +175,7 @@ export function useAuthCard() {
   const handleVerifyCodeStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (resetCode.length < 6) {
-      toast.error("Masukkan 6 digit kode.");
+      toast.error("Enter the 6-digit code.");
       return;
     }
     setCurrentView("forgot-new-pass");

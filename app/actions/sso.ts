@@ -159,7 +159,7 @@ export async function deactivateSSOAction() {
       );
 
       if (!res.ok) {
-        console.error("Gagal menghapus dari BoxyHQ");
+        console.error("Failed to delete from BoxyHQ");
       }
     }
 

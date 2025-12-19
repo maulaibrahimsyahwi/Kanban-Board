@@ -48,17 +48,17 @@ export default function ProfileSettingsPage() {
     if (!file) return;
 
     if (file.size > 1 * 1024 * 1024) {
-      toast.error("File terlalu besar. Maksimal 1MB.");
+      toast.error("File is too large. Max 1MB.");
       return;
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Hanya file gambar (JPEG, PNG, WEBP) yang diperbolehkan.");
+      toast.error("Only image files (JPEG, PNG, WEBP) are allowed.");
       return;
     }
 
-    const toastId = toast.loading("Mengunggah foto profil...");
+    const toastId = toast.loading("Uploading profile photo...");
 
     try {
       const uploadBody = new FormData();
@@ -77,7 +77,7 @@ export default function ProfileSettingsPage() {
       if (!uploadRes.ok || !uploadJson || uploadJson.success !== true) {
         const message =
           (uploadJson && "message" in uploadJson && uploadJson.message) ||
-          "Gagal mengunggah gambar";
+          "Failed to upload image";
         throw new Error(message);
       }
 
@@ -92,17 +92,17 @@ export default function ProfileSettingsPage() {
       }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Gagal mengunggah gambar.", { id: toastId });
+      toast.error("Failed to upload image.", { id: toastId });
     }
   };
 
   const handlePasswordSave = async () => {
     if (!currentPassword || !newPassword || !repeatPassword) {
-      toast.error("Mohon isi semua kolom password.");
+      toast.error("Please fill in all password fields.");
       return;
     }
     if (newPassword !== repeatPassword) {
-      toast.error("Password baru tidak cocok.");
+      toast.error("New passwords do not match.");
       return;
     }
 
@@ -125,7 +125,7 @@ export default function ProfileSettingsPage() {
     setIsLoading(true);
     const result = await deleteAccountAction();
     if (result.success) {
-      toast.success("Akun dihapus. Mengalihkan...");
+      toast.success("Account deleted. Redirecting...");
       await signOut({ callbackUrl: "/" });
     } else {
       toast.error(result.message);
@@ -138,7 +138,7 @@ export default function ProfileSettingsPage() {
     const result = await updateDateFormatAction(val);
     if (result.success) {
       await update({ dateFormat: val });
-      toast.success(`Format tanggal diubah ke ${val}`);
+      toast.success(`Date format updated to ${val}`);
     } else {
       toast.error(result.message);
     }

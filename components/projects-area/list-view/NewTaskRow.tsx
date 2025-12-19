@@ -90,8 +90,8 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
       };
       addTaskToProject(newTaskData, boardId, selectedProject.id);
 
-      toast.success("Tugas baru berhasil ditambahkan", {
-        description: `"${title.trim()}" telah ditambahkan ke ${
+      toast.success("New task added", {
+        description: `"${title.trim()}" has been added to ${
           boards.find((b) => b.id === boardId)?.name || "Board"
         }.`,
       });
@@ -104,7 +104,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
       setIsExpanded(false);
       onTaskAdded();
     } catch (error) {
-      toast.error("Gagal menambahkan tugas." + (error as Error).message);
+      toast.error("Failed to add task." + (error as Error).message);
     } finally {
       setIsCreating(false);
     }
@@ -132,7 +132,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
           <Plus className="w-4 h-4" />
         </Button>
         <Input
-          placeholder="Tambahkan tugas baru..."
+          placeholder="Add a new task..."
           className="h-7 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 shadow-none cursor-pointer"
           onFocus={() => setIsExpanded(true)}
           value={title}
@@ -156,7 +156,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
           )}
         />
         <Input
-          placeholder="Tambahkan tugas baru"
+          placeholder="Add a new task"
           className="h-7 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 shadow-none"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -167,7 +167,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
 
       <div className="text-muted-foreground truncate pr-2">
         <Input
-          placeholder="Tugas"
+          placeholder="Task"
           className="h-7 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 shadow-none text-muted-foreground"
           disabled={true}
         />
@@ -197,7 +197,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
             className="h-7 p-1 text-xs border-dashed text-muted-foreground"
             size="sm"
           >
-            <SelectValue placeholder="Pilih wadah" />
+            <SelectValue placeholder="Select a board" />
           </SelectTrigger>
           <SelectContent>
             {boards.map((board) => (
@@ -227,7 +227,7 @@ export const NewTaskRow: React.FC<NewTaskRowProps> = ({
 
       <div className="flex flex-wrap gap-1">
         <span className="text-primary text-xs cursor-pointer hover:underline">
-          Tambahkan label
+          Add label
         </span>
       </div>
 

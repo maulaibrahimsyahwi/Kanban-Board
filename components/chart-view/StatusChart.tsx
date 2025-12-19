@@ -68,10 +68,10 @@ export default function StatusChart({ tasks }: StatusChartProps) {
   const percentage = totalTasks > 0 ? (completed / totalTasks) * 100 : 0;
 
   const stats = [
-    { label: "Belum di...", value: notStarted, color: "bg-gray-400" },
-    { label: "Dalam pr...", value: inProgress, color: "bg-blue-500" },
-    { label: "Terlambat", value: overdue, color: "bg-red-500" },
-    { label: "Selesai", value: completed, color: "bg-green-500" },
+    { label: "Not started", value: notStarted, color: "bg-gray-400" },
+    { label: "In progress", value: inProgress, color: "bg-blue-500" },
+    { label: "Overdue", value: overdue, color: "bg-red-500" },
+    { label: "Done", value: completed, color: "bg-green-500" },
   ];
 
   return (
@@ -97,7 +97,7 @@ export default function StatusChart({ tasks }: StatusChartProps) {
             })}
           />
           <p className="text-center text-sm text-muted-foreground mt-1">
-            Tugas tersisa
+            Tasks remaining
           </p>
         </div>
         <div className="flex-1 space-y-2 w-full">

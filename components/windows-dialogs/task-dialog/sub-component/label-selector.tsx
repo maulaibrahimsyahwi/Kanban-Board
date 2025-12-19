@@ -156,7 +156,7 @@ export default function LabelSelector({
                   }
                 }}
                 placeholder={
-                  selectedLabels.length === 0 ? "Pilih label..." : ""
+                  selectedLabels.length === 0 ? "Select labels..." : ""
                 }
                 className="flex-1 bg-transparent outline-none text-sm min-w-[120px]"
                 onFocus={() => setIsDropdownOpen(true)}
@@ -169,12 +169,12 @@ export default function LabelSelector({
           >
             {availableLabels.length === 0 && searchQuery && (
               <DropdownMenuItem disabled>
-                Tidak ada label ditemukan...
+                No labels found...
               </DropdownMenuItem>
             )}
             {availableLabels.length === 0 && !searchQuery && (
               <DropdownMenuItem disabled>
-                Semua label telah dipilih.
+                All labels have been selected.
               </DropdownMenuItem>
             )}
             {availableLabels.map((label) => (

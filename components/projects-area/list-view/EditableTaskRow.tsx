@@ -103,8 +103,8 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
     const isMoving = newBoardId !== oldBoardId;
     if (isMoving) {
       moveTask(initialTask.id, oldBoardId, newBoardId);
-      toast.success("Tugas dipindahkan", {
-        description: `Tugas dipindahkan ke ${
+      toast.success("Task moved", {
+        description: `Task moved to ${
           boards.find((b) => b.id === newBoardId)?.name
         }.`,
       });
@@ -127,8 +127,8 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
         } as Omit<typeof initialTask, "labels"> & { labels: AppliedLabel[] };
       });
 
-      toast.success("Tugas diperbarui", {
-        description: `Kolom ${key} telah diperbarui.`,
+      toast.success("Task updated", {
+        description: `Field \"${key}\" has been updated.`,
       });
     }
   };
@@ -201,8 +201,8 @@ export const EditableTaskRow: React.FC<EditableTaskRowProps> = ({
 
     setIsEditLabelDialogOpen(false);
     setCurrentLabelToEdit(null);
-    toast.success("Label diperbarui", {
-      description: `Label ${editLabelName} telah diperbarui.`,
+    toast.success("Label updated", {
+      description: `Label \"${editLabelName}\" has been updated.`,
     });
   };
 

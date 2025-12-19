@@ -28,14 +28,14 @@ test.describe("Auth & Onboarding", () => {
 
     await page.getByRole("button", { name: "Create Account" }).click();
 
-    await expect(page.getByText("Ukuran Tim")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText("Team size")).toBeVisible({ timeout: 60_000 });
 
-    await page.getByText("Hanya saya", { exact: true }).click();
-    await expect(page.getByText("Tujuan")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("Pekerjaan", { exact: true })).toBeVisible({
+    await page.getByText("Just me", { exact: true }).click();
+    await expect(page.getByText("Purpose")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Work", { exact: true })).toBeVisible({
       timeout: 30_000,
     });
-    await page.getByText("Pekerjaan", { exact: true }).click();
+    await page.getByText("Work", { exact: true }).click();
 
     await expect(page.getByRole("combobox")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("combobox").click();
@@ -44,7 +44,7 @@ test.describe("Auth & Onboarding", () => {
     });
     await page.getByText("IT / Software", { exact: true }).click();
 
-    await page.getByRole("button", { name: "Mulai Sekarang" }).click();
+    await page.getByRole("button", { name: "Get started" }).click();
 
     await expect(page.getByText("My First Project")).toBeVisible({
       timeout: 60_000,

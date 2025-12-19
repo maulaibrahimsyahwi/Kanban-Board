@@ -26,7 +26,7 @@ export default function OnboardingFlow() {
       const result = await submitOnboardingAction(formData);
 
       if (result.success) {
-        toast.success("Semua siap! Selamat datang.");
+        toast.success("All set! Welcome.");
         await update({ onboardingCompleted: true });
         // Loader tetap tampil sampai komponen di-unmount oleh parent
       } else {
@@ -34,7 +34,7 @@ export default function OnboardingFlow() {
         setIsLoading(false);
       }
     } catch {
-      toast.error("Terjadi kesalahan.");
+      toast.error("Something went wrong.");
       setIsLoading(false);
     }
   };
@@ -72,7 +72,7 @@ export default function OnboardingFlow() {
   // TAMPILKAN LOADER FULLSCREEN JIKA SEDANG SUBMIT
   if (isLoading) {
     return (
-      <CustomLoader variant="fullscreen" label="Menyiapkan Workspace..." />
+      <CustomLoader variant="fullscreen" label="Preparing your workspace..." />
     );
   }
 

@@ -71,51 +71,51 @@ export default function ListView({ filteredBoards }: ListViewProps) {
         <div className="min-w-[1500px] bg-card border border-border rounded-xl flex flex-col h-full">
           <div className="grid grid-cols-[1.5fr_150px_150px_150px_120px_180px_160px_150px_80px] text-sm font-semibold text-muted-foreground border-b border-border/50 py-3 px-4 z-10 flex-shrink-0 bg-card">
             <SortableHeader
-              label="Nama Tugas"
+              label="Task name"
               sortKey="title"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
-            <div className="text-muted-foreground/80">Tugas</div>
+            <div className="text-muted-foreground/80">Task</div>
             <SortableHeader
-              label="Tanggal mulai"
+              label="Start date"
               sortKey="startDate"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
             <SortableHeader
-              label="Tenggat Waktu"
+              label="Due date"
               sortKey="dueDate"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
             <SortableHeader
-              label="Wadah"
+              label="Board"
               sortKey="boardName"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
             <SortableHeader
-              label="Kemajuan"
+              label="Progress"
               sortKey="progress"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
             <SortableHeader
-              label="Prioritas"
+              label="Priority"
               sortKey="priority"
               currentSortKey={sortBy}
               currentDirection={sortDirection}
               onClick={handleSort}
             />
-            <div className="text-muted-foreground/80">Label</div>
+            <div className="text-muted-foreground/80">Labels</div>
             <div className="text-right text-muted-foreground/80">
-              Lihat sekilas
+              Quick view
             </div>
           </div>
 

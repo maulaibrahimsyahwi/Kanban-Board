@@ -67,7 +67,7 @@ export async function createBoardAction(projectId: string, name: string) {
     revalidatePath("/");
     return { success: true, data: newBoard };
   } catch (error) {
-    return { success: false, message: "Gagal membuat board" };
+    return { success: false, message: "Failed to create board" };
   }
 }
 
@@ -102,7 +102,7 @@ export async function deleteBoardAction(boardId: string) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    return { success: false, message: "Gagal menghapus board" };
+    return { success: false, message: "Failed to delete board" };
   }
 }
 
@@ -131,6 +131,6 @@ export async function updateBoardAction(boardId: string, name: string) {
     revalidatePath("/");
     return { success: true, data: updatedBoard };
   } catch (error) {
-    return { success: false, message: "Gagal update board" };
+    return { success: false, message: "Failed to update board" };
   }
 }

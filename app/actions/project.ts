@@ -44,7 +44,7 @@ export async function createProjectAction(projectName: string, icon?: string) {
     return { success: true, data: newProject };
   } catch (error) {
     console.error("Create project error:", error);
-    return { success: false, message: "Gagal membuat project" };
+    return { success: false, message: "Failed to create project" };
   }
 }
 
@@ -108,7 +108,7 @@ export async function deleteProjectAction(projectId: string) {
     return { success: true };
   } catch (error) {
     console.error("Delete project error:", error);
-    return { success: false, message: "Gagal menghapus project" };
+    return { success: false, message: "Failed to delete project" };
   }
 }
 
@@ -141,7 +141,7 @@ export async function updateProjectAction(
     return { success: true };
   } catch (error) {
     console.error("Update project error:", error);
-    return { success: false, message: "Gagal mengupdate project" };
+    return { success: false, message: "Failed to update project" };
   }
 }
 
@@ -161,14 +161,14 @@ export async function addMemberAction(projectId: string, email: string) {
       return {
         success: false,
         message:
-          "User tidak ditemukan. Pastikan mereka sudah login ke aplikasi.",
+          "User not found. Make sure they've signed in to the app.",
       };
     }
 
     if (userInvited.id === session.user.id) {
       return {
         success: false,
-        message: "Anda tidak bisa mengundang diri sendiri.",
+        message: "You can't invite yourself.",
       };
     }
 
@@ -193,10 +193,10 @@ export async function addMemberAction(projectId: string, email: string) {
     revalidatePath("/");
     return {
       success: true,
-      message: `Berhasil mengundang ${userInvited.name || userInvited.email}`,
+      message: `Successfully invited ${userInvited.name || userInvited.email}`,
     };
   } catch (error) {
     console.error("Invite member error:", error);
-    return { success: false, message: "Gagal mengundang user" };
+    return { success: false, message: "Failed to invite user" };
   }
 }

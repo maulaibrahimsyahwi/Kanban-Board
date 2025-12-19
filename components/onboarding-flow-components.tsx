@@ -74,7 +74,7 @@ export function OnboardingCard({
           transition={{ duration: 0.3 }}
         >
           <div className="text-xs font-bold text-primary tracking-widest uppercase mb-2">
-            Langkah {step} dari {STEPS.length}
+            Step {step} of {STEPS.length}
           </div>
           <CardTitle className="text-3xl font-bold mb-2">
             {STEPS[step - 1].title}
@@ -161,13 +161,15 @@ export function OnboardingCard({
             {step === 3 && (
               <div className="space-y-6 flex flex-col justify-center h-full">
                 <div className="space-y-2">
-                  <Label className="text-base font-medium">Pilih Industri</Label>
+                  <Label className="text-base font-medium">
+                    Select an industry
+                  </Label>
                   <Select
                     onValueChange={(val) => onSelect("industry", val)}
                     value={formData.industry}
                   >
                     <SelectTrigger className="h-14 text-lg px-4 border-2 focus:ring-primary/20">
-                      <SelectValue placeholder="Pilih industri..." />
+                      <SelectValue placeholder="Select an industry..." />
                     </SelectTrigger>
                     <SelectContent>
                       {INDUSTRY_OPTIONS.map((industry) => (
@@ -185,8 +187,8 @@ export function OnboardingCard({
 
                 <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Info: Kami akan menyesuaikan template proyek berdasarkan
-                    pilihan industri Anda.
+                    Info: We&apos;ll tailor project templates based on your industry
+                    selection.
                   </p>
                 </div>
               </div>
@@ -205,7 +207,7 @@ export function OnboardingCard({
             step === 1 ? "opacity-0 pointer-events-none" : "opacity-100"
           )}
         >
-          <IoChevronBack className="w-4 h-4 mr-2" /> Kembali
+          <IoChevronBack className="w-4 h-4 mr-2" /> Back
         </Button>
 
         {step < 3 ? (
@@ -214,7 +216,7 @@ export function OnboardingCard({
             disabled={!isStepValid}
             className="rounded-full px-6"
           >
-            Lanjut <IoChevronForward className="w-4 h-4 ml-2" />
+            Next <IoChevronForward className="w-4 h-4 ml-2" />
           </Button>
         ) : (
           <Button
@@ -223,7 +225,7 @@ export function OnboardingCard({
             className="min-w-[140px] rounded-full shadow-lg shadow-primary/25"
             size="lg"
           >
-            Mulai Sekarang
+            Get started
           </Button>
         )}
       </CardFooter>
@@ -246,7 +248,7 @@ export function SignedInFooter({
       className="mt-8 text-center"
     >
       <p className="text-sm text-muted-foreground mb-2">
-        Masuk sebagai{" "}
+        Signed in as{" "}
         <span className="font-semibold text-foreground">{email}</span>
       </p>
       <Button
@@ -254,9 +256,8 @@ export function SignedInFooter({
         onClick={onSwitchAccount}
         className="text-sm text-muted-foreground hover:text-primary h-auto p-0"
       >
-        Bukan Anda? Ganti akun
+        Not you? Switch account
       </Button>
     </motion.div>
   );
 }
-

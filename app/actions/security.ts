@@ -48,7 +48,7 @@ export async function activateTwoFactorAction(token: string, secret: string) {
   const isValid = authenticator.verify({ token, secret });
 
   if (!isValid) {
-    return { success: false, message: "Kode verifikasi salah." };
+    return { success: false, message: "Invalid verification code." };
   }
 
   let encryptedSecret: string;
@@ -58,7 +58,7 @@ export async function activateTwoFactorAction(token: string, secret: string) {
     return {
       success: false,
       message:
-        "Konfigurasi server belum lengkap: DATA_ENCRYPTION_KEY wajib di-set untuk menyimpan 2FA secret dengan aman.",
+        "Server configuration is incomplete: DATA_ENCRYPTION_KEY must be set to store the 2FA secret securely.",
     };
   }
 
@@ -119,7 +119,7 @@ export async function verifyTwoFactorLoginAction(code: string) {
     if (!limitedByIp.ok || !limitedByUser.ok) {
       return {
         success: false,
-        message: "Terlalu banyak percobaan. Silakan coba lagi nanti.",
+        message: "Too many attempts. Please try again later.",
       };
     }
 

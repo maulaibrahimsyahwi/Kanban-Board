@@ -300,19 +300,6 @@ export function WorkspaceSettingsSection({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
         <div className="space-y-2">
-          <Label>Language</Label>
-          <Select defaultValue="en">
-            <SelectTrigger>
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="id">Indonesia</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label>Date format</Label>
           <Select value={dateFormat} onValueChange={onDateFormatChange}>
             <SelectTrigger>

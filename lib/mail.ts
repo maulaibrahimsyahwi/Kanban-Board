@@ -16,10 +16,10 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       subject: "Reset Password Code - FreeKanban",
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
-          <h2>Permintaan Reset Password</h2>
-          <p>Gunakan kode berikut untuk mereset kata sandi Anda:</p>
+          <h2>Password Reset Request</h2>
+          <p>Use the following code to reset your password:</p>
           <h1 style="background: #f4f4f4; padding: 10px; display: inline-block; border-radius: 5px;">${token}</h1>
-          <p>Kode ini berlaku selama 15 menit.</p>
+          <p>This code is valid for 15 minutes.</p>
         </div>
       `,
     });

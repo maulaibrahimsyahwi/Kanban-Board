@@ -101,22 +101,22 @@ export function useListViewTaskEditor({
 
       editTask(taskId, originalBoardId, updatedData);
 
-      let toastDescription = `"${editTitle.trim()}" telah diperbarui.`;
+      let toastDescription = `"${editTitle.trim()}" has been updated.`;
 
       if (editBoardId !== originalBoardId) {
         moveTask(taskId, originalBoardId, editBoardId);
         const newBoard = boards?.find((b) => b.id === editBoardId);
-        toastDescription = `Tugas dipindahkan ke ${newBoard?.name || "board baru"}.`;
+        toastDescription = `Task moved to ${newBoard?.name || "new board"}.`;
       }
 
-      toast.success("Tugas berhasil disimpan", {
+      toast.success("Task saved", {
         description: toastDescription,
       });
       onUpdated();
       closeEditor();
     } catch (error) {
-      toast.error("Gagal menyimpan tugas");
-      console.error("Gagal menyimpan tugas:", error);
+      toast.error("Failed to save task");
+      console.error("Failed to save task:", error);
     } finally {
       setIsSaving(false);
     }

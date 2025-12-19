@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -20,7 +20,7 @@ export function formatDateSafely(
       return "";
     }
 
-    return format(dateObj, dateFormatStr, { locale: id });
+    return format(dateObj, dateFormatStr, { locale: enUS });
   } catch (error) {
     console.error("Date formatting error:", error);
     return "";

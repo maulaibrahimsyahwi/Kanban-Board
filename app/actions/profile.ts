@@ -60,7 +60,7 @@ export async function changePasswordAction(
     if (user.password) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
-        return { success: false, message: "Password saat ini salah." };
+        return { success: false, message: "Current password is incorrect." };
       }
     }
 
@@ -70,9 +70,9 @@ export async function changePasswordAction(
       data: { password: hashedPassword },
     });
 
-    return { success: true, message: "Password berhasil diperbarui." };
+    return { success: true, message: "Password updated successfully." };
   } catch {
-    return { success: false, message: "Gagal mengubah password." };
+    return { success: false, message: "Failed to change password." };
   }
 }
 
@@ -85,9 +85,9 @@ export async function deleteAccountAction() {
 
   try {
     await prisma.user.delete({ where: { id: session.user.id } });
-    return { success: true, message: "Akun berhasil dihapus." };
+    return { success: true, message: "Account deleted successfully." };
   } catch {
-    return { success: false, message: "Gagal menghapus akun." };
+    return { success: false, message: "Failed to delete account." };
   }
 }
 
@@ -100,7 +100,7 @@ export async function updateProfileImageAction(imageUrl: string) {
 
   const normalized = imageUrl.trim();
   if (!isAllowedProfileImageUrl(normalized)) {
-    return { success: false, message: "URL gambar tidak valid." };
+    return { success: false, message: "Invalid image URL." };
   }
 
   try {
@@ -109,9 +109,9 @@ export async function updateProfileImageAction(imageUrl: string) {
       data: { image: normalized },
     });
     revalidatePath("/");
-    return { success: true, message: "Foto profil diperbarui." };
+    return { success: true, message: "Profile photo updated." };
   } catch {
-    return { success: false, message: "Gagal memperbarui foto." };
+    return { success: false, message: "Failed to update photo." };
   }
 }
 
@@ -128,8 +128,8 @@ export async function updateDateFormatAction(format: string) {
       data: { dateFormat: format },
     });
     revalidatePath("/");
-    return { success: true, message: "Format tanggal diperbarui." };
+    return { success: true, message: "Date format updated." };
   } catch {
-    return { success: false, message: "Gagal update format tanggal." };
+    return { success: false, message: "Failed to update date format." };
   }
 }

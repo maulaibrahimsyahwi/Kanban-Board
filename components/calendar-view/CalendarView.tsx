@@ -10,7 +10,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 // Import EventDropArg from @fullcalendar/core
 import type { EventInput, EventDropArg } from "@fullcalendar/core";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
-import { id as indonesianLocale } from "date-fns/locale";
 import { addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -62,9 +61,9 @@ export default function CalendarView() {
         startDate: newStartDate,
         dueDate: newDueDate,
       });
-      toast.success(`Tugas "${event.title}" dipindahkan.`);
+      toast.success(`Task "${event.title}" moved.`);
     } catch (error) {
-      toast.error("Gagal memindahkan tugas." + (error as Error).message);
+      toast.error("Failed to move task. " + (error as Error).message);
       dropInfo.revert();
     }
   };
@@ -84,9 +83,9 @@ export default function CalendarView() {
         startDate: newStartDate,
         dueDate: newDueDate,
       });
-      toast.success(`Durasi "${event.title}" diperbarui.`);
+      toast.success(`Duration for "${event.title}" updated.`);
     } catch (error) {
-      toast.error("Gagal mengubah durasi tugas." + (error as Error).message);
+      toast.error("Failed to update task duration. " + (error as Error).message);
       resizeInfo.revert();
     }
   };
@@ -101,7 +100,7 @@ export default function CalendarView() {
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        locale={indonesianLocale}
+        locale="en"
         headerToolbar={{
           left: "prev,next today",
           center: "title",

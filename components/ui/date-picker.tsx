@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function DatePicker({
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? (
-            format(date, "dd/MM/yyyy", { locale: id })
+            format(date, "dd/MM/yyyy", { locale: enUS })
           ) : (
             <span>{placeholder}</span>
           )}
@@ -53,7 +53,7 @@ export function DatePicker({
           selected={date ? date : undefined}
           onSelect={(d) => onDateChange(d || null)}
           initialFocus
-          locale={id}
+          locale={enUS}
           captionLayout="dropdown"
           fromYear={fromYear}
           toYear={toYear}

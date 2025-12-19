@@ -88,7 +88,7 @@ export default function TasksDropDown({
           onClick={onOpenCopyDialog}
         >
           <Copy className="flex-shrink-0 w-4 h-4" />
-          <span>Salin Tugas</span>
+          <span>Copy Task</span>
         </DropdownMenuItem>
 
         <DropdownMenuSub>
@@ -105,7 +105,7 @@ export default function TasksDropDown({
                 disabled
                 className="cursor-default p-2 text-muted-foreground"
               >
-                Semua label telah dipilih
+                All labels have been selected
               </DropdownMenuItem>
             )}
             {availableLabels.map((label) => {

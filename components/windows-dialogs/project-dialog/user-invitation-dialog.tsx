@@ -44,7 +44,7 @@ export default function UserInvitationDialog({
         toast.error(result.message);
       }
     } catch {
-      toast.error("Terjadi kesalahan saat mengirim undangan.");
+      toast.error("An error occurred while sending the invitation.");
     } finally {
       setIsLoading(false);
     }

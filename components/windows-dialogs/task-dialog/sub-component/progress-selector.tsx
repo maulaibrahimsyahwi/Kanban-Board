@@ -27,19 +27,19 @@ type ProgressItem = {
 const ProgressListArray: ProgressItem[] = [
   {
     id: "not_started",
-    name: "Belum dimulai",
+    name: "Not started",
     icon: FaRegCircle,
     className: "text-muted-foreground",
   },
   {
     id: "in_progress",
-    name: "Dalam proses",
+    name: "In progress",
     icon: BsCircleHalf,
     className: "text-blue-600 dark:text-blue-400",
   },
   {
     id: "done",
-    name: "Selesai",
+    name: "Done",
     icon: FaCircleCheck,
     className: "text-green-600 dark:text-green-500",
   },
@@ -106,7 +106,7 @@ export default function ProgressSelector({
   return (
     <div className={cn("space-y-2", size === "sm" && "space-y-0")}>
       {size === "default" && (
-        <Label className="text-sm font-medium">Kemajuan</Label>
+        <Label className="text-sm font-medium">Progress</Label>
       )}
       <div className={cn(size === "default" ? "w-full" : "w-fit")}>
         <DropdownMenu>

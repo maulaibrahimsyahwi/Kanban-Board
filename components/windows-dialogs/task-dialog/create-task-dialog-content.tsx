@@ -145,7 +145,7 @@ export function CreateTaskDialogContent({
                   className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
                 <Label htmlFor="displayChecklist" className="text-sm font-normal cursor-pointer">
-                  Tampilkan pada kartu
+                  Show on card
                 </Label>
               </div>
             }
@@ -156,7 +156,7 @@ export function CreateTaskDialogContent({
               <LabelSelector selectedLabels={labels} onLabelsChange={setLabels} />
               <div className="space-y-2">
                 <Label htmlFor="board-select" className="text-sm font-medium">
-                  Wadah
+                  Board
                 </Label>
                 <select
                   id="board-select"
@@ -165,7 +165,7 @@ export function CreateTaskDialogContent({
                   className="w-full h-11 border border-input bg-background rounded-md px-3 text-sm"
                 >
                   <option value="" disabled>
-                    Pilih wadah...
+                    Select a board...
                   </option>
                   {boards.map((board) => (
                     <option key={board.id} value={board.id}>
@@ -185,15 +185,23 @@ export function CreateTaskDialogContent({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start-date" className="text-sm font-medium">
-                Tanggal mulai
+                Start date
               </Label>
-              <DatePicker date={startDate} onDateChange={setStartDate} placeholder="Pilih tanggal" />
+              <DatePicker
+                date={startDate}
+                onDateChange={setStartDate}
+                placeholder="Select date"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="due-date" className="text-sm font-medium">
-                Tenggat waktu
+                Due date
               </Label>
-              <DatePicker date={dueDate} onDateChange={setDueDate} placeholder="Pilih tanggal" />
+              <DatePicker
+                date={dueDate}
+                onDateChange={setDueDate}
+                placeholder="Select date"
+              />
             </div>
           </div>
         </div>

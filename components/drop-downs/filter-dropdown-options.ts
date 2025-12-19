@@ -29,40 +29,40 @@ export type FilterOption<T> = {
 export const DUE_DATE_OPTIONS: FilterOption<DueDateFilter>[] = [
   {
     id: "overdue",
-    label: "Terlambat",
+    label: "Overdue",
     icon: TimerOff,
     className: "text-red-600 dark:text-red-400",
   },
-  { id: "today", label: "Hari ini", icon: CalendarCheck },
-  { id: "tomorrow", label: "Besok", icon: CalendarClock },
-  { id: "this-week", label: "Minggu ini", icon: CalendarRange },
-  { id: "next-week", label: "Minggu depan", icon: CalendarPlus },
-  { id: "upcoming", label: "Mendatang", icon: TrendingUp },
-  { id: "no-date", label: "Tidak ada tanggal", icon: CalendarX },
+  { id: "today", label: "Today", icon: CalendarCheck },
+  { id: "tomorrow", label: "Tomorrow", icon: CalendarClock },
+  { id: "this-week", label: "This week", icon: CalendarRange },
+  { id: "next-week", label: "Next week", icon: CalendarPlus },
+  { id: "upcoming", label: "Upcoming", icon: TrendingUp },
+  { id: "no-date", label: "No date", icon: CalendarX },
 ];
 
 export const PRIORITY_OPTIONS: FilterOption<PriorityFilter>[] = [
   {
     id: "critical",
-    label: "Mendesak",
+    label: "Critical",
     icon: BellRing,
     className: "text-red-600 dark:text-red-400",
   },
   {
     id: "high",
-    label: "Penting",
+    label: "High",
     icon: AlertCircle,
     className: "text-orange-600 dark:text-orange-400",
   },
   {
     id: "medium",
-    label: "Sedang",
+    label: "Medium",
     icon: GoDotFill,
     className: "text-green-600 dark:text-green-400",
   },
   {
     id: "low",
-    label: "Rendah",
+    label: "Low",
     icon: ArrowDown,
     className: "text-blue-600 dark:text-blue-400",
   },
@@ -71,19 +71,19 @@ export const PRIORITY_OPTIONS: FilterOption<PriorityFilter>[] = [
 export const PROGRESS_OPTIONS: FilterOption<ProgressFilter>[] = [
   {
     id: "not_started",
-    label: "Belum dimulai",
+    label: "Not started",
     icon: FaRegCircle,
     className: "text-muted-foreground",
   },
   {
     id: "in_progress",
-    label: "Dalam proses",
+    label: "In progress",
     icon: BsCircleHalf,
     className: "text-blue-600 dark:text-blue-400",
   },
   {
     id: "done",
-    label: "Selesai",
+    label: "Done",
     icon: FaCircleCheck,
     className: "text-green-600 dark:text-green-500",
   },

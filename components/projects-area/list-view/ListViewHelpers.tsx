@@ -11,35 +11,35 @@ export const getPriorityConfig = (priority: Task["priority"]) => {
   switch (priority) {
     case "critical":
       return {
-        label: "Mendesak",
+        label: "Critical",
         icon: Star,
         colorClass: "text-red-600 dark:text-red-400",
-        display: "Mendesak",
+        display: "Critical",
         isIconFilled: true,
       };
     case "high":
       return {
-        label: "Penting",
+        label: "High",
         icon: Star,
         colorClass: "text-orange-600 dark:text-orange-400",
-        display: "Penting",
+        display: "High",
         isIconFilled: true,
       };
     case "medium":
       return {
-        label: "Sedang",
+        label: "Medium",
         icon: GoDotFill,
         colorClass: "text-green-600 dark:text-green-400",
-        display: "Sedang",
+        display: "Medium",
         isIconFilled: false,
       };
     case "low":
     default:
       return {
-        label: "Rendah",
+        label: "Low",
         icon: GoDotFill,
         colorClass: "text-blue-600 dark:text-blue-400",
-        display: "Rendah",
+        display: "Low",
         isIconFilled: false,
       };
   }
@@ -49,25 +49,25 @@ export const getProgressConfig = (progress: Task["progress"]) => {
   switch (progress) {
     case "done":
       return {
-        label: "Selesai",
+        label: "Done",
         icon: Check,
         colorClass: "text-green-600 dark:text-green-500",
-        display: "Selesai",
+        display: "Done",
       };
     case "in_progress":
       return {
-        label: "Dalam proses",
+        label: "In progress",
         icon: GoDotFill,
         colorClass: "text-blue-600 dark:text-blue-400",
-        display: "Dalam proses",
+        display: "In progress",
       };
     case "not_started":
     default:
       return {
-        label: "Belum dimulai",
+        label: "Not started",
         icon: Circle,
         colorClass: "text-muted-foreground",
-        display: "Belum dimulai",
+        display: "Not started",
       };
   }
 };
@@ -142,7 +142,7 @@ export const SimplePriorityDisplay = ({
   const config = getPriorityConfig(priority);
   return (
     <div className="flex items-center gap-1">
-      {config.display === "Sedang" || config.display === "Rendah" ? (
+      {priority === "medium" || priority === "low" ? (
         <GoDotFill className={cn("w-3 h-3", config.colorClass)} />
       ) : (
         <span

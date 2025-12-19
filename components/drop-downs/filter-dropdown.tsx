@@ -235,7 +235,7 @@ export default function FilterDropdown({
             onSelect={(e) => e.preventDefault()}
           >
             <ListChecks className="w-4 h-4 mr-2" />
-            <span>Tugas</span>
+            <span>Tasks</span>
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

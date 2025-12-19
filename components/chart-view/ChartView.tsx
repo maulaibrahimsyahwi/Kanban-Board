@@ -13,10 +13,10 @@ const stackColors = {
 };
 
 const legend = [
-  { label: "Belum Dimulai", color: stackColors.notStarted },
-  { label: "Dalam Proses", color: stackColors.inProgress },
-  { label: "Terlambat", color: stackColors.overdue },
-  { label: "Selesai", color: stackColors.completed },
+  { label: "Not started", color: stackColors.notStarted },
+  { label: "In progress", color: stackColors.inProgress },
+  { label: "Overdue", color: stackColors.overdue },
+  { label: "Done", color: stackColors.completed },
 ];
 
 const getTaskStacks = (tasks: Task[]) => {
@@ -49,11 +49,11 @@ const getTaskStacks = (tasks: Task[]) => {
     {
       value: notStarted,
       color: stackColors.notStarted,
-      label: "Belum Dimulai",
+      label: "Not started",
     },
-    { value: inProgress, color: stackColors.inProgress, label: "Dalam Proses" },
-    { value: overdue, color: stackColors.overdue, label: "Terlambat" },
-    { value: completed, color: stackColors.completed, label: "Selesai" },
+    { value: inProgress, color: stackColors.inProgress, label: "In progress" },
+    { value: overdue, color: stackColors.overdue, label: "Overdue" },
+    { value: completed, color: stackColors.completed, label: "Done" },
   ];
 };
 
@@ -63,7 +63,7 @@ export default function ChartView() {
   if (!selectedProject) {
     return (
       <div className="text-muted-foreground">
-        Pilih proyek untuk melihat bagan.
+        Select a project to view charts.
       </div>
     );
   }
@@ -82,19 +82,19 @@ export default function ChartView() {
   // Data untuk Bagan "Prioritas"
   const priorityChartData: BarChartData[] = [
     {
-      label: "Mendesak",
+      label: "Critical",
       stacks: getTaskStacks(allTasks.filter((t) => t.priority === "critical")),
     },
     {
-      label: "Penting",
+      label: "High",
       stacks: getTaskStacks(allTasks.filter((t) => t.priority === "high")),
     },
     {
-      label: "Sedang",
+      label: "Medium",
       stacks: getTaskStacks(allTasks.filter((t) => t.priority === "medium")),
     },
     {
-      label: "Rendah",
+      label: "Low",
       stacks: getTaskStacks(allTasks.filter((t) => t.priority === "low")),
     },
   ];
@@ -103,7 +103,7 @@ export default function ChartView() {
   const allMembers = [selectedProject.owner, ...selectedProject.members];
 
   const memberChartData: BarChartData[] = [
-    { label: "Tidak Ditet.", stacks: getTaskStacks(allTasks) },
+    { label: "Unassigned", stacks: getTaskStacks(allTasks) },
     ...allMembers.map((m) => ({
       label: (m.name || m.email || "Unknown").split(" ")[0],
       stacks: getTaskStacks([]), // Placeholder: Belum ada assignment task
@@ -117,15 +117,15 @@ export default function ChartView() {
         <StatusChart tasks={allTasks} />
       </div>
       <div className="lg:col-span-1">
-        <BarChart title="Wadah" data={boardChartData} legend={legend} />
+        <BarChart title="Boards" data={boardChartData} legend={legend} />
       </div>
       <div className="lg:col-span-1">
-        <BarChart title="Prioritas" data={priorityChartData} legend={legend} />
+        <BarChart title="Priority" data={priorityChartData} legend={legend} />
       </div>
 
       {/* Baris 2 - Anggota */}
       <div className="lg:col-span-3">
-        <BarChart title="Anggota" data={memberChartData} legend={legend} />
+        <BarChart title="Members" data={memberChartData} legend={legend} />
       </div>
     </div>
   );
