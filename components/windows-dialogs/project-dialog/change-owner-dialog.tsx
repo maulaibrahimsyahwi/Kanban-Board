@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { transferProjectOwnershipAction } from "@/app/actions/project";
+import { useProjects } from "@/contexts/projectContext";
 
 interface ChangeOwnerDialogProps {
+  projectId: string;
+  currentOwnerId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   members: UserProfile[];
@@ -30,12 +35,39 @@ export default function ChangeOwnerDialog({
   isOpen,
   onOpenChange,
   members,
+  projectId,
+  currentOwnerId,
 }: ChangeOwnerDialogProps) {
   const [selectedOwner, setSelectedOwner] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { refreshProjects } = useProjects();
 
-  const handleTransfer = () => {
-    toast.success("Ownership transferred successfully");
-    onOpenChange(false);
+  const eligibleMembers = useMemo(
+    () => members.filter((member) => !member.isVirtual && member.id !== currentOwnerId),
+    [members, currentOwnerId]
+  );
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedOwner("");
+    }
+  }, [isOpen]);
+
+  const handleTransfer = async () => {
+    if (!selectedOwner || isLoading) return;
+
+    setIsLoading(true);
+    const result = await transferProjectOwnershipAction(projectId, selectedOwner);
+
+    if (result.success) {
+      toast.success("Ownership transferred successfully");
+      setSelectedOwner("");
+      onOpenChange(false);
+      refreshProjects();
+    } else {
+      toast.error(result.message || "Failed to transfer ownership");
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -58,9 +90,9 @@ export default function ChangeOwnerDialog({
               <SelectValue placeholder="Enter the name or email" />
             </SelectTrigger>
             <SelectContent>
-              {members.map((member, idx) => (
-                <SelectItem key={idx} value={member.email || `user-${idx}`}>
-                  {member.name || member.email}
+              {eligibleMembers.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name || member.email || "Unknown"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -74,9 +106,9 @@ export default function ChangeOwnerDialog({
           <Button
             className="bg-blue-400 hover:bg-blue-500 text-white min-w-[80px]"
             onClick={handleTransfer}
-            disabled={!selectedOwner}
+            disabled={!selectedOwner || isLoading}
           >
-            Ok
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ok"}
           </Button>
         </DialogFooter>
       </DialogContent>

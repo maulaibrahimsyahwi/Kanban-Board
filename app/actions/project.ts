@@ -64,14 +64,49 @@ export async function getProjectsAction() {
         ],
       },
       include: {
-        owner: { select: { name: true, email: true, image: true } },
-        members: { select: { name: true, email: true, image: true } },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            isVirtual: true,
+            resourceColor: true,
+            resourceType: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            isVirtual: true,
+            resourceColor: true,
+            resourceType: true,
+          },
+        },
         status: true,
         boards: {
           orderBy: { order: "asc" },
           include: {
             tasks: {
-              include: { checklist: true, labels: true },
+              include: {
+                checklist: true,
+                labels: true,
+                attachments: true,
+                assignees: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                    isVirtual: true,
+                    resourceColor: true,
+                    resourceType: true,
+                  },
+                },
+              },
               orderBy: { order: "asc" },
             },
           },
@@ -198,5 +233,82 @@ export async function addMemberAction(projectId: string, email: string) {
   } catch (error) {
     console.error("Invite member error:", error);
     return { success: false, message: "Failed to invite user" };
+  }
+}
+
+export async function transferProjectOwnershipAction(
+  projectId: string,
+  newOwnerId: string
+) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, message: "Unauthorized" };
+
+  const unlock = await ensureTwoFactorUnlocked(session);
+  if (!unlock.ok) return { success: false, message: unlock.message };
+
+  const trimmedProjectId = projectId.trim();
+  const trimmedOwnerId = newOwnerId.trim();
+  if (!trimmedProjectId || !trimmedOwnerId) {
+    return { success: false, message: "Invalid project or owner." };
+  }
+
+  if (trimmedOwnerId === session.user.id) {
+    return { success: false, message: "Selected user is already the owner." };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: trimmedProjectId },
+    select: { id: true, ownerId: true },
+  });
+
+  if (!project || project.ownerId !== session.user.id) {
+    return { success: false, message: "Forbidden" };
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: trimmedOwnerId },
+    select: { id: true, isVirtual: true },
+  });
+
+  if (!targetUser || targetUser.isVirtual) {
+    return { success: false, message: "Invalid new owner." };
+  }
+
+  const isMember = await prisma.project.findFirst({
+    where: { id: trimmedProjectId, members: { some: { id: trimmedOwnerId } } },
+    select: { id: true },
+  });
+
+  if (!isMember) {
+    return {
+      success: false,
+      message: "New owner must be a project member.",
+    };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id: trimmedProjectId },
+        data: {
+          ownerId: trimmedOwnerId,
+          members: {
+            connect: [{ id: session.user.id }, { id: trimmedOwnerId }],
+          },
+        },
+      });
+    });
+
+    await publishProjectInvalidation({
+      projectId: trimmedProjectId,
+      actorId: session.user.id,
+      kind: "project:owner:transfer",
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Transfer owner error:", error);
+    return { success: false, message: "Failed to transfer ownership" };
   }
 }

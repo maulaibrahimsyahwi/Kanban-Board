@@ -64,6 +64,13 @@ export async function changePasswordAction(
       }
     }
 
+    if (newPassword.trim().length < 8) {
+      return {
+        success: false,
+        message: "New password must be at least 8 characters long.",
+      };
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: session.user.id },

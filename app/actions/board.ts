@@ -43,19 +43,23 @@ export async function createBoardAction(projectId: string, name: string) {
   if (!hasAccess) return { success: false, message: "Forbidden" };
 
   try {
-    const lastBoard = await prisma.board.findFirst({
-      where: { projectId },
-      orderBy: { order: "desc" },
-    });
-    const newOrder = lastBoard ? lastBoard.order + 1 : 0;
+    const newBoard = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${projectId} FOR UPDATE`;
 
-    const newBoard = await prisma.board.create({
-      data: {
-        name,
-        projectId,
-        order: newOrder,
-      },
-      include: { tasks: true },
+      const lastBoard = await tx.board.findFirst({
+        where: { projectId },
+        orderBy: { order: "desc" },
+      });
+      const newOrder = lastBoard ? lastBoard.order + 1 : 0;
+
+      return tx.board.create({
+        data: {
+          name,
+          projectId,
+          order: newOrder,
+        },
+        include: { tasks: true },
+      });
     });
 
     await publishProjectInvalidation({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,34 +28,68 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowRight, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/types";
-import { cn } from "@/lib/utils";
+import { convertVirtualResourceAction } from "@/app/actions/resources";
 
 interface ConvertResourceDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  resourceName: string;
+  projectId?: string;
+  resource: UserProfile;
   members: UserProfile[]; // Menerima data members
+  onConverted?: () => void;
 }
 
 export default function ConvertResourceDialog({
   isOpen,
   onOpenChange,
-  resourceName,
+  projectId,
+  resource,
   members,
+  onConverted,
 }: ConvertResourceDialogProps) {
   const [openCombobox, setOpenCombobox] = useState(false);
-  const [selectedUserEmail, setSelectedUserEmail] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [deleteAfterConvert, setDeleteAfterConvert] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedUserId("");
+      setDeleteAfterConvert(false);
+    }
+  }, [isOpen]);
 
   // Cari user object berdasarkan email yang dipilih
-  const selectedUser = members.find((m) => m.email === selectedUserEmail);
+  const selectedUser = members.find((m) => m.id === selectedUserId);
 
-  const handleConvert = () => {
-    const userName = selectedUser?.name || selectedUser?.email || "the user";
-    toast.success(`Successfully converted ${resourceName} to ${userName}`);
-    onOpenChange(false);
-    setSelectedUserEmail("");
-    setDeleteAfterConvert(false);
+  const handleConvert = async () => {
+    if (!projectId) {
+      toast.error("Project not found.");
+      return;
+    }
+
+    if (!selectedUser) return;
+
+    setIsLoading(true);
+    const result = await convertVirtualResourceAction({
+      projectId,
+      resourceId: resource.id,
+      targetUserId: selectedUser.id,
+      deleteAfterConvert,
+    });
+
+    if (result.success) {
+      const userName = selectedUser?.name || selectedUser?.email || "the user";
+      const resourceLabel = resource.name || "the resource";
+      toast.success(`Successfully converted ${resourceLabel} to ${userName}`);
+      onOpenChange(false);
+      setSelectedUserId("");
+      setDeleteAfterConvert(false);
+      onConverted?.();
+    } else {
+      toast.error(result.message || "Failed to convert resource");
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -76,9 +110,11 @@ export default function ConvertResourceDialog({
           {/* Virtual Resource Display */}
           <div className="flex-1 flex items-center gap-3 bg-muted/30 px-3 py-2 rounded-md border border-border h-10">
             <div className="w-6 h-6 rounded-full bg-slate-500 flex items-center justify-center text-white text-[10px] uppercase font-medium">
-              {resourceName.substring(0, 1)}
+              {(resource.name || "R").substring(0, 1)}
             </div>
-            <span className="text-sm font-medium">{resourceName}</span>
+            <span className="text-sm font-medium">
+              {resource.name || "Untitled resource"}
+            </span>
           </div>
 
           <ArrowRight className="w-5 h-5 text-muted-foreground" />
@@ -128,10 +164,10 @@ export default function ConvertResourceDialog({
                     >
                       {members.map((member) => (
                         <CommandItem
-                          key={member.email}
+                          key={member.id}
                           value={member.name || member.email || ""}
                           onSelect={() => {
-                            setSelectedUserEmail(member.email || "");
+                            setSelectedUserId(member.id);
                             setOpenCombobox(false);
                           }}
                           className="text-sm cursor-pointer py-2"
@@ -148,7 +184,7 @@ export default function ConvertResourceDialog({
                               {member.name || member.email}
                             </span>
                           </div>
-                          {selectedUserEmail === member.email && (
+                          {selectedUserId === member.id && (
                             <Check className="ml-auto h-4 w-4 text-primary" />
                           )}
                         </CommandItem>
@@ -184,9 +220,9 @@ export default function ConvertResourceDialog({
           <Button
             className="bg-blue-400 hover:bg-blue-500 text-white min-w-[80px]"
             onClick={handleConvert}
-            disabled={!selectedUser}
+            disabled={!selectedUser || isLoading}
           >
-            Next
+            {isLoading ? "Converting..." : "Next"}
           </Button>
         </DialogFooter>
       </DialogContent>

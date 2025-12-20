@@ -9,6 +9,14 @@ import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
+const getUserKey = (user: UserProfile) => user.id || user.email || "";
+
+const isSameUser = (a: UserProfile, b: UserProfile) => {
+  if (a.id && b.id) return a.id === b.id;
+  if (a.email && b.email) return a.email === b.email;
+  return false;
+};
+
 type TaskAssigneePopoverProps = {
   members?: UserProfile[];
   assignees: UserProfile[];
@@ -44,10 +52,10 @@ export default function TaskAssigneePopover({
           <CommandList>
             <CommandGroup heading="Project Members">
               {members?.map((member) => {
-                const isSelected = assignees.some((a) => a.email === member.email);
+                const isSelected = assignees.some((a) => isSameUser(a, member));
                 return (
                   <CommandItem
-                    key={member.email}
+                    key={getUserKey(member)}
                     onSelect={() => onToggleAssignee(member)}
                     className="flex items-center gap-2 cursor-pointer"
                   >
@@ -57,14 +65,14 @@ export default function TaskAssigneePopover({
                         {member.name?.slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <span
-                      className={cn(
-                        "text-sm truncate flex-1",
-                        isSelected ? "font-bold text-primary" : ""
-                      )}
-                    >
-                      {member.name}
-                    </span>
+                      <span
+                        className={cn(
+                          "text-sm truncate flex-1",
+                          isSelected ? "font-bold text-primary" : ""
+                        )}
+                      >
+                        {member.name || member.email || "Unknown"}
+                      </span>
                     {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
                   </CommandItem>
                 );
@@ -97,16 +105,18 @@ export function SelectedAssignees({
     <div className="flex flex-wrap gap-2">
       {assignees.map((user, idx) => (
         <div
-          key={idx}
+          key={getUserKey(user) || String(idx)}
           className="flex items-center gap-2 bg-muted/50 pl-1 pr-2 py-1 rounded-full border text-xs"
         >
           <Avatar className="w-5 h-5">
             <AvatarImage src={user.image || ""} />
-            <AvatarFallback className="text-[9px]">
-              {user.name?.slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="max-w-[100px] truncate">{user.name}</span>
+          <AvatarFallback className="text-[9px]">
+            {user.name?.slice(0, 2)}
+          </AvatarFallback>
+        </Avatar>
+          <span className="max-w-[100px] truncate">
+            {user.name || user.email || "Unknown"}
+          </span>
           <button
             onClick={() => onToggleAssignee(user)}
             className="hover:text-red-500 ml-1"

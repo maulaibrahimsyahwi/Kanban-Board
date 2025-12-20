@@ -157,7 +157,7 @@ const SingleTask = ({ task, boardId, provided, snapshot }: SingleTaskProps) => {
                 <div className="flex -space-x-2">
                   {task.assignees.slice(0, 3).map((u, i) => (
                     <Avatar
-                      key={i}
+                      key={u.id || u.email || String(i)}
                       className="w-5 h-5 border border-background"
                     >
                       <AvatarImage src={u.image || ""} />

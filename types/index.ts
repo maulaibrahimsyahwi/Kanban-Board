@@ -45,9 +45,13 @@ export type Board = {
 };
 
 export type UserProfile = {
+  id: string;
   name: string | null;
   email: string | null;
   image: string | null;
+  isVirtual?: boolean;
+  resourceColor?: string | null;
+  resourceType?: string | null;
 };
 
 export type ProjectStatus = {

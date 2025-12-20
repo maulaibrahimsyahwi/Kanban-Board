@@ -24,15 +24,27 @@ export default function PeopleView() {
 
   if (!selectedProject) return null;
 
-  // Siapkan data members untuk dikirim ke child components
+  const realMembers = selectedProject.members.filter((m) => !m.isVirtual);
+
   const allMembers = [
     { ...selectedProject.owner, role: "Project Owner", type: "per hour" },
-    ...selectedProject.members.map((m) => ({
+    ...realMembers.map((m) => ({
       ...m,
       role: "Member",
       type: "per hour",
     })),
-  ];
+  ].filter((member, idx, arr) => {
+    if (!member.id) return false;
+    return arr.findIndex((item) => item.id === member.id) === idx;
+  });
+
+  const conversionMembers = [
+    selectedProject.owner,
+    ...realMembers,
+  ].filter((member, idx, arr) => {
+    if (!member.id) return false;
+    return arr.findIndex((item) => item.id === member.id) === idx;
+  });
 
   // Filter untuk tampilan People tab (tetap sama)
   const filteredMembers = allMembers.filter(
@@ -154,7 +166,7 @@ export default function PeopleView() {
           </div>
         ) : (
           // Pass data allMembers ke VirtualResourcesView
-          <VirtualResourcesView members={allMembers} />
+          <VirtualResourcesView members={conversionMembers} />
         )}
       </div>
 
@@ -168,6 +180,8 @@ export default function PeopleView() {
           <ChangeOwnerDialog
             isOpen={isChangeOwnerOpen}
             onOpenChange={setIsChangeOwnerOpen}
+            projectId={selectedProject.id}
+            currentOwnerId={selectedProject.owner.id}
             members={allMembers}
           />
         </>

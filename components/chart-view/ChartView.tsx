@@ -100,7 +100,9 @@ export default function ChartView() {
   ];
 
   // Data untuk Bagan "Anggota" (Members)
-  const allMembers = [selectedProject.owner, ...selectedProject.members];
+  const allMembers = [selectedProject.owner, ...selectedProject.members].filter(
+    (member) => !member.isVirtual
+  );
 
   const memberChartData: BarChartData[] = [
     { label: "Unassigned", stacks: getTaskStacks(allTasks) },

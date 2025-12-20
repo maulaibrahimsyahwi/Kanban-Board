@@ -1,0 +1,3 @@
+ALTER TABLE "User" ADD COLUMN "isVirtual" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN "resourceColor" TEXT;
+ALTER TABLE "User" ADD COLUMN "resourceType" TEXT;

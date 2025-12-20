@@ -33,6 +33,9 @@ model User {
   twoFactorEnabled    Boolean   @default(false)
   twoFactorSecret     String?
   dateFormat          String    @default("dd/MM/yyyy")
+  isVirtual           Boolean   @default(false)
+  resourceColor       String?
+  resourceType        String?
 
   accounts      Account[]
   sessions      Session[]

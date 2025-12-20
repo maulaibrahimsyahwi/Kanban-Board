@@ -32,43 +32,57 @@ export async function createTaskAction(
   }
 
   try {
-    const lastTask = await prisma.task.findFirst({
-      where: { boardId },
-      orderBy: { order: "desc" },
-    });
-    const newOrder = lastTask ? lastTask.order + 1 : 0;
+    const newTask = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Board" WHERE id = ${boardId} FOR UPDATE`;
 
-    const newTask = await prisma.task.create({
-      data: {
-        title: taskData.title!,
-        description: taskData.description,
-        priority: taskData.priority || "low",
-        progress: taskData.progress || "not_started",
-        statusId: taskData.statusId,
-        startDate: taskData.startDate,
-        dueDate: taskData.dueDate,
-        cardDisplayPreference: taskData.cardDisplayPreference || "none",
-        boardId: boardId,
-        order: newOrder,
-        labels: {
-          create: taskData.labels?.map((l) => ({
-            name: l.name,
-            color: l.color,
-          })),
+      const lastTask = await tx.task.findFirst({
+        where: { boardId },
+        orderBy: { order: "desc" },
+      });
+      const newOrder = lastTask ? lastTask.order + 1 : 0;
+
+      return tx.task.create({
+        data: {
+          title: taskData.title!,
+          description: taskData.description,
+          priority: taskData.priority || "low",
+          progress: taskData.progress || "not_started",
+          statusId: taskData.statusId,
+          startDate: taskData.startDate,
+          dueDate: taskData.dueDate,
+          cardDisplayPreference: taskData.cardDisplayPreference || "none",
+          boardId: boardId,
+          order: newOrder,
+          labels: {
+            create: taskData.labels?.map((l) => ({
+              name: l.name,
+              color: l.color,
+            })),
+          },
+          checklist: {
+            create: taskData.checklist?.map((c) => ({
+              text: c.text,
+              isDone: c.isDone,
+            })),
+          },
         },
-        checklist: {
-          create: taskData.checklist?.map((c) => ({
-            text: c.text,
-            isDone: c.isDone,
-          })),
+        include: {
+          labels: true,
+          checklist: true,
+          assignees: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              isVirtual: true,
+              resourceColor: true,
+              resourceType: true,
+            },
+          },
+          attachments: true,
         },
-      },
-      include: {
-        labels: true,
-        checklist: true,
-        assignees: { select: { name: true, email: true, image: true } },
-        attachments: true,
-      },
+      });
     });
 
     const board = await prisma.board.findUnique({
@@ -109,11 +123,75 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
     return { success: false, message: "Invalid data format" };
   }
 
+  const assigneeInput = validation.data.assignees;
+  let assigneeConnections: Array<{ id: string }> | undefined;
+
+  if (assigneeInput !== undefined) {
+    const rawAssignees = Array.isArray(assigneeInput) ? assigneeInput : [];
+    const normalizedAssignees = rawAssignees.map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const candidate = entry as { id?: unknown; email?: unknown };
+      const id = typeof candidate.id === "string" ? candidate.id.trim() : "";
+      if (id) return { id };
+      const email =
+        typeof candidate.email === "string"
+          ? candidate.email.trim().toLowerCase()
+          : "";
+      if (email) return { email };
+      return null;
+    });
+
+    if (normalizedAssignees.some((entry) => !entry)) {
+      return { success: false, message: "Invalid assignee data." };
+    }
+
+    const boardProject = await prisma.board.findUnique({
+      where: { id: existingTask.boardId },
+      select: {
+        project: {
+          select: {
+            owner: { select: { id: true, email: true } },
+            members: { select: { id: true, email: true } },
+          },
+        },
+      },
+    });
+
+    if (!boardProject?.project) {
+      return { success: false, message: "Forbidden or Task not found." };
+    }
+
+    const allowedUsers = [
+      boardProject.project.owner,
+      ...boardProject.project.members,
+    ];
+    const allowedIds = new Set(allowedUsers.map((user) => user.id));
+    const emailToId = new Map(
+      allowedUsers
+        .filter((user) => user.email)
+        .map((user) => [user.email!.toLowerCase(), user.id])
+    );
+
+    const deduped = new Map<string, { id: string }>();
+    for (const entry of normalizedAssignees) {
+      if (!entry) continue;
+      const id = "id" in entry ? entry.id : emailToId.get(entry.email);
+      if (!id || !allowedIds.has(id)) {
+        return {
+          success: false,
+          message: "Assignees must be project members.",
+        };
+      }
+      deduped.set(id, { id });
+    }
+
+    assigneeConnections = [...deduped.values()];
+  }
+
   try {
     const {
       labels,
       checklist,
-      assignees,
       attachments,
       statusId,
       ...primitiveData
@@ -140,18 +218,10 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
             create: checklist.map((c) => ({ text: c.text, isDone: c.isDone })),
           },
         }),
-        ...(assignees && {
+        ...(assigneeInput !== undefined && {
           assignees: {
             set: [],
-            connect: assignees
-              .filter(
-                (u): u is { email: string } =>
-                  typeof u === "object" &&
-                  u !== null &&
-                  "email" in u &&
-                  typeof u.email === "string"
-              )
-              .map((u) => ({ email: u.email })),
+            connect: assigneeConnections ?? [],
           },
         }),
         ...(attachments && {
@@ -168,7 +238,17 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       include: {
         labels: true,
         checklist: true,
-        assignees: { select: { name: true, email: true, image: true } },
+        assignees: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            isVirtual: true,
+            resourceColor: true,
+            resourceType: true,
+          },
+        },
         attachments: true,
       },
     });

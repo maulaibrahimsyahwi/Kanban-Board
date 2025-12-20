@@ -5,6 +5,16 @@ export interface LabelDTO {
   color: string;
 }
 
+export interface UserProfileDTO {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  isVirtual?: boolean | null;
+  resourceColor?: string | null;
+  resourceType?: string | null;
+}
+
 export interface ChecklistItemDTO {
   id: string;
   text: string;
@@ -26,11 +36,7 @@ export interface TaskDTO {
   boardId: string;
   labels: LabelDTO[];
   checklist: ChecklistItemDTO[];
-  assignees: {
-    name: string | null;
-    email: string | null;
-    image: string | null;
-  }[];
+  assignees: UserProfileDTO[];
   attachments: { id: string; name: string; url: string; type: string }[];
 }
 
@@ -47,12 +53,8 @@ export interface ProjectDTO {
   ownerId: string;
   icon: string;
   createdAt: Date;
-  owner: { name: string | null; email: string | null; image: string | null };
-  members: {
-    name: string | null;
-    email: string | null;
-    image: string | null;
-  }[];
+  owner: UserProfileDTO;
+  members: UserProfileDTO[];
   statusId: string | null;
   status: { id: string; name: string; color: string; isSystem: boolean } | null;
   boards: BoardDTO[];
@@ -106,5 +108,5 @@ export interface ProjectContextType {
   ) => Promise<{ success: boolean; message?: string }>;
   updateProjectStatus: (projectId: string, statusId: string) => void;
   refreshStatuses: () => void;
+  refreshProjects: () => void;
 }
-

@@ -231,6 +231,10 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshProjects = useCallback(() => {
+    void loadData(true);
+  }, [loadData]);
+
   const updateProjectStatus = async (projectId: string, statusId: string) => {
     const targetStatus = projectStatuses.find((s) => s.id === statusId);
 
@@ -296,6 +300,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     addBoard,
     updateProjectStatus,
     refreshStatuses,
+    refreshProjects,
   };
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;

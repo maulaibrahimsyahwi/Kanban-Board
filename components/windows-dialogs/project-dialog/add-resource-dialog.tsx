@@ -19,10 +19,13 @@ import {
 } from "@/components/ui/select";
 import { Search, User } from "lucide-react";
 import { toast } from "sonner";
+import { createVirtualResourceAction } from "@/app/actions/resources";
 
 interface AddResourceDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId?: string;
+  onCreated?: () => void;
 }
 
 const COLORS = [
@@ -33,17 +36,49 @@ const COLORS = [
   { name: "Blue", value: "bg-blue-500" },
 ];
 
+const RESOURCE_TYPES = [
+  { label: "per hour", value: "per hour" },
+  { label: "per item", value: "per item" },
+  { label: "cost only", value: "cost only" },
+];
+
 export default function AddResourceDialog({
   isOpen,
   onOpenChange,
+  projectId,
+  onCreated,
 }: AddResourceDialogProps) {
   const [resourceName, setResourceName] = useState("");
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
+  const [resourceType, setResourceType] = useState(RESOURCE_TYPES[0].value);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAdd = () => {
-    toast.success("Resource added successfully");
-    setResourceName("");
-    onOpenChange(false);
+  const handleAdd = async () => {
+    if (!projectId) {
+      toast.error("Project not found.");
+      return;
+    }
+
+    if (!resourceName.trim()) return;
+
+    setIsLoading(true);
+    const result = await createVirtualResourceAction(projectId, {
+      name: resourceName.trim(),
+      color: selectedColor,
+      type: resourceType,
+    });
+
+    if (result.success) {
+      toast.success("Resource added successfully");
+      setResourceName("");
+      setSelectedColor(COLORS[0].value);
+      setResourceType(RESOURCE_TYPES[0].value);
+      onOpenChange(false);
+      onCreated?.();
+    } else {
+      toast.error(result.message || "Failed to add resource");
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -155,6 +190,24 @@ export default function AddResourceDialog({
               </div>
             </div>
 
+            <div className="mt-4 space-y-2">
+              <label className="text-sm font-bold text-muted-foreground">
+                Type
+              </label>
+              <Select value={resourceType} onValueChange={setResourceType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESOURCE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-card flex justify-end gap-3">
               <Button variant="secondary" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -162,9 +215,9 @@ export default function AddResourceDialog({
               <Button
                 className="bg-blue-400 hover:bg-blue-500 text-white min-w-[80px]"
                 onClick={handleAdd}
-                disabled={!resourceName}
+                disabled={!resourceName.trim() || isLoading || !projectId}
               >
-                Add
+                {isLoading ? "Adding..." : "Add"}
               </Button>
             </div>
           </TabsContent>

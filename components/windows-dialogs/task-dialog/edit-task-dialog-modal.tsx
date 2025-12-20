@@ -87,9 +87,15 @@ export function EditTaskDialogModal({
   };
 
   const toggleAssignee = (member: UserProfile) => {
-    const exists = editAssignees.find((a) => a.email === member.email);
+    const isSameUser = (a: UserProfile, b: UserProfile) => {
+      if (a.id && b.id) return a.id === b.id;
+      if (a.email && b.email) return a.email === b.email;
+      return false;
+    };
+
+    const exists = editAssignees.find((a) => isSameUser(a, member));
     if (exists) {
-      setEditAssignees(editAssignees.filter((a) => a.email !== member.email));
+      setEditAssignees(editAssignees.filter((a) => !isSameUser(a, member)));
     } else {
       setEditAssignees([...editAssignees, member]);
     }
