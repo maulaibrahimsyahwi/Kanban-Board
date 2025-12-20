@@ -206,6 +206,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       checklist,
       attachments,
       statusId,
+      assignees: _assignees,
       ...primitiveData
     } = validation.data;
 
