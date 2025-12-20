@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -37,6 +47,8 @@ export default function VirtualResourcesView({
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const projectId = selectedProject?.id;
   const resources =
@@ -51,15 +63,18 @@ export default function VirtualResourcesView({
     setIsConvertOpen(true);
   };
 
-  const handleDelete = async (resourceId: string) => {
-    if (!projectId) return;
-    const result = await deleteVirtualResourceAction(projectId, resourceId);
+  const handleDelete = async () => {
+    if (!projectId || !deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    const result = await deleteVirtualResourceAction(projectId, deleteTarget.id);
     if (result.success) {
       toast.success("Resource deleted");
       refreshProjects();
+      setDeleteTarget(null);
     } else {
       toast.error(result.message || "Failed to delete resource");
     }
+    setIsDeleting(false);
   };
 
   const handleTypeChange = async (resourceId: string, nextType: string) => {
@@ -156,7 +171,7 @@ export default function VirtualResourcesView({
                     </Select>
                   </div>
 
-                  <div className="col-span-4 flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="col-span-4 flex justify-end items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -169,7 +184,7 @@ export default function VirtualResourcesView({
                       variant="ghost"
                       size="icon"
                       className="text-muted-foreground hover:text-red-600 h-8 w-8"
-                      onClick={() => handleDelete(res.id)}
+                      onClick={() => setDeleteTarget(res)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -203,6 +218,32 @@ export default function VirtualResourcesView({
           onConverted={refreshProjects}
         />
       )}
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete resource?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove{" "}
+              {deleteTarget?.name
+                ? `"${deleteTarget.name}"`
+                : "this resource"}{" "}
+              from the project. Any assigned tasks will be unassigned.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

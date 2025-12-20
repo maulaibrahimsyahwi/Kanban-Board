@@ -125,7 +125,7 @@ export function CreateTaskDialogContent({
                   className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
                 <Label htmlFor="displayDesc" className="text-sm font-normal cursor-pointer">
-                  Tampilkan pada kartu
+                  Show on card
                 </Label>
               </div>
             }

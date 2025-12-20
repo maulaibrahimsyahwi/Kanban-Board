@@ -40,6 +40,13 @@ export default function EditTaskDialog({
 }: EditTaskDialogProps) {
   const { selectedProject } = useProjects();
 
+  const members = selectedProject
+    ? [selectedProject.owner, ...selectedProject.members].filter(
+        (member, index, arr) =>
+          arr.findIndex((item) => item.id === member.id) === index
+      )
+    : undefined;
+
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
@@ -78,7 +85,7 @@ export default function EditTaskDialog({
         setEditAssignees={setEditAssignees}
         editAttachments={editAttachments}
         setEditAttachments={setEditAttachments}
-        members={selectedProject?.members}
+        members={members}
         isUploading={isUploading}
         setIsUploading={setIsUploading}
         onOpenLinkDialog={() => setIsLinkDialogOpen(true)}

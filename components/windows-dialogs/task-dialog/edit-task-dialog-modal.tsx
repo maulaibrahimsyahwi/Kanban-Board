@@ -175,7 +175,7 @@ export function EditTaskDialogModal({
                     htmlFor="editDisplayDesc"
                     className="text-sm font-normal cursor-pointer"
                   >
-                    Tampilkan pada kartu
+                    Show on card
                   </Label>
                 </div>
               }
@@ -198,7 +198,7 @@ export function EditTaskDialogModal({
                     htmlFor="editDisplayChecklist"
                     className="text-sm font-normal cursor-pointer"
                   >
-                    Tampilkan pada kartu
+                    Show on card
                   </Label>
                 </div>
               }
@@ -215,7 +215,7 @@ export function EditTaskDialogModal({
                     htmlFor="edit-board-select"
                     className="text-sm font-medium"
                   >
-                    Wadah
+                    Board
                   </Label>
                   <select
                     id="edit-board-select"

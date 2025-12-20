@@ -117,9 +117,9 @@ export default function PeopleView() {
             </div>
 
             <div className="space-y-1">
-              {filteredMembers.map((member, index) => (
+              {filteredMembers.map((member) => (
                 <div
-                  key={index}
+                  key={member.id}
                   className="grid grid-cols-12 gap-4 px-4 py-4 items-center border-b last:border-0 hover:bg-muted/10 transition-colors"
                 >
                   <div className="col-span-5 flex items-center gap-3 overflow-hidden">
