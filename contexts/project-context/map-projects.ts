@@ -1,7 +1,20 @@
-import type { Project, Task } from "@/types";
+import type { Project, Task, UserProfile } from "@/types";
 
 import type { ProjectDTO } from "./types";
 import { getProjectIcon } from "./icon-map";
+
+function mapUserProfile(user: ProjectDTO["owner"]): UserProfile {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    image: user.image,
+    isVirtual: user.isVirtual ?? undefined,
+    resourceColor: user.resourceColor ?? null,
+    resourceType: user.resourceType ?? null,
+    role: user.role,
+  };
+}
 
 export function mapProjectsFromDto(dbProjects: ProjectDTO[]): Project[] {
   return dbProjects.map((p) => ({
@@ -10,9 +23,9 @@ export function mapProjectsFromDto(dbProjects: ProjectDTO[]): Project[] {
     ownerId: p.ownerId,
     icon: getProjectIcon(p.icon),
     createdAt: new Date(p.createdAt),
-    owner: p.owner,
+    owner: mapUserProfile(p.owner),
     members: p.members.map((member) => ({
-      ...member.user,
+      ...mapUserProfile(member.user),
       role: member.role,
     })),
     statusId: p.statusId,
@@ -37,7 +50,7 @@ export function mapProjectsFromDto(dbProjects: ProjectDTO[]): Project[] {
         boardId: t.boardId,
         labels: t.labels,
         checklist: t.checklist,
-        assignees: t.assignees || [],
+        assignees: (t.assignees ?? []).map(mapUserProfile),
         attachments: t.attachments || [],
       })),
     })),
