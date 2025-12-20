@@ -5,32 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { publishProjectInvalidation } from "@/lib/ably";
-
-async function verifyProjectAccess(userId: string, projectId: string) {
-  const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
-    },
-    select: { id: true },
-  });
-
-  return !!project;
-}
-
-async function verifyBoardAccess(userId: string, boardId: string) {
-  const board = await prisma.board.findFirst({
-    where: {
-      id: boardId,
-      project: {
-        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
-      },
-    },
-    select: { id: true },
-  });
-
-  return !!board;
-}
+import { ActivityAction, ActivityEntityType } from "@prisma/client";
+import { recordActivity } from "@/lib/activity-log";
+import {
+  canEditProject,
+  canManageProject,
+  getProjectAccessByBoardId,
+  getProjectAccessByProjectId,
+} from "@/lib/project-permissions";
 
 export async function createBoardAction(projectId: string, name: string) {
   const session = await auth();
@@ -39,8 +21,10 @@ export async function createBoardAction(projectId: string, name: string) {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const hasAccess = await verifyProjectAccess(session.user.id, projectId);
-  if (!hasAccess) return { success: false, message: "Forbidden" };
+  const access = await getProjectAccessByProjectId(session.user.id, projectId);
+  if (!access || !canEditProject(access.role)) {
+    return { success: false, message: "Forbidden" };
+  }
 
   try {
     const newBoard = await prisma.$transaction(async (tx) => {
@@ -68,6 +52,15 @@ export async function createBoardAction(projectId: string, name: string) {
       kind: "board:create",
     });
 
+    await recordActivity({
+      projectId,
+      actorId: session.user.id,
+      action: ActivityAction.create,
+      entityType: ActivityEntityType.board,
+      entityId: newBoard.id,
+      metadata: { order: newBoard.order },
+    });
+
     revalidatePath("/");
     return { success: true, data: newBoard };
   } catch (error) {
@@ -82,8 +75,10 @@ export async function deleteBoardAction(boardId: string) {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const hasAccess = await verifyBoardAccess(session.user.id, boardId);
-  if (!hasAccess) return { success: false, message: "Forbidden" };
+  const access = await getProjectAccessByBoardId(session.user.id, boardId);
+  if (!access || !canManageProject(access.role)) {
+    return { success: false, message: "Forbidden" };
+  }
 
   const board = await prisma.board.findUnique({
     where: { id: boardId },
@@ -101,6 +96,14 @@ export async function deleteBoardAction(boardId: string) {
         actorId: session.user.id,
         kind: "board:delete",
       });
+
+      await recordActivity({
+        projectId: board.projectId,
+        actorId: session.user.id,
+        action: ActivityAction.delete,
+        entityType: ActivityEntityType.board,
+        entityId: boardId,
+      });
     }
 
     revalidatePath("/");
@@ -117,8 +120,10 @@ export async function updateBoardAction(boardId: string, name: string) {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const hasAccess = await verifyBoardAccess(session.user.id, boardId);
-  if (!hasAccess) return { success: false, message: "Forbidden" };
+  const access = await getProjectAccessByBoardId(session.user.id, boardId);
+  if (!access || !canEditProject(access.role)) {
+    return { success: false, message: "Forbidden" };
+  }
 
   try {
     const updatedBoard = await prisma.board.update({
@@ -130,6 +135,14 @@ export async function updateBoardAction(boardId: string, name: string) {
       projectId: updatedBoard.projectId,
       actorId: session.user.id,
       kind: "board:update",
+    });
+
+    await recordActivity({
+      projectId: updatedBoard.projectId,
+      actorId: session.user.id,
+      action: ActivityAction.update,
+      entityType: ActivityEntityType.board,
+      entityId: updatedBoard.id,
     });
 
     revalidatePath("/");

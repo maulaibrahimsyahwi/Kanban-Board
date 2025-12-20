@@ -18,8 +18,9 @@ ALTER TABLE "Board" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Attachment" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "NotificationSettings" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "SSOSettings" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "_ProjectMembers" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ProjectMember" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "_TaskAssignees" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ActivityLog" ENABLE ROW LEVEL SECURITY;
 
 -- Private Storage bucket for attachments (served via server-generated signed URLs)
 INSERT INTO storage.buckets (id, name, public)

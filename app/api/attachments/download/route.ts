@@ -87,7 +87,7 @@ export async function GET(request: Request) {
           project: {
             OR: [
               { ownerId: session.user.id },
-              { members: { some: { id: session.user.id } } },
+              { members: { some: { userId: session.user.id } } },
             ],
           },
         },

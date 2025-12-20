@@ -11,7 +11,10 @@ export function mapProjectsFromDto(dbProjects: ProjectDTO[]): Project[] {
     icon: getProjectIcon(p.icon),
     createdAt: new Date(p.createdAt),
     owner: p.owner,
-    members: p.members,
+    members: p.members.map((member) => ({
+      ...member.user,
+      role: member.role,
+    })),
     statusId: p.statusId,
     status: p.status,
     boards: p.boards.map((b) => ({
@@ -40,4 +43,3 @@ export function mapProjectsFromDto(dbProjects: ProjectDTO[]): Project[] {
     })),
   }));
 }
-

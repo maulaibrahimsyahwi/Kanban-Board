@@ -12,6 +12,7 @@ import UserInvitationDialog from "@/components/windows-dialogs/project-dialog/us
 import ChangeOwnerDialog from "@/components/windows-dialogs/project-dialog/change-owner-dialog";
 import VirtualResourcesView from "./virtual-resources-view";
 import { cn } from "@/lib/utils";
+import type { ProjectRole } from "@/types";
 
 type TabType = "people" | "virtual";
 
@@ -24,13 +25,14 @@ export default function PeopleView() {
 
   if (!selectedProject) return null;
 
-  const realMembers = selectedProject.members.filter((m) => !m.isVirtual);
+  const realMembers = selectedProject.members.filter(
+    (m) => !m.isVirtual && m.id !== selectedProject.owner.id
+  );
 
   const allMembers = [
-    { ...selectedProject.owner, role: "Project Owner", type: "per hour" },
+    { ...selectedProject.owner, type: "per hour" },
     ...realMembers.map((m) => ({
       ...m,
-      role: "Member",
       type: "per hour",
     })),
   ].filter((member, idx, arr) => {
@@ -52,6 +54,13 @@ export default function PeopleView() {
       m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getRoleLabel = (role?: ProjectRole) => {
+    if (role === "admin") return "Admin";
+    if (role === "editor") return "Editor";
+    if (role === "viewer") return "Viewer";
+    return "Member";
+  };
 
   return (
     <div className="h-full flex flex-col bg-card border rounded-xl overflow-hidden animate-in fade-in duration-300">
@@ -140,7 +149,9 @@ export default function PeopleView() {
                   </div>
 
                   <div className="col-span-3 text-sm font-medium">
-                    {member.role}
+                    {member.id === selectedProject.owner.id
+                      ? "Project Owner"
+                      : getRoleLabel(member.role)}
                   </div>
 
                   <div className="col-span-2 text-sm text-muted-foreground">
@@ -148,7 +159,7 @@ export default function PeopleView() {
                   </div>
 
                   <div className="col-span-2 flex justify-end">
-                    {member.role === "Project Owner" && (
+                    {member.id === selectedProject.owner.id && (
                       <Button
                         variant="ghost"
                         size="sm"

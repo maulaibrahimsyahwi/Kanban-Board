@@ -19,6 +19,30 @@ enum TaskProgress {
   done
 }
 
+enum ProjectRole {
+  admin
+  editor
+  viewer
+}
+
+enum ActivityAction {
+  create
+  update
+  delete
+  move
+  invite
+  transfer
+}
+
+enum ActivityEntityType {
+  task
+  board
+  project
+  member
+  resource
+  status
+}
+
 model User {
   id                  String    @id @default(cuid())
   name                String?
@@ -41,7 +65,7 @@ model User {
   sessions      Session[]
   
   projectsOwned   Project[] @relation("ProjectOwner")
-  projectsMember  Project[] @relation("ProjectMembers")
+  projectMemberships ProjectMember[]
   projectStatuses ProjectStatus[]
 
   notificationSettings NotificationSettings?
@@ -49,6 +73,8 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   
   sSOSettings          SSOSettings?
+
+  activityLogs         ActivityLog[]
 }
 
 model NotificationSettings {
@@ -146,12 +172,26 @@ model Project {
   ownerId   String
   owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   
-  members   User[]   @relation("ProjectMembers")
+  members   ProjectMember[]
   
   boards    Board[]
+  activityLogs ActivityLog[]
 
   statusId  String?
   status    ProjectStatus? @relation(fields: [statusId], references: [id], onDelete: SetNull)
+}
+
+model ProjectMember {
+  projectId String
+  userId    String
+  role      ProjectRole @default(editor)
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId], map: "ProjectMember_userId_idx")
 }
 
 model ProjectStatus {
@@ -177,7 +217,7 @@ model ProjectStatus {
 model Board {
   id        String   @id @default(cuid())
   name      String
-  order     Int      @default(0)
+  order     Float    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -198,7 +238,7 @@ model Task {
   startDate             DateTime?
   dueDate               DateTime?
   cardDisplayPreference String          @default("none")
-  order                 Int             @default(0)
+  order                 Float           @default(0)
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 
@@ -266,4 +306,22 @@ model SSOSettings {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ActivityLog {
+  id         String             @id @default(cuid())
+  projectId  String
+  actorId    String
+  action     ActivityAction
+  entityType ActivityEntityType
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime           @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User    @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt], map: "ActivityLog_projectId_createdAt_idx")
+  @@index([actorId, createdAt], map: "ActivityLog_actorId_createdAt_idx")
+  @@index([entityType, entityId], map: "ActivityLog_entity_idx")
 }

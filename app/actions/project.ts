@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { publishProjectInvalidation } from "@/lib/ably";
+import { ProjectRole } from "@prisma/client";
+import { canManageProject, getProjectAccessByProjectId } from "@/lib/project-permissions";
 
 export async function createProjectAction(projectName: string, icon?: string) {
   const session = await auth();
@@ -60,7 +62,7 @@ export async function getProjectsAction() {
       where: {
         OR: [
           { ownerId: session.user.id },
-          { members: { some: { id: session.user.id } } },
+          { members: { some: { userId: session.user.id } } },
         ],
       },
       include: {
@@ -77,13 +79,18 @@ export async function getProjectsAction() {
         },
         members: {
           select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            isVirtual: true,
-            resourceColor: true,
-            resourceType: true,
+            role: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                isVirtual: true,
+                resourceColor: true,
+                resourceType: true,
+              },
+            },
           },
         },
         status: true,
@@ -129,8 +136,13 @@ export async function deleteProjectAction(projectId: string) {
   if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
+    const access = await getProjectAccessByProjectId(session.user.id, projectId);
+    if (!access || access.role !== "owner") {
+      return { success: false, message: "Forbidden" };
+    }
+
     await prisma.project.delete({
-      where: { id: projectId, ownerId: session.user.id },
+      where: { id: projectId },
     });
 
     await publishProjectInvalidation({
@@ -158,8 +170,13 @@ export async function updateProjectAction(
   if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
+    const access = await getProjectAccessByProjectId(session.user.id, projectId);
+    if (!access || !canManageProject(access.role)) {
+      return { success: false, message: "Forbidden" };
+    }
+
     await prisma.project.update({
-      where: { id: projectId, ownerId: session.user.id },
+      where: { id: projectId },
       data: {
         ...(data.name && { name: data.name }),
         ...(data.icon && { icon: data.icon }),
@@ -180,7 +197,11 @@ export async function updateProjectAction(
   }
 }
 
-export async function addMemberAction(projectId: string, email: string) {
+export async function addMemberAction(
+  projectId: string,
+  email: string,
+  role: ProjectRole = ProjectRole.editor
+) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
@@ -188,6 +209,17 @@ export async function addMemberAction(projectId: string, email: string) {
   if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
+    const access = await getProjectAccessByProjectId(session.user.id, projectId);
+    if (!access || !canManageProject(access.role)) {
+      return { success: false, message: "Forbidden" };
+    }
+
+    const normalizedRole = Object.values(ProjectRole).includes(
+      role as ProjectRole
+    )
+      ? (role as ProjectRole)
+      : ProjectRole.editor;
+
     const userInvited = await prisma.user.findUnique({
       where: { email },
     });
@@ -207,15 +239,39 @@ export async function addMemberAction(projectId: string, email: string) {
       };
     }
 
-    await prisma.project.update({
-      where: {
-        id: projectId,
-        ownerId: session.user.id,
-      },
+    const existingMembership = await prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId: userInvited.id } },
+      select: { projectId: true },
+    });
+
+    if (existingMembership) {
+      return {
+        success: false,
+        message: "User is already a member of this project.",
+      };
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true },
+    });
+
+    if (!project) {
+      return { success: false, message: "Project not found." };
+    }
+
+    if (project.ownerId === userInvited.id) {
+      return {
+        success: false,
+        message: "User is already the project owner.",
+      };
+    }
+
+    await prisma.projectMember.create({
       data: {
-        members: {
-          connect: { id: userInvited.id },
-        },
+        projectId,
+        userId: userInvited.id,
+        role: normalizedRole,
       },
     });
 
@@ -275,7 +331,10 @@ export async function transferProjectOwnershipAction(
   }
 
   const isMember = await prisma.project.findFirst({
-    where: { id: trimmedProjectId, members: { some: { id: trimmedOwnerId } } },
+    where: {
+      id: trimmedProjectId,
+      members: { some: { userId: trimmedOwnerId } },
+    },
     select: { id: true },
   });
 
@@ -292,9 +351,25 @@ export async function transferProjectOwnershipAction(
         where: { id: trimmedProjectId },
         data: {
           ownerId: trimmedOwnerId,
-          members: {
-            connect: [{ id: session.user.id }, { id: trimmedOwnerId }],
-          },
+        },
+      });
+
+      await tx.projectMember.upsert({
+        where: {
+          projectId_userId: { projectId: trimmedProjectId, userId: session.user.id },
+        },
+        update: { role: ProjectRole.admin },
+        create: {
+          projectId: trimmedProjectId,
+          userId: session.user.id,
+          role: ProjectRole.admin,
+        },
+      });
+
+      await tx.projectMember.deleteMany({
+        where: {
+          projectId: trimmedProjectId,
+          userId: trimmedOwnerId,
         },
       });
     });

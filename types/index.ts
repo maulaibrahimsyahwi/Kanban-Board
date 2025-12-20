@@ -44,6 +44,8 @@ export type Board = {
   tasks: Task[];
 };
 
+export type ProjectRole = "admin" | "editor" | "viewer";
+
 export type UserProfile = {
   id: string;
   name: string | null;
@@ -52,6 +54,7 @@ export type UserProfile = {
   isVirtual?: boolean;
   resourceColor?: string | null;
   resourceType?: string | null;
+  role?: ProjectRole;
 };
 
 export type ProjectStatus = {

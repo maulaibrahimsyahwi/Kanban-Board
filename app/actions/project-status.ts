@@ -5,18 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { publishProjectInvalidation } from "@/lib/ably";
-
-async function verifyProjectAccess(userId: string, projectId: string) {
-  const project = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
-    },
-    select: { id: true },
-  });
-
-  return !!project;
-}
+import { canEditProject, getProjectAccessByProjectId } from "@/lib/project-permissions";
 
 export async function getProjectStatusesAction() {
   const session = await auth();
@@ -140,8 +129,8 @@ export async function setProjectStatusAction(
   if (!unlock.ok) return { success: false, message: unlock.message };
 
   try {
-    const hasProjectAccess = await verifyProjectAccess(session.user.id, projectId);
-    if (!hasProjectAccess) {
+    const access = await getProjectAccessByProjectId(session.user.id, projectId);
+    if (!access || !canEditProject(access.role)) {
       return { success: false, message: "Forbidden" };
     }
 

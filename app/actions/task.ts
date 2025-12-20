@@ -4,10 +4,17 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Task } from "@/types";
-import { verifyProjectAccess, verifyTaskAccess } from "./task-access";
 import { TaskUpdateSchema } from "./task-schemas";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { publishProjectInvalidation } from "@/lib/ably";
+import { ActivityAction, ActivityEntityType } from "@prisma/client";
+import { recordActivity } from "@/lib/activity-log";
+import {
+  canEditProject,
+  getProjectAccessByBoardId,
+  getTaskAccessById,
+} from "@/lib/project-permissions";
+import { computeOrderBetween } from "@/lib/order-utils";
 
 export async function createTaskAction(
   boardId: string,
@@ -19,8 +26,8 @@ export async function createTaskAction(
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const hasAccess = await verifyProjectAccess(session.user.id, boardId);
-  if (!hasAccess) {
+  const access = await getProjectAccessByBoardId(session.user.id, boardId);
+  if (!access || !canEditProject(access.role)) {
     return {
       success: false,
       message: "Forbidden: You do not have access to this project.",
@@ -85,16 +92,20 @@ export async function createTaskAction(
       });
     });
 
-    const board = await prisma.board.findUnique({
-      where: { id: boardId },
-      select: { projectId: true },
-    });
-
-    if (board?.projectId) {
+    if (access.projectId) {
       await publishProjectInvalidation({
-        projectId: board.projectId,
+        projectId: access.projectId,
         actorId: session.user.id,
         kind: "task:create",
+      });
+
+      await recordActivity({
+        projectId: access.projectId,
+        actorId: session.user.id,
+        action: ActivityAction.create,
+        entityType: ActivityEntityType.task,
+        entityId: newTask.id,
+        metadata: { boardId },
       });
     }
 
@@ -113,9 +124,12 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const existingTask = await verifyTaskAccess(session.user.id, taskId);
+  const existingTask = await getTaskAccessById(session.user.id, taskId);
   if (!existingTask) {
     return { success: false, message: "Forbidden or Task not found." };
+  }
+  if (!canEditProject(existingTask.role)) {
+    return { success: false, message: "Forbidden" };
   }
 
   const validation = TaskUpdateSchema.safeParse(updates);
@@ -145,25 +159,23 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       return { success: false, message: "Invalid assignee data." };
     }
 
-    const boardProject = await prisma.board.findUnique({
-      where: { id: existingTask.boardId },
+    const project = await prisma.project.findUnique({
+      where: { id: existingTask.projectId },
       select: {
-        project: {
-          select: {
-            owner: { select: { id: true, email: true } },
-            members: { select: { id: true, email: true } },
-          },
+        owner: { select: { id: true, email: true } },
+        members: {
+          select: { user: { select: { id: true, email: true } } },
         },
       },
     });
 
-    if (!boardProject?.project) {
+    if (!project) {
       return { success: false, message: "Forbidden or Task not found." };
     }
 
     const allowedUsers = [
-      boardProject.project.owner,
-      ...boardProject.project.members,
+      project.owner,
+      ...project.members.map((member) => member.user),
     ];
     const allowedIds = new Set(allowedUsers.map((user) => user.id));
     const emailToId = new Map(
@@ -253,16 +265,20 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>) {
       },
     });
 
-    const board = await prisma.board.findUnique({
-      where: { id: updatedTask.boardId },
-      select: { projectId: true },
-    });
-
-    if (board?.projectId) {
+    if (existingTask.projectId) {
       await publishProjectInvalidation({
-        projectId: board.projectId,
+        projectId: existingTask.projectId,
         actorId: session.user.id,
         kind: "task:update",
+      });
+
+      await recordActivity({
+        projectId: existingTask.projectId,
+        actorId: session.user.id,
+        action: ActivityAction.update,
+        entityType: ActivityEntityType.task,
+        entityId: taskId,
+        metadata: { boardId: existingTask.boardId },
       });
     }
 
@@ -285,107 +301,58 @@ export async function moveTaskAction(
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const task = await verifyTaskAccess(session.user.id, taskId);
-  if (!task) return { success: false, message: "Forbidden or Task not found." };
+  const taskAccess = await getTaskAccessById(session.user.id, taskId);
+  if (!taskAccess) {
+    return { success: false, message: "Forbidden or Task not found." };
+  }
+  if (!canEditProject(taskAccess.role)) {
+    return { success: false, message: "Forbidden" };
+  }
 
-  const targetBoardAccess = await verifyProjectAccess(
+  const targetAccess = await getProjectAccessByBoardId(
     session.user.id,
     newBoardId
   );
-  if (!targetBoardAccess) {
+  if (!targetAccess || !canEditProject(targetAccess.role)) {
     return {
       success: false,
       message: "Forbidden: Cannot move task to this board.",
     };
   }
 
-  const oldBoardId = task.boardId;
-  const [oldBoard, newBoard] = await Promise.all([
-    prisma.board.findUnique({
-      where: { id: oldBoardId },
-      select: { projectId: true },
-    }),
-    prisma.board.findUnique({
-      where: { id: newBoardId },
-      select: { projectId: true },
-    }),
-  ]);
+  const oldBoardId = taskAccess.boardId;
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Catatan penting: client mengirim `destination.index` (index di UI), bukan nilai `order` yang pasti rapat.
-      // Karena `order` bisa memiliki gap (mis. setelah delete), kita perlakukan parameter ini sebagai "index tujuan"
-      // lalu normalisasi ulang `order` agar rapat (0..n-1) supaya UI tidak "mantul" saat data di-refresh.
-      const [sourceTasks, destinationTasks] = await Promise.all([
-        tx.task.findMany({
-          where: { boardId: oldBoardId },
-          orderBy: { order: "asc" },
-          select: { id: true },
-        }),
-        oldBoardId === newBoardId
-          ? Promise.resolve([] as { id: string }[])
-          : tx.task.findMany({
-              where: { boardId: newBoardId },
-              orderBy: { order: "asc" },
-              select: { id: true },
-            }),
-      ]);
+      const destinationTasks = await tx.task.findMany({
+        where: { boardId: newBoardId },
+        orderBy: { order: "asc" },
+        select: { id: true, order: true },
+      });
 
-      const sourceIds = sourceTasks
-        .map((t) => t.id)
-        .filter((id) => id !== taskId);
+      const filtered = destinationTasks.filter((task) => task.id !== taskId);
+      const targetIndex = Number.isFinite(newIndex)
+        ? Math.trunc(newIndex)
+        : filtered.length;
+      const clampedIndex = Math.max(0, Math.min(targetIndex, filtered.length));
 
-      if (oldBoardId === newBoardId) {
-        const nextIds = [...sourceIds];
-        const clampedIndex = Math.max(
-          0,
-          Math.min(
-            Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0,
-            nextIds.length
-          )
-        );
-        nextIds.splice(clampedIndex, 0, taskId);
+      const prevOrder =
+        clampedIndex === 0 ? null : filtered[clampedIndex - 1]?.order;
+      const nextOrder =
+        clampedIndex === filtered.length ? null : filtered[clampedIndex]?.order;
 
-        await Promise.all(
-          nextIds.map((id, index) =>
-            tx.task.update({ where: { id }, data: { order: index } })
-          )
-        );
-        return;
-      }
+      const nextOrderValue = computeOrderBetween(prevOrder, nextOrder);
 
-      const destIdsOriginal = destinationTasks
-        .map((t) => t.id)
-        .filter((id) => id !== taskId);
-      const clampedIndex = Math.max(
-        0,
-        Math.min(
-          Number.isFinite(newIndex) ? Math.trunc(newIndex) : 0,
-          destIdsOriginal.length
-        )
-      );
-      const destIds = [...destIdsOriginal];
-      destIds.splice(clampedIndex, 0, taskId);
-
-      await Promise.all([
-        ...sourceIds.map((id, index) =>
-          tx.task.update({ where: { id }, data: { order: index } })
-        ),
-        ...destIds.map((id, index) =>
-          tx.task.update({
-            where: { id },
-            data:
-              id === taskId
-                ? { boardId: newBoardId, order: index }
-                : { order: index },
-          })
-        ),
-      ]);
+      await tx.task.update({
+        where: { id: taskId },
+        data: { boardId: newBoardId, order: nextOrderValue },
+      });
     });
 
-    const projectIds = new Set<string>();
-    if (oldBoard?.projectId) projectIds.add(oldBoard.projectId);
-    if (newBoard?.projectId) projectIds.add(newBoard.projectId);
+    const projectIds = new Set<string>([
+      taskAccess.projectId,
+      targetAccess.projectId,
+    ]);
 
     await Promise.all(
       [...projectIds].map((projectId) =>
@@ -396,6 +363,20 @@ export async function moveTaskAction(
         })
       )
     );
+
+    await recordActivity({
+      projectId: targetAccess.projectId,
+      actorId: session.user.id,
+      action: ActivityAction.move,
+      entityType: ActivityEntityType.task,
+      entityId: taskId,
+      metadata: {
+        fromBoardId: oldBoardId,
+        toBoardId: newBoardId,
+        fromProjectId: taskAccess.projectId,
+        toProjectId: targetAccess.projectId,
+      },
+    });
 
     revalidatePath("/");
     return { success: true };
@@ -412,36 +393,33 @@ export async function deleteTaskAction(taskId: string) {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const existingTask = await verifyTaskAccess(session.user.id, taskId);
+  const existingTask = await getTaskAccessById(session.user.id, taskId);
   if (!existingTask) {
     return { success: false, message: "Forbidden or Task not found." };
   }
-
-  const board = await prisma.board.findUnique({
-    where: { id: existingTask.boardId },
-    select: { projectId: true },
-  });
+  if (!canEditProject(existingTask.role)) {
+    return { success: false, message: "Forbidden" };
+  }
 
   try {
-    // Jaga `order` tetap rapat setelah delete agar drag/drop berbasis index tetap konsisten.
     await prisma.$transaction(async (tx) => {
       await tx.task.delete({ where: { id: taskId } });
-      await tx.task.updateMany({
-        where: {
-          boardId: existingTask.boardId,
-          order: { gt: existingTask.order },
-        },
-        data: { order: { decrement: 1 } },
-      });
     });
 
-    if (board?.projectId) {
-      await publishProjectInvalidation({
-        projectId: board.projectId,
-        actorId: session.user.id,
-        kind: "task:delete",
-      });
-    }
+    await publishProjectInvalidation({
+      projectId: existingTask.projectId,
+      actorId: session.user.id,
+      kind: "task:delete",
+    });
+
+    await recordActivity({
+      projectId: existingTask.projectId,
+      actorId: session.user.id,
+      action: ActivityAction.delete,
+      entityType: ActivityEntityType.task,
+      entityId: taskId,
+      metadata: { boardId: existingTask.boardId },
+    });
 
     revalidatePath("/");
     return { success: true };

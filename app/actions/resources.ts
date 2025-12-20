@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ensureTwoFactorUnlocked } from "@/lib/two-factor-session";
 import { publishProjectInvalidation } from "@/lib/ably";
+import { ProjectRole } from "@prisma/client";
+import { canManageProject, getProjectAccessByProjectId } from "@/lib/project-permissions";
 
 const RESOURCE_TYPES = ["per hour", "per item", "cost only"] as const;
 const RESOURCE_COLORS = new Set([
@@ -22,14 +24,10 @@ const ResourceSchema = z.object({
   type: z.enum(RESOURCE_TYPES),
 });
 
-async function requireProjectOwner(userId: string, projectId: string) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { id: true, ownerId: true },
-  });
-
-  if (!project || project.ownerId !== userId) return null;
-  return project;
+async function requireProjectAdmin(userId: string, projectId: string) {
+  const access = await getProjectAccessByProjectId(userId, projectId);
+  if (!access || !canManageProject(access.role)) return null;
+  return access;
 }
 
 export async function createVirtualResourceAction(
@@ -55,7 +53,7 @@ export async function createVirtualResourceAction(
     return { success: false, message: "Invalid color selection." };
   }
 
-  const project = await requireProjectOwner(session.user.id, projectId);
+  const project = await requireProjectAdmin(session.user.id, projectId);
   if (!project) return { success: false, message: "Forbidden" };
 
   try {
@@ -65,8 +63,8 @@ export async function createVirtualResourceAction(
         isVirtual: true,
         resourceColor: color,
         resourceType: type,
-        projectsMember: {
-          connect: { id: projectId },
+        projectMemberships: {
+          create: { projectId, role: ProjectRole.viewer },
         },
       },
       select: {
@@ -104,14 +102,14 @@ export async function deleteVirtualResourceAction(
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const project = await requireProjectOwner(session.user.id, projectId);
+  const project = await requireProjectAdmin(session.user.id, projectId);
   if (!project) return { success: false, message: "Forbidden" };
 
   const resource = await prisma.user.findFirst({
     where: {
       id: resourceId,
       isVirtual: true,
-      projectsMember: { some: { id: projectId } },
+      projectMemberships: { some: { projectId } },
     },
     select: { id: true },
   });
@@ -149,7 +147,7 @@ export async function convertVirtualResourceAction(args: {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const project = await requireProjectOwner(session.user.id, args.projectId);
+  const project = await requireProjectAdmin(session.user.id, args.projectId);
   if (!project) return { success: false, message: "Forbidden" };
 
   if (args.resourceId === args.targetUserId) {
@@ -161,7 +159,7 @@ export async function convertVirtualResourceAction(args: {
       where: {
         id: args.resourceId,
         isVirtual: true,
-        projectsMember: { some: { id: args.projectId } },
+        projectMemberships: { some: { projectId: args.projectId } },
       },
       select: { id: true },
     }),
@@ -174,7 +172,7 @@ export async function convertVirtualResourceAction(args: {
         id: args.projectId,
         OR: [
           { ownerId: args.targetUserId },
-          { members: { some: { id: args.targetUserId } } },
+          { members: { some: { userId: args.targetUserId } } },
         ],
       },
       select: { id: true },
@@ -246,7 +244,7 @@ export async function updateVirtualResourceTypeAction(args: {
   const unlock = await ensureTwoFactorUnlocked(session);
   if (!unlock.ok) return { success: false, message: unlock.message };
 
-  const project = await requireProjectOwner(session.user.id, args.projectId);
+  const project = await requireProjectAdmin(session.user.id, args.projectId);
   if (!project) return { success: false, message: "Forbidden" };
 
   if (!RESOURCE_TYPES.includes(args.type as (typeof RESOURCE_TYPES)[number])) {
@@ -257,7 +255,7 @@ export async function updateVirtualResourceTypeAction(args: {
     where: {
       id: args.resourceId,
       isVirtual: true,
-      projectsMember: { some: { id: args.projectId } },
+      projectMemberships: { some: { projectId: args.projectId } },
     },
     select: { id: true },
   });

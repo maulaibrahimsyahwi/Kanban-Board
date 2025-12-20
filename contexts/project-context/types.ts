@@ -13,6 +13,7 @@ export interface UserProfileDTO {
   isVirtual?: boolean | null;
   resourceColor?: string | null;
   resourceType?: string | null;
+  role?: "admin" | "editor" | "viewer";
 }
 
 export interface ChecklistItemDTO {
@@ -47,6 +48,11 @@ export interface BoardDTO {
   tasks: TaskDTO[];
 }
 
+export interface ProjectMemberDTO {
+  role: "admin" | "editor" | "viewer";
+  user: UserProfileDTO;
+}
+
 export interface ProjectDTO {
   id: string;
   name: string;
@@ -54,7 +60,7 @@ export interface ProjectDTO {
   icon: string;
   createdAt: Date;
   owner: UserProfileDTO;
-  members: UserProfileDTO[];
+  members: ProjectMemberDTO[];
   statusId: string | null;
   status: { id: string; name: string; color: string; isSystem: boolean } | null;
   boards: BoardDTO[];

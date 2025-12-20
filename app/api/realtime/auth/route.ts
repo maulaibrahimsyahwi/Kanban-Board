@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       id: projectId,
       OR: [
         { ownerId: session.user.id },
-        { members: { some: { id: session.user.id } } },
+        { members: { some: { userId: session.user.id } } },
       ],
     },
     select: { id: true },
